@@ -217,8 +217,19 @@ func atomicWriteText(path, content string, mode os.FileMode) error {
 	if err != nil {
 		return err
 	}
-	tmp.WriteString(content)
-	tmp.Close()
-	os.Chmod(tmp.Name(), mode)
-	return os.Rename(tmp.Name(), path)
+	tmpName := tmp.Name()
+	if _, err := tmp.WriteString(content); err != nil {
+		tmp.Close()
+		os.Remove(tmpName)
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		os.Remove(tmpName)
+		return err
+	}
+	if err := os.Chmod(tmpName, mode); err != nil {
+		os.Remove(tmpName)
+		return err
+	}
+	return os.Rename(tmpName, path)
 }
