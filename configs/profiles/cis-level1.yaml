@@ -1,0 +1,117 @@
+# CIS Benchmark Level 1 Profile
+# Minimum baseline — intended to be applicable to any Linux server.
+# Low disruption to service availability.
+# Reference: CIS Ubuntu Linux 22.04 LTS Benchmark v1.0.0
+
+version: "1"
+profile: cis-level1
+environment: onprem
+
+modules:
+  ssh:
+    enabled: true
+    max_auth_tries: 4
+    login_grace_time: 60
+    client_alive_interval: 300
+    client_alive_count_max: 3
+    disable_root_login: true
+    disable_empty_passwords: true
+    disable_x11_forwarding: true
+    disable_hostbased_auth: true
+    disable_ignore_rhosts: true
+    log_level: INFO
+    ciphers:
+      - aes128-ctr
+      - aes192-ctr
+      - aes256-ctr
+      - aes128-gcm@openssh.com
+      - aes256-gcm@openssh.com
+      - chacha20-poly1305@openssh.com
+    macs:
+      - hmac-sha2-256
+      - hmac-sha2-512
+      - hmac-sha2-256-etm@openssh.com
+      - hmac-sha2-512-etm@openssh.com
+
+  firewall:
+    enabled: true
+    backend: auto
+    default_inbound: drop
+    default_outbound: accept
+
+  kernel:
+    enabled: true
+
+  users:
+    enabled: true
+    password_max_days: 365
+    password_min_days: 1
+    password_warn_age: 7
+    password_min_length: 14
+    lockout_attempts: 5
+    lockout_duration: 900
+    inactive_account_lock_days: 30
+
+  filesystem:
+    enabled: true
+    tmp_nosuid: true
+    tmp_nodev: true
+    tmp_noexec: true
+    devshm_nosuid: true
+    devshm_nodev: true
+    devshm_noexec: true
+
+  auditd:
+    enabled: true
+    max_log_file_size: 8
+    action_on_space_left: email
+
+  services:
+    enabled: true
+    disable:
+      - xinetd
+      - inetd
+      - avahi-daemon
+      - cups
+      - dhcpd
+      - slapd
+      - nfs-server
+      - bind
+      - vsftpd
+      - httpd
+      - apache2
+      - nginx
+      - dovecot
+      - sendmail
+      - samba
+      - squid
+      - snmpd
+      - nis
+      - telnet
+      - rsh-server
+      - rsync
+
+  network:
+    enabled: true
+    disable_dccp: true
+    disable_sctp: true
+    disable_rds: true
+    disable_tipc: true
+
+  mac:
+    enabled: true
+    enforce: true
+
+  ntp:
+    enabled: true
+
+  updates:
+    enabled: true
+    unattended_security_upgrades: true
+
+  containers:
+    enabled: false
+
+audit:
+  fail_on_critical: true
+  fail_on_high: true

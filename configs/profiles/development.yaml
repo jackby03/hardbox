@@ -1,0 +1,124 @@
+# Development Cloud Profile
+# Optimised for developer productivity + security on dev/staging cloud servers.
+# Less restrictive than production — still covers critical hygiene.
+
+version: "1"
+profile: development
+environment: cloud
+
+modules:
+  ssh:
+    enabled: true
+    max_auth_tries: 5
+    login_grace_time: 60
+    client_alive_interval: 600
+    client_alive_count_max: 3
+    # Password auth allowed for convenience; recommend switching to keys
+    password_authentication: false
+    log_level: INFO
+
+  firewall:
+    enabled: true
+    backend: auto
+    default_inbound: drop
+    default_outbound: accept
+    allowed_ingress:
+      - port: 22
+        proto: tcp
+        comment: "SSH"
+      - port: 443
+        proto: tcp
+        comment: "HTTPS"
+      - port: 80
+        proto: tcp
+        comment: "HTTP"
+      - port: 8080
+        proto: tcp
+        comment: "Dev HTTP"
+      - port: 3000
+        proto: tcp
+        comment: "Node/React dev server"
+      - port: 5432
+        proto: tcp
+        source: "10.0.0.0/8"   # restrict DB access to internal network
+        comment: "PostgreSQL (internal only)"
+
+  kernel:
+    enabled: true
+    # Relaxed: ip_forward may be needed for Docker networking
+    overrides:
+      net.ipv4.ip_forward: "1"
+
+  users:
+    enabled: true
+    password_max_days: 365
+    password_min_length: 12
+    password_complexity: true
+    lockout_attempts: 10
+    lockout_duration: 300
+    inactive_account_lock_days: 90
+
+  filesystem:
+    enabled: true
+    # /tmp still hardened
+    tmp_nosuid: true
+    tmp_nodev: true
+    # noexec relaxed for dev tooling that may use /tmp for scripts
+    tmp_noexec: false
+
+  auditd:
+    enabled: true
+    max_log_file_size: 8
+    num_logs: 3
+    immutable: false    # easier to adjust rules during development
+
+  services:
+    enabled: true
+    disable:
+      - xinetd
+      - inetd
+      - telnet
+      - rsh-server
+      - nis
+    # avahi and cups may be useful in dev — left enabled
+
+  network:
+    enabled: true
+    disable_ipv6: false
+    disable_dccp: true
+    disable_sctp: true
+    disable_rds: true
+    disable_tipc: true
+    disable_wireless: true
+
+  crypto:
+    enabled: true
+    min_tls_version: "1.2"
+    disable_weak_ciphers: true
+
+  logging:
+    enabled: true
+    log_retention_days: 30
+
+  mac:
+    enabled: true
+    enforce: true
+
+  ntp:
+    enabled: true
+    backend: auto
+    timezone: UTC
+
+  updates:
+    enabled: true
+    unattended_security_upgrades: true
+    auto_reboot: false
+
+  containers:
+    enabled: true   # Docker common in dev environments
+    rootless: false # may not be available in all dev setups
+    disable_icc: false  # inter-container networking needed in dev
+
+audit:
+  fail_on_critical: true
+  fail_on_high: false

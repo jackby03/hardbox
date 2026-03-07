@@ -1,0 +1,54 @@
+# ── Binaries ─────────────────────────────────────────────────────────────────
+bin/
+dist/
+/hardbox
+*.exe
+*.out
+
+# ── Build cache ───────────────────────────────────────────────────────────────
+*.o
+*.a
+*.so
+
+# ── Go toolchain ─────────────────────────────────────────────────────────────
+vendor/
+go.sum
+
+# ── Test & coverage ───────────────────────────────────────────────────────────
+*.test
+coverage.out
+coverage.html
+
+# ── hardbox runtime data ──────────────────────────────────────────────────────
+# Do not commit snapshots or generated reports
+var/
+/var/lib/hardbox/
+audit-report*.json
+audit-report*.html
+*.hardbox-report.*
+
+# ── Editor / IDE ─────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ── Environment & secrets ─────────────────────────────────────────────────────
+.env
+.env.*
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# ── GoReleaser ────────────────────────────────────────────────────────────────
+dist/
+
+# ── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride

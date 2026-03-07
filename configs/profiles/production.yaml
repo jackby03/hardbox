@@ -1,0 +1,129 @@
+# Production Cloud Profile
+# Curated by hardbox — balanced security + operability for cloud production servers.
+# Extends CIS Level 2 with cloud-specific relaxations and additions.
+
+version: "1"
+profile: production
+environment: cloud
+
+modules:
+  ssh:
+    enabled: true
+    max_auth_tries: 3
+    login_grace_time: 30
+    client_alive_interval: 300
+    client_alive_count_max: 3
+    log_level: VERBOSE
+    # Recommended: restrict to your ops team group
+    # allow_groups:
+    #   - sshusers
+
+  firewall:
+    enabled: true
+    backend: auto           # auto-detect: ufw | nftables | firewalld
+    default_inbound: drop
+    default_outbound: accept
+    allowed_ingress:
+      - port: 22
+        proto: tcp
+        comment: "SSH (change this to your actual port)"
+      - port: 443
+        proto: tcp
+        comment: "HTTPS"
+      - port: 80
+        proto: tcp
+        comment: "HTTP"
+
+  kernel:
+    enabled: true
+    # net.ipv4.ip_forward left at 0 unless this is a router/NAT host
+    # Override example: overrides: { net.ipv4.ip_forward: "1" }
+
+  users:
+    enabled: true
+    password_max_days: 90
+    password_min_days: 1
+    password_warn_age: 14
+    password_min_length: 14
+    password_complexity: true
+    password_history: 5
+    lockout_attempts: 5
+    lockout_duration: 900
+    inactive_account_lock_days: 30
+
+  filesystem:
+    enabled: true
+    tmp_nosuid: true
+    tmp_nodev: true
+    tmp_noexec: true
+    devshm_nosuid: true
+    devshm_nodev: true
+    devshm_noexec: true
+
+  auditd:
+    enabled: true
+    max_log_file_size: 32    # MB
+    num_logs: 5
+    action_on_space_left: email
+    space_left_mb: 75
+    immutable: true
+
+  services:
+    enabled: true
+    # These are always disabled on a production server:
+    disable:
+      - xinetd
+      - inetd
+      - avahi-daemon
+      - cups
+      - telnet
+      - rsh-server
+      - nis
+
+  network:
+    enabled: true
+    disable_ipv6: false       # set true if your infra doesn't use IPv6
+    disable_dccp: true
+    disable_sctp: true
+    disable_rds: true
+    disable_tipc: true
+    disable_wireless: true    # always off on cloud VMs
+
+  crypto:
+    enabled: true
+    min_tls_version: "1.2"
+    disable_weak_ciphers: true
+
+  logging:
+    enabled: true
+    remote_log_host: ""       # set your syslog server IP
+    log_retention_days: 90
+
+  mac:
+    enabled: true
+    enforce: true
+
+  ntp:
+    enabled: true
+    backend: auto             # auto: chrony | systemd-timesyncd
+    timezone: UTC
+    # servers:
+    #   - 169.254.169.123     # AWS time sync (if on AWS)
+
+  updates:
+    enabled: true
+    unattended_security_upgrades: true
+    auto_reboot: false        # set true to allow overnight reboots
+
+  containers:
+    enabled: false            # enable if Docker/Podman is in use
+
+report:
+  format: html
+  output_dir: /var/lib/hardbox/reports
+  include_remediation: true
+  include_evidence: true
+
+audit:
+  fail_on_critical: true
+  fail_on_high: false
