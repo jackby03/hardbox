@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src=".github/assets/hardbox-logo.png" alt="hardbox logo" width="220" />
+<img src=".github/assets/hardbox-logo.png" alt="hardbox logo" width="100%" />
 
 **The definitive Linux hardening toolkit for IT, Cloud, Infrastructure, and Security teams.**
 
