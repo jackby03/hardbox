@@ -35,6 +35,7 @@ audit-report*.html
 *~
 .DS_Store
 Thumbs.db
+.claude
 
 # ── Environment & secrets ─────────────────────────────────────────────────────
 .env
