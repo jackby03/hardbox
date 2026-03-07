@@ -144,7 +144,7 @@ func (e *Engine) runAudit(ctx context.Context) ([]modules.Finding, error) {
 			log.Debug().Str("module", m.Name()).Msg("skipped (disabled)")
 			continue
 		}
-		findings, err := m.Audit(ctx, e.cfg.ModuleCfg(m.Name()))
+		findings, err := m.Audit(ctx, modules.ModuleConfig(e.cfg.ModuleCfg(m.Name())))
 		if err != nil {
 			return nil, fmt.Errorf("module %s audit: %w", m.Name(), err)
 		}
@@ -159,7 +159,7 @@ func (e *Engine) buildPlan(ctx context.Context, findings []modules.Finding) ([]m
 		if !e.cfg.IsModuleEnabled(m.Name()) {
 			continue
 		}
-		c, err := m.Plan(ctx, e.cfg.ModuleCfg(m.Name()))
+		c, err := m.Plan(ctx, modules.ModuleConfig(e.cfg.ModuleCfg(m.Name())))
 		if err != nil {
 			return nil, fmt.Errorf("module %s plan: %w", m.Name(), err)
 		}
@@ -192,7 +192,7 @@ func printAuditSummary(findings []modules.Finding) {
 }
 
 func printDryRun(changes []modules.Change) {
-	fmt.Println("\n[DRY RUN] The following changes would be applied:\n")
+	fmt.Print("\n[DRY RUN] The following changes would be applied:\n\n")
 	for i, ch := range changes {
 		fmt.Printf("  %d. %s\n", i+1, ch.Description)
 		if ch.DryRunOutput != "" {

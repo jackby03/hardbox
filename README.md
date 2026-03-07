@@ -1,12 +1,6 @@
 <div align="center">
 
-```
-  _                   _ _
- | |__   __ _ _ __ __| | |__   _____  __
- | '_ \ / _` | '__/ _` | '_ \ / _ \ \/ /
- | | | | (_| | | | (_| | |_) | (_) >  <
- |_| |_|\__,_|_|  \__,_|_.__/ \___/_/\_\
-```
+<img src=".github/assets/hardbox-logo.png" alt="hardbox logo" width="220" />
 
 **The definitive Linux hardening toolkit for IT, Cloud, Infrastructure, and Security teams.**
 
@@ -101,37 +95,9 @@ sudo hardbox rollback --last
 
 ---
 
-## TUI Overview
+## Preview
 
-```
-╔══════════════════════════════════════════════════════════════════════╗
-║  hardbox v1.0.0          [ Ubuntu 22.04 LTS ]        [?] Help  [Q]uit ║
-╠══════════════════════════════════════════════════════════════════════╣
-║  DASHBOARD                                                            ║
-║  ─────────────────────────────────────────────────────────────────── ║
-║  Security Score:  ████████████░░░░░░░░  62 / 100                     ║
-║  Profile:         Production Cloud (CIS Level 2)                     ║
-║  Last Audit:      2024-03-06 14:32:01 UTC                            ║
-║  Changes Pending: 18 items                                           ║
-║  ─────────────────────────────────────────────────────────────────── ║
-║  [ENTER] Run Selected   [A] Apply All   [D] Dry Run   [R] Report     ║
-╠═══════════════╦══════════════════════════════════════════════════════╣
-║  MODULES      ║  SSH HARDENING                               [●] ON  ║
-║  ──────────── ║  ──────────────────────────────────────────────────  ║
-║  ● SSH        ║  ✓ Disable root login                                ║
-║  ● Firewall   ║  ✓ Enforce key-based authentication                  ║
-║  ● Kernel     ║  ✓ Set MaxAuthTries to 3                             ║
-║  ● Users/PAM  ║  ✓ Disable empty passwords                          ║
-║  ● Filesystem ║  ✓ Set LoginGraceTime to 30s                        ║
-║  ● Audit Log  ║  ✓ Disable X11 forwarding                           ║
-║  ● Services   ║  ✓ Enable strict mode                               ║
-║  ● Network    ║  ✗ Change default port  [configure: 22 → ___]       ║
-║  ● Crypto     ║  ✓ Restrict allowed ciphers                         ║
-║  ● Compliance ║  ✓ Restrict allowed MACs                            ║
-║               ║                                                      ║
-║  [↑↓] Select  ║  Compliance: CIS 5.2 | NIST AC-17 | STIG V-238218  ║
-╚═══════════════╩══════════════════════════════════════════════════════╝
-```
+> Screenshot coming soon.
 
 ---
 

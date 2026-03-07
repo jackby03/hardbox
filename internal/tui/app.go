@@ -19,6 +19,13 @@ const (
 	screenApplyProgress
 )
 
+// moduleListModel is a placeholder for the module list screen (implemented in module_list.go).
+type moduleListModel struct{}
+
+func (m moduleListModel) Init() tea.Cmd                        { return nil }
+func (m moduleListModel) Update(tea.Msg) (tea.Model, tea.Cmd)  { return m, nil }
+func (m moduleListModel) View() string                         { return "" }
+
 // App is the root Bubble Tea model that owns the entire TUI.
 type App struct {
 	cfg    *config.Config
@@ -26,8 +33,8 @@ type App struct {
 	width  int
 	height int
 
-	dashboard    dashboardModel
-	moduleList   moduleListModel
+	dashboard  dashboardModel
+	moduleList moduleListModel
 }
 
 // NewApp creates the root model, wiring in the config.

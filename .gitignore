@@ -12,7 +12,7 @@ dist/
 
 # ── Go toolchain ─────────────────────────────────────────────────────────────
 vendor/
-go.sum
+# go.sum must be committed — do NOT add it here
 
 # ── Test & coverage ───────────────────────────────────────────────────────────
 *.test
