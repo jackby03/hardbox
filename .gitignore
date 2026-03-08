@@ -35,7 +35,64 @@ audit-report*.html
 *~
 .DS_Store
 Thumbs.db
-.claude
+
+# ── AI agents & editors ───────────────────────
+
+# Claude Code (Anthropic)
+.claude/
+
+# GitHub Copilot (VS Code / JetBrains)
+.github/copilot-instructions.md
+.github/instructions/
+.github/skills/
+
+# Cursor
+.cursor/
+.cursorrules
+.cursorignore
+
+# Windsurf (Codeium)
+.windsurf/
+.windsurfrules
+
+# OpenAI Codex / ChatGPT context
+.codex/
+codex.json
+.openai/
+
+# Aider
+.aider*
+aider.conf.yml
+
+# Continue (VS Code extension)
+.continue/
+
+# Cody (Sourcegraph)
+.cody/
+
+# Tabnine
+.tabnine/
+
+# Antigravity
+.antigravity/
+.ag-context/
+
+# Devin (Cognition)
+.devin/
+
+# Gemini CLI / Google AI Studio
+.gemini/
+gemini-context.json
+
+# Generic AI context / instruction files (catch-all)
+.ai-context/
+.llm-context/
+.agents/
+ai-instructions.*
+llm-instructions.*
+AGENTS.md
+COPILOT.md
+CLAUDE.md
 
 # ── Environment & secrets ─────────────────────────────────────────────────────
 .env
