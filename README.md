@@ -12,12 +12,6 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](docs/CONTRIBUTING.md)
 [![Code of Conduct](https://img.shields.io/badge/conduct-Contributor%20Covenant-5865F2?style=flat-square)](CODE_OF_CONDUCT.md)
 
-<br/>
-
-<a href="https://ko-fi.com/jackby03"><img src="https://img.shields.io/badge/Ko--fi-Support_on_Ko--fi-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Ko-fi" /></a>
-&nbsp;
-<a href="https://publishers.basicattentiontoken.org/en/c/jackby03"><img src="https://img.shields.io/badge/BAT-Brave_Rewards-FB542B?style=for-the-badge&logo=brave&logoColor=white" alt="BAT" /></a>
-
 </div>
 
 ---
