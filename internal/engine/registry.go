@@ -1,6 +1,9 @@
 package engine
 
-import "github.com/hardbox-io/hardbox/internal/modules"
+import (
+	"github.com/hardbox-io/hardbox/internal/modules"
+	"github.com/hardbox-io/hardbox/internal/modules/kernel"
+)
 
 // registeredModules returns the list of all built-in hardening modules.
 // Each module is instantiated here; disabled ones are filtered by the engine.
@@ -8,9 +11,9 @@ func registeredModules() []modules.Module {
 	// Modules are applied in dependency order:
 	// kernel and filesystem first, then services, then daemons, then access control.
 	return []modules.Module{
+		&kernel.Module{},
 		// Stub placeholders — each will be fully implemented in its own package.
 		// &updates.Module{},
-		// &kernel.Module{},
 		// &filesystem.Module{},
 		// &network.Module{},
 		// &services.Module{},
