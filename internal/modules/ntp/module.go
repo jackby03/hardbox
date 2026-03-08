@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/hardbox-io/hardbox/internal/modules"
+	"github.com/hardbox-io/hardbox/internal/modules/util"
 )
 
 const (
@@ -158,13 +158,13 @@ func (m *Module) Plan(ctx context.Context, cfg modules.ModuleConfig) ([]modules.
 			Description:  fmt.Sprintf("ntp: update chrony directives in %s", path),
 			DryRunOutput: strings.TrimSpace(newContent),
 			Apply: func() error {
-				return atomicWrite(path, []byte(newContent), 0o644)
+				return util.AtomicWrite(path, []byte(newContent), 0o644)
 			},
 			Revert: func() error {
 				if !fileExisted {
 					return os.Remove(path)
 				}
-				return atomicWrite(path, oldContent, 0o644)
+				return util.AtomicWrite(path, oldContent, 0o644)
 			},
 		},
 	}, nil
@@ -432,14 +432,18 @@ func readChronyDirective(content, directive string) (string, bool) {
 }
 
 func setChronyDirective(content, directive, value string) string {
-	lines := strings.Split(content, "\n")
+	// Trim trailing newlines before splitting so that a file ending with a
+	// newline (common for config files) does not produce a spurious empty
+	// element that would introduce a blank line when appending a new directive.
+	trimmed := strings.TrimRight(content, "\n")
+	lines := strings.Split(trimmed, "\n")
 	updated := false
 	for i, line := range lines {
-		trimmed := strings.TrimSpace(line)
-		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
+		trimmedLine := strings.TrimSpace(line)
+		if trimmedLine == "" || strings.HasPrefix(trimmedLine, "#") {
 			continue
 		}
-		fields := strings.Fields(trimmed)
+		fields := strings.Fields(trimmedLine)
 		if len(fields) == 0 {
 			continue
 		}
@@ -459,38 +463,6 @@ func valueOrMissing(v string, exists bool) string {
 		return "missing"
 	}
 	return v
-}
-
-func atomicWrite(path string, data []byte, mode os.FileMode) error {
-	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return fmt.Errorf("atomicWrite mkdir %s: %w", dir, err)
-	}
-
-	tmp, err := os.CreateTemp(dir, ".hardbox-ntp-")
-	if err != nil {
-		return fmt.Errorf("atomicWrite create temp: %w", err)
-	}
-	tmpName := tmp.Name()
-
-	if _, err := tmp.Write(data); err != nil {
-		tmp.Close()
-		os.Remove(tmpName)
-		return fmt.Errorf("atomicWrite write: %w", err)
-	}
-	if err := tmp.Close(); err != nil {
-		os.Remove(tmpName)
-		return fmt.Errorf("atomicWrite close: %w", err)
-	}
-	if err := os.Chmod(tmpName, mode); err != nil {
-		os.Remove(tmpName)
-		return fmt.Errorf("atomicWrite chmod: %w", err)
-	}
-	if err := os.Rename(tmpName, path); err != nil {
-		os.Remove(tmpName)
-		return fmt.Errorf("atomicWrite rename: %w", err)
-	}
-	return nil
 }
 
 func runCommand(ctx context.Context, name string, args ...string) (string, error) {
