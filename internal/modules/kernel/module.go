@@ -43,11 +43,20 @@ func (m *Module) Audit(_ context.Context, _ modules.ModuleConfig) ([]modules.Fin
 	for _, chk := range checks {
 		current, err := m.readSysctl(chk.param)
 		if err != nil {
-			// Param not present in this kernel — report as skipped.
+			if os.IsNotExist(err) {
+				// Param not present in this kernel — report as skipped.
+				findings = append(findings, modules.Finding{
+					Check:  chk.check,
+					Status: modules.StatusSkipped,
+					Detail: fmt.Sprintf("sysctl param %q not available: %v", chk.param, err),
+				})
+				continue
+			}
+			// Unexpected error reading the sysctl — report as error.
 			findings = append(findings, modules.Finding{
 				Check:  chk.check,
-				Status: modules.StatusSkipped,
-				Detail: fmt.Sprintf("sysctl param %q not available: %v", chk.param, err),
+				Status: modules.StatusError,
+				Detail: fmt.Sprintf("failed to read sysctl param %q: %v", chk.param, err),
 			})
 			continue
 		}
@@ -70,7 +79,7 @@ func (m *Module) Audit(_ context.Context, _ modules.ModuleConfig) ([]modules.Fin
 }
 
 // Plan builds a single atomic Change that writes /etc/sysctl.d/99-hardbox.conf
-// with all required hardened values — one file, one revert.
+// with the required hardened values for all non-compliant parameters — one file, one revert.
 func (m *Module) Plan(ctx context.Context, _ modules.ModuleConfig) ([]modules.Change, error) {
 	findings, err := m.Audit(ctx, nil)
 	if err != nil {
@@ -78,14 +87,18 @@ func (m *Module) Plan(ctx context.Context, _ modules.ModuleConfig) ([]modules.Ch
 	}
 
 	// Collect non-compliant params only.
+	checks := allChecks()
 	type fix struct {
 		param, expected string
 	}
 	var fixes []fix
 	for i, f := range findings {
+		if i >= len(checks) {
+			continue
+		}
 		if !f.IsCompliant() && f.Status != modules.StatusSkipped {
 			fixes = append(fixes, fix{
-				param:    allChecks()[i].param,
+				param:    checks[i].param,
 				expected: f.Target,
 			})
 		}
@@ -103,8 +116,12 @@ func (m *Module) Plan(ctx context.Context, _ modules.ModuleConfig) ([]modules.Ch
 	}
 	newContent := []byte(sb.String())
 
-	// Read existing file for revert (may not exist yet).
-	oldContent, _ := os.ReadFile(sysctlConfPath)
+	// Read existing file for revert; distinguish missing file from real I/O errors.
+	oldContent, readErr := os.ReadFile(sysctlConfPath)
+	if readErr != nil && !os.IsNotExist(readErr) {
+		return nil, fmt.Errorf("kernel: read existing %s: %w", sysctlConfPath, readErr)
+	}
+	fileExisted := readErr == nil
 
 	return []modules.Change{
 		{
@@ -114,7 +131,7 @@ func (m *Module) Plan(ctx context.Context, _ modules.ModuleConfig) ([]modules.Ch
 				return atomicWrite(sysctlConfPath, newContent, 0o644)
 			},
 			Revert: func() error {
-				if len(oldContent) == 0 {
+				if !fileExisted {
 					return os.Remove(sysctlConfPath)
 				}
 				return atomicWrite(sysctlConfPath, oldContent, 0o644)
@@ -129,8 +146,11 @@ func (m *Module) Plan(ctx context.Context, _ modules.ModuleConfig) ([]modules.Ch
 func (m *Module) readSysctl(param string) (string, error) {
 	relPath := strings.ReplaceAll(param, ".", string(filepath.Separator))
 	path := filepath.Join(m.base(), relPath)
-	// Reject path traversal
-	if !strings.HasPrefix(filepath.Clean(path), filepath.Clean(m.base())) {
+	// Reject path traversal by ensuring the final path is contained within the base.
+	cleanBase := filepath.Clean(m.base())
+	cleanPath := filepath.Clean(path)
+	rel, err := filepath.Rel(cleanBase, cleanPath)
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
 		return "", fmt.Errorf("invalid sysctl path: %q", param)
 	}
 	data, err := os.ReadFile(path)
