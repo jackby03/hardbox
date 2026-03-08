@@ -65,6 +65,18 @@ This document is the authoritative cross-reference index.
 
 ---
 
+## NTP Module
+
+| Check ID | Title | CIS | NIST | STIG | PCI | HIPAA | ISO |
+|---|---|---|---|---|---|---|---|
+| ntp-001 | Time sync service installed | 2.2.1 | AU-8 | — | 10.4.1 | 164.312(b) | A.8.16 |
+| ntp-002 | Single active time sync service | 2.2.2 | CM-7 | — | 2.2.1 | — | A.8.9 |
+| ntp-003 | chrony makestep configured | 2.3.1 | AU-8 | — | 10.4.1 | 164.312(b) | A.8.17 |
+| ntp-004 | chrony maxdistance configured | 2.3.2 | AU-8 | — | 10.4.1 | 164.312(b) | A.8.17 |
+| ntp-005 | Timezone set to UTC | 2.2.3 | AU-8 | — | 10.4.1 | 164.312(b) | A.8.16 |
+
+---
+
 ## Users & PAM Module
 
 | Check ID | Title | CIS | NIST | STIG | PCI | HIPAA | ISO |

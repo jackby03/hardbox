@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/hardbox-io/hardbox/internal/modules"
+	"github.com/hardbox-io/hardbox/internal/modules/util"
 )
 
 const (
@@ -128,13 +129,13 @@ func (m *Module) Plan(ctx context.Context, _ modules.ModuleConfig) ([]modules.Ch
 			Description:  fmt.Sprintf("kernel: write %d hardened sysctl parameters to %s", len(fixes), sysctlConfPath),
 			DryRunOutput: sb.String(),
 			Apply: func() error {
-				return atomicWrite(sysctlConfPath, newContent, 0o644)
+				return util.AtomicWrite(sysctlConfPath, newContent, 0o644)
 			},
 			Revert: func() error {
 				if !fileExisted {
 					return os.Remove(sysctlConfPath)
 				}
-				return atomicWrite(sysctlConfPath, oldContent, 0o644)
+				return util.AtomicWrite(sysctlConfPath, oldContent, 0o644)
 			},
 		},
 	}, nil
@@ -158,36 +159,4 @@ func (m *Module) readSysctl(param string) (string, error) {
 		return "", err
 	}
 	return strings.TrimSpace(string(data)), nil
-}
-
-// atomicWrite writes data to path using a temp-file + rename so the target
-// is never left in a partial state.
-func atomicWrite(path string, data []byte, mode os.FileMode) error {
-	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return fmt.Errorf("atomicWrite mkdir %s: %w", dir, err)
-	}
-	tmp, err := os.CreateTemp(dir, ".hardbox-tmp-")
-	if err != nil {
-		return fmt.Errorf("atomicWrite create temp: %w", err)
-	}
-	tmpName := tmp.Name()
-	if _, err := tmp.Write(data); err != nil {
-		tmp.Close()
-		os.Remove(tmpName)
-		return fmt.Errorf("atomicWrite write: %w", err)
-	}
-	if err := tmp.Close(); err != nil {
-		os.Remove(tmpName)
-		return fmt.Errorf("atomicWrite close: %w", err)
-	}
-	if err := os.Chmod(tmpName, mode); err != nil {
-		os.Remove(tmpName)
-		return fmt.Errorf("atomicWrite chmod: %w", err)
-	}
-	if err := os.Rename(tmpName, path); err != nil {
-		os.Remove(tmpName)
-		return fmt.Errorf("atomicWrite rename: %w", err)
-	}
-	return nil
 }
