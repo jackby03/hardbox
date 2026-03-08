@@ -67,6 +67,7 @@ func TestAudit_NonCompliantScenarios(t *testing.T) {
 		t.Fatalf("Audit(): unexpected error: %v", err)
 	}
 
+	assertStatus(t, findings, "ntp-001", modules.StatusCompliant)
 	assertStatus(t, findings, "ntp-002", modules.StatusNonCompliant)
 	assertStatus(t, findings, "ntp-003", modules.StatusNonCompliant)
 	assertStatus(t, findings, "ntp-004", modules.StatusNonCompliant)
@@ -90,8 +91,10 @@ func TestAudit_SkipsChronyDirectivesWhenChronyNotInstalled(t *testing.T) {
 	}
 
 	assertStatus(t, findings, "ntp-001", modules.StatusNonCompliant)
+	assertStatus(t, findings, "ntp-002", modules.StatusNonCompliant)
 	assertStatus(t, findings, "ntp-003", modules.StatusSkipped)
 	assertStatus(t, findings, "ntp-004", modules.StatusSkipped)
+	assertStatus(t, findings, "ntp-005", modules.StatusCompliant)
 }
 
 func TestPlan_UpdatesChronyAndReverts(t *testing.T) {
