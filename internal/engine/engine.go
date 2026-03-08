@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -11,6 +12,7 @@ import (
 	"github.com/hardbox-io/hardbox/internal/config"
 	"github.com/hardbox-io/hardbox/internal/distro"
 	"github.com/hardbox-io/hardbox/internal/modules"
+	"github.com/hardbox-io/hardbox/internal/report"
 )
 
 // Engine orchestrates the plan → snapshot → execute → verify → report lifecycle.
@@ -46,6 +48,7 @@ func New(cfg *config.Config) *Engine {
 
 // Audit runs all module checks and returns findings without making changes.
 func (e *Engine) Audit(ctx context.Context, format, outputPath string) error {
+	sessionID := time.Now().UTC().Format("2006-01-02T150405Z")
 	log.Info().Str("profile", e.cfg.Profile).Msg("starting audit")
 
 	all, err := e.runAudit(ctx)
@@ -55,11 +58,8 @@ func (e *Engine) Audit(ctx context.Context, format, outputPath string) error {
 
 	printAuditSummary(all)
 
-	if outputPath != "" {
-		if err := writeReport(all, format, outputPath); err != nil {
-			return fmt.Errorf("writing report: %w", err)
-		}
-		log.Info().Str("path", outputPath).Msg("report written")
+	if err := e.writeReport(sessionID, all, format, outputPath); err != nil {
+		return fmt.Errorf("writing report: %w", err)
 	}
 
 	if e.cfg.Audit.FailOnCritical && hasCritical(all) {
@@ -205,7 +205,8 @@ func printAuditSummary(findings []modules.Finding) {
 			nonCompliant++
 		}
 	}
-	fmt.Fprintf(os.Stdout, "\nAudit Summary: %d compliant / %d non-compliant\n\n",
+	// Write to stderr so structured output on stdout stays pipeable (e.g. | jq .).
+	fmt.Fprintf(os.Stderr, "\nAudit Summary: %d compliant / %d non-compliant\n\n",
 		compliant, nonCompliant)
 }
 
@@ -229,8 +230,41 @@ func hasCritical(findings []modules.Finding) bool {
 	return false
 }
 
-// writeReport and snapshot helpers are stubs — implemented in audit/ and snapshot.go.
-func writeReport(findings []modules.Finding, format, path string) error {
-	// TODO: delegate to internal/audit/renderers
+// writeReport renders the audit report to stdout (when path is empty) or to a
+// file. If path points to a directory, a timestamped file is created inside it.
+func (e *Engine) writeReport(sessionID string, findings []modules.Finding, format, path string) error {
+	r := report.Build(sessionID, e.cfg.Profile, findings)
+
+	if path == "" {
+		return report.Write(r, format, os.Stdout)
+	}
+
+	// If path is an existing directory, generate a filename inside it.
+	if info, err := os.Stat(path); err == nil && info.IsDir() {
+		ext := formatExtension(format)
+		path = filepath.Join(path, fmt.Sprintf("hardbox-report-%s%s", sessionID, ext))
+	}
+
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
+	if err != nil {
+		return fmt.Errorf("creating report file: %w", err)
+	}
+	defer f.Close()
+
+	if err := report.Write(r, format, f); err != nil {
+		return err
+	}
+	log.Info().Str("path", path).Str("format", format).Msg("report written")
 	return nil
+}
+
+func formatExtension(format string) string {
+	switch format {
+	case "json":
+		return ".json"
+	case "markdown", "md":
+		return ".md"
+	default:
+		return ".txt"
+	}
 }

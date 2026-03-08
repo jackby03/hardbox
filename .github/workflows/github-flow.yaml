@@ -1,0 +1,159 @@
+name: GitHub Flow
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [ opened, edited, synchronize, reopened ]
+  push:
+    branches-ignore: [ main ]
+
+jobs:
+  # ── 1. Branch name validation ─────────────────────────────────────────────
+  branch-name:
+    name: Validate Branch Name
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Check branch naming convention
+        env:
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          PATTERN='^(feat|fix|chore|refactor|test|docs|release)/.+'
+          if [[ ! "$BRANCH" =~ $PATTERN ]]; then
+            echo "::error::Branch name '$BRANCH' does not follow the convention."
+            echo "::error::Expected: <type>/<description>"
+            echo "::error::Valid types: feat, fix, chore, refactor, test, docs, release"
+            echo "::error::Example: feat/firewall-module, fix/ssh-audit-panic"
+            exit 1
+          fi
+          echo "Branch name '$BRANCH' is valid."
+
+  # ── 2. PR title validation (Conventional Commits) ─────────────────────────
+  pr-title:
+    name: Validate PR Title
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Check PR title follows Conventional Commits
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          PATTERN='^(feat|fix|chore|refactor|test|docs|perf|ci)(\([a-z0-9/-]+\))?: .{1,72}$'
+          if [[ ! "$PR_TITLE" =~ $PATTERN ]]; then
+            echo "::error::PR title '$PR_TITLE' does not follow Conventional Commits."
+            echo "::error::Expected: <type>(<scope>): <description>"
+            echo "::error::Valid types: feat, fix, chore, refactor, test, docs, perf, ci"
+            echo "::error::Examples:"
+            echo "::error::  feat(ssh): add PermitRootLogin check"
+            echo "::error::  fix(engine): prevent nil deref on empty module list"
+            echo "::error::  chore(ci): pin golangci-lint to v1.57"
+            exit 1
+          fi
+          echo "PR title '$PR_TITLE' is valid."
+
+  # ── 3. PR size check ──────────────────────────────────────────────────────
+  pr-size:
+    name: PR Size Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Count changed lines
+        id: diff
+        run: |
+          BASE=${{ github.event.pull_request.base.sha }}
+          HEAD=${{ github.event.pull_request.head.sha }}
+          ADDITIONS=$(git diff --stat "$BASE...$HEAD" | tail -1 | grep -oP '\d+ insertion' | grep -oP '\d+' || echo 0)
+          DELETIONS=$(git diff --stat "$BASE...$HEAD" | tail -1 | grep -oP '\d+ deletion' | grep -oP '\d+' || echo 0)
+          TOTAL=$((ADDITIONS + DELETIONS))
+          echo "additions=$ADDITIONS" >> "$GITHUB_OUTPUT"
+          echo "deletions=$DELETIONS" >> "$GITHUB_OUTPUT"
+          echo "total=$TOTAL" >> "$GITHUB_OUTPUT"
+          echo "PR size: +$ADDITIONS / -$DELETIONS (total: $TOTAL lines)"
+
+      - name: Warn on large PR
+        env:
+          TOTAL: ${{ steps.diff.outputs.total }}
+        run: |
+          if [ "$TOTAL" -gt 1000 ]; then
+            echo "::warning::This PR changes $TOTAL lines — consider splitting it into smaller PRs."
+            echo "::warning::Large PRs are harder to review and more likely to introduce bugs."
+          elif [ "$TOTAL" -gt 500 ]; then
+            echo "::notice::This PR changes $TOTAL lines — medium-large. Document the scope clearly."
+          else
+            echo "PR size ($TOTAL lines) is within guidelines."
+          fi
+
+  # ── 4. No direct push to main ─────────────────────────────────────────────
+  no-direct-push:
+    name: Block Direct Push to Main
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Fail on direct push
+        run: |
+          echo "::error::Direct pushes to main are not allowed."
+          echo "::error::All changes must go through a pull request."
+          exit 1
+
+  # ── 5. Stale branch check ─────────────────────────────────────────────────
+  stale-branch:
+    name: Check Branch Freshness
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check how far behind main the branch is
+        run: |
+          git fetch origin main
+          BEHIND=$(git rev-list --count HEAD..origin/main)
+          echo "Branch is $BEHIND commits behind main."
+          if [ "$BEHIND" -gt 60 ]; then
+            echo "::warning::This branch is $BEHIND commits behind main."
+            echo "::warning::Please rebase: git fetch origin && git rebase origin/main"
+          fi
+
+  # ── 6. Auto-label PR based on branch type ────────────────────────────────
+  auto-label:
+    name: Auto-label PR
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.action == 'opened'
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Apply label based on branch prefix
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: ${{ github.head_ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [[ "$BRANCH" == feat/* ]]; then     LABEL="enhancement"
+          elif [[ "$BRANCH" == fix/* ]]; then    LABEL="bug"
+          elif [[ "$BRANCH" == docs/* ]]; then   LABEL="documentation"
+          elif [[ "$BRANCH" == chore/* ]]; then  LABEL="chore"
+          elif [[ "$BRANCH" == test/* ]]; then   LABEL="testing"
+          elif [[ "$BRANCH" == refactor/* ]]; then LABEL="refactor"
+          elif [[ "$BRANCH" == release/* ]]; then  LABEL="release"
+          else LABEL=""
+          fi
+
+          if [ -n "$LABEL" ]; then
+            gh pr edit "$PR_NUMBER" --repo "$REPO" --add-label "$LABEL" || \
+              echo "::notice::Could not add label '$LABEL' — it may need to be created first."
+          fi

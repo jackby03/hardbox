@@ -67,7 +67,7 @@ func rootCmd() *cobra.Command {
 	}
 	apply.Flags().BoolVarP(&dryRun, "dry-run", "n", false, "preview changes without applying them")
 	apply.Flags().BoolVar(&nonInteract, "non-interactive", false, "run without prompts (CI/CD mode)")
-	apply.Flags().StringVar(&reportFmt, "report-format", "html", "report format: json|html|markdown|all")
+	apply.Flags().StringVar(&reportFmt, "report-format", "text", "report format: json|text|markdown|all")
 	apply.Flags().StringVar(&reportOut, "report", "", "write report to this file path")
 
 	// audit subcommand
@@ -83,7 +83,7 @@ func rootCmd() *cobra.Command {
 			return e.Audit(cmd.Context(), reportFmt, reportOut)
 		},
 	}
-	audit.Flags().StringVar(&reportFmt, "format", "html", "output format: json|html|markdown")
+	audit.Flags().StringVar(&reportFmt, "format", "text", "output format: json|text|markdown")
 	audit.Flags().StringVarP(&reportOut, "output", "o", "", "write report to this file")
 
 	// rollback subcommand
