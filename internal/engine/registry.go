@@ -3,6 +3,7 @@ package engine
 import (
 	"github.com/hardbox-io/hardbox/internal/modules"
 	"github.com/hardbox-io/hardbox/internal/modules/kernel"
+	"github.com/hardbox-io/hardbox/internal/modules/ntp"
 )
 
 // registeredModules returns the list of all built-in hardening modules.
@@ -12,6 +13,7 @@ func registeredModules() []modules.Module {
 	// kernel and filesystem first, then services, then daemons, then access control.
 	return []modules.Module{
 		&kernel.Module{},
+		&ntp.Module{},
 		// Stub placeholders — each will be fully implemented in its own package.
 		// &updates.Module{},
 		// &filesystem.Module{},
@@ -24,7 +26,6 @@ func registeredModules() []modules.Module {
 		// &auditd.Module{},
 		// &logging.Module{},
 		// &mac.Module{},
-		// &ntp.Module{},
 		// &crypto.Module{},
 		// &containers.Module{},
 	}

@@ -87,6 +87,23 @@ Each module is self-contained, independently enabled/disabled, and maps every ch
 
 ---
 
+## Module: NTP / Time Synchronization
+
+**ID:** `ntp`  
+**Method:** `systemctl`, `timedatectl`, `/etc/chrony.conf`
+
+### Checks
+
+| ID | Check | Target | Severity | CIS | NIST |
+|---|---|---|---|---|---|
+| ntp-001 | Time synchronization service installed | at least one of `chronyd`, `systemd-timesyncd`, `ntpd` | High | 2.2.1 | AU-8 |
+| ntp-002 | Only one time synchronization service active | exactly 1 active service | Medium | 2.2.2 | CM-7 |
+| ntp-003 | `chrony` `makestep` configured | `makestep 1.0 3` | Low | 2.3.1 | AU-8 |
+| ntp-004 | `chrony` `maxdistance` configured | `maxdistance 16.0` | Low | 2.3.2 | AU-8 |
+| ntp-005 | Timezone set to UTC | `UTC` (or `Etc/UTC`) | Info | 2.2.3 | AU-8 |
+
+---
+
 ## Module: Users & PAM
 
 **ID:** `users`  
