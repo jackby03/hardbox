@@ -1,0 +1,8 @@
+PRETTY_NAME="Amazon Linux 2023"
+NAME="Amazon Linux"
+VERSION_ID="2023"
+VERSION="2023"
+ID=amzn
+ID_LIKE="fedora"
+HOME_URL="https://aws.amazon.com/linux/amazon-linux-2023/"
+BUG_REPORT_URL="https://github.com/amazonlinux/amazon-linux-2023"
