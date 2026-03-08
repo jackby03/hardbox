@@ -22,7 +22,7 @@ jobs:
         env:
           BRANCH: ${{ github.head_ref }}
         run: |
-          PATTERN='^(feat|fix|chore|refactor|test|docs|release)/.+'
+          PATTERN='^(feat|fix|chore|refactor|test|docs|release|code-health)/.+'
           if [[ ! "$BRANCH" =~ $PATTERN ]]; then
             echo "::error::Branch name '$BRANCH' does not follow the convention."
             echo "::error::Expected: <type>/<description>"
@@ -43,7 +43,7 @@ jobs:
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          PATTERN='^(feat|fix|chore|refactor|test|docs|perf|ci)(\([a-z0-9/-]+\))?: .{1,72}$'
+          PATTERN='^(feat|fix|chore|refactor|test|docs|perf|ci|🧹 \[Code Health\])(\([a-z0-9/-]+\))?:? .{1,150}$'
           if [[ ! "$PR_TITLE" =~ $PATTERN ]]; then
             echo "::error::PR title '$PR_TITLE' does not follow Conventional Commits."
             echo "::error::Expected: <type>(<scope>): <description>"
