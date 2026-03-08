@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/hardbox-io/hardbox/internal/modules"
+	"github.com/hardbox-io/hardbox/internal/util"
 )
 
 const (
@@ -208,28 +209,5 @@ func setSshdOption(key, value string) error {
 		lines = append(lines, fmt.Sprintf("%s %s", key, value))
 	}
 
-	return atomicWriteText(sshdConfig, strings.Join(lines, "\n"), 0600)
-}
-
-func atomicWriteText(path, content string, mode os.FileMode) error {
-	dir := strings.TrimSuffix(path, "/"+strings.TrimPrefix(path, path[:strings.LastIndex(path, "/")+1]))
-	tmp, err := os.CreateTemp(dir, ".hardbox-sshd-*")
-	if err != nil {
-		return err
-	}
-	tmpName := tmp.Name()
-	if _, err := tmp.WriteString(content); err != nil {
-		tmp.Close()
-		os.Remove(tmpName)
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		os.Remove(tmpName)
-		return err
-	}
-	if err := os.Chmod(tmpName, mode); err != nil {
-		os.Remove(tmpName)
-		return err
-	}
-	return os.Rename(tmpName, path)
+	return util.AtomicWrite(sshdConfig, []byte(strings.Join(lines, "\n")), 0600)
 }
