@@ -9,21 +9,39 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/hardbox-io/hardbox/internal/config"
+	"github.com/hardbox-io/hardbox/internal/distro"
 	"github.com/hardbox-io/hardbox/internal/modules"
 )
 
 // Engine orchestrates the plan → snapshot → execute → verify → report lifecycle.
 type Engine struct {
-	cfg     *config.Config
-	modules []modules.Module
+	cfg        *config.Config
+	modules    []modules.Module
+	DistroInfo *distro.Info
 }
 
 // New creates an Engine with all built-in modules registered.
+// It calls distro.Detect() at startup and logs the result; a detection failure
+// is non-fatal — the engine continues without distro information.
 func New(cfg *config.Config) *Engine {
-	return &Engine{
+	e := &Engine{
 		cfg:     cfg,
 		modules: registeredModules(),
 	}
+
+	if info, err := distro.Detect(); err != nil {
+		log.Warn().Err(err).Msg("distro detection failed — some module checks may be skipped")
+	} else {
+		e.DistroInfo = info
+		log.Info().
+			Str("id", info.ID).
+			Str("version", info.VersionID).
+			Str("family", string(info.Family)).
+			Str("pretty_name", info.PrettyName).
+			Msg("distro detected")
+	}
+
+	return e
 }
 
 // Audit runs all module checks and returns findings without making changes.
