@@ -84,13 +84,11 @@ aider.conf.yml
 .gemini/
 gemini-context.json
 
-# Generic AI context / instruction files (catch-all)
+# AI context / instruction files (catch-all)
 .ai-context/
 .llm-context/
-.agents/
 ai-instructions.*
 llm-instructions.*
-AGENTS.md
 COPILOT.md
 CLAUDE.md
 
