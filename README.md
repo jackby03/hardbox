@@ -89,11 +89,13 @@ sudo hardbox rollback --last
 
 ---
 
+<!--
 ## Preview
 
 > Screenshot coming soon.
 
 ---
+-->
 
 ## Hardening Modules
 
