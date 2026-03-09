@@ -146,6 +146,12 @@ func TestAudit_TableDriven(t *testing.T) {
 			want:    modules.StatusCompliant,
 		},
 		{
+			name:    "ssh-004 LoginGraceTime 0 (unlimited - non-compliant)",
+			config:  "LoginGraceTime 0\n",
+			checkID: "ssh-004",
+			want:    modules.StatusNonCompliant,
+		},
+		{
 			name:    "ssh-004 LoginGraceTime too high",
 			config:  "LoginGraceTime 120\n",
 			checkID: "ssh-004",
@@ -212,6 +218,12 @@ func TestAudit_TableDriven(t *testing.T) {
 			want:    modules.StatusCompliant,
 		},
 		{
+			name:    "ssh-009 arcfour exact match (not as substring)",
+			config:  "Ciphers chacha20-poly1305@openssh.com,arcfour\n",
+			checkID: "ssh-009",
+			want:    modules.StatusNonCompliant,
+		},
+		{
 			name:    "ssh-009 weak cipher present",
 			config:  "Ciphers aes256-ctr,aes128-cbc\n",
 			checkID: "ssh-009",
@@ -240,6 +252,12 @@ func TestAudit_TableDriven(t *testing.T) {
 			config:  "MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256\n",
 			checkID: "ssh-010",
 			want:    modules.StatusCompliant,
+		},
+		{
+			name:    "ssh-011 gss prefix kex present (non-compliant)",
+			config:  "KexAlgorithms curve25519-sha256,gss-group1-sha1-tohost\n",
+			checkID: "ssh-011",
+			want:    modules.StatusNonCompliant,
 		},
 		{
 			name:    "ssh-011 weak kex present",

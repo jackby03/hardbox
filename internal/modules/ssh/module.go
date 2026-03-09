@@ -116,16 +116,35 @@ func lteInt(max int) func(string) bool {
 	}
 }
 
-// containsNone returns true if the current comma-separated value contains none of the banned items.
+// containsNone returns true if the comma-separated current value contains none of the banned items.
+// Each token is compared by exact match. Banned entries that end with "-" are treated as prefix
+// matches (e.g. "gss-group1-sha1-" matches "gss-group1-sha1-tohost").
 func containsNone(banned []string) func(string) bool {
 	return func(current string) bool {
 		if strings.TrimSpace(current) == "" {
 			return false
 		}
-		lower := strings.ToLower(current)
-		for _, b := range banned {
-			if strings.Contains(lower, strings.ToLower(b)) {
-				return false
+		tokens := strings.Split(current, ",")
+		for _, rawToken := range tokens {
+			token := strings.ToLower(strings.TrimSpace(rawToken))
+			if token == "" {
+				continue
+			}
+			for _, b := range banned {
+				bannedLower := strings.ToLower(strings.TrimSpace(b))
+				if bannedLower == "" {
+					continue
+				}
+				// Entries ending with "-" are prefix patterns (e.g. "gss-group1-sha1-").
+				if strings.HasSuffix(bannedLower, "-") {
+					if strings.HasPrefix(token, bannedLower) {
+						return false
+					}
+				} else {
+					if token == bannedLower {
+						return false
+					}
+				}
 			}
 		}
 		return true
@@ -197,7 +216,13 @@ func defaultChecks(cfg modules.ModuleConfig) []sshdCheck {
 				},
 			},
 			key: "logingracetime", expected: "30",
-			validate: lteInt(60),
+			validate: func(v string) bool {
+				val, err := strconv.Atoi(strings.TrimSpace(v))
+				if err != nil {
+					return false
+				}
+				return val > 0 && val <= 60
+			},
 		},
 		{
 			check: modules.Check{
