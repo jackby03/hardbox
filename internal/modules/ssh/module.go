@@ -15,16 +15,22 @@ const (
 )
 
 // Module implements SSH daemon hardening.
-type Module struct{}
+type Module struct {
+	configPath string // defaults to sshdConfig if empty
+}
 
 func (m *Module) Name() string    { return "ssh" }
 func (m *Module) Version() string { return "1.0" }
 
 // Audit reads /etc/ssh/sshd_config and checks each setting against the profile.
 func (m *Module) Audit(_ context.Context, cfg modules.ModuleConfig) ([]modules.Finding, error) {
-	content, err := os.ReadFile(sshdConfig)
+	path := m.configPath
+	if path == "" {
+		path = sshdConfig
+	}
+	content, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("reading %s: %w", sshdConfig, err)
+		return nil, fmt.Errorf("reading %s: %w", path, err)
 	}
 
 	parsed := parseSshdConfig(content)
@@ -33,13 +39,19 @@ func (m *Module) Audit(_ context.Context, cfg modules.ModuleConfig) ([]modules.F
 	checks := defaultChecks(cfg)
 	for _, chk := range checks {
 		current := parsed[strings.ToLower(chk.key)]
-		status := modules.StatusCompliant
-		detail := fmt.Sprintf("current: %q, expected: %q", current, chk.expected)
+		var pass bool
+		if chk.validateFull != nil {
+			pass = chk.validateFull(parsed)
+		} else {
+			pass = chk.validate(current)
+		}
 
-		if !chk.validate(current) {
+		status := modules.StatusCompliant
+		if !pass {
 			status = modules.StatusNonCompliant
 		}
 
+		detail := fmt.Sprintf("current: %q, expected: %q", current, chk.expected)
 		findings = append(findings, modules.Finding{
 			Check:   chk.check,
 			Status:  status,
@@ -81,10 +93,11 @@ func (m *Module) Plan(ctx context.Context, cfg modules.ModuleConfig) ([]modules.
 // ── internal helpers ────────────────────────────────────────────────────────
 
 type sshdCheck struct {
-	check    modules.Check
-	key      string
-	expected string
-	validate func(current string) bool
+	check        modules.Check
+	key          string
+	expected     string
+	validate     func(current string) bool
+	validateFull func(parsed map[string]string) bool // for multi-key or complex checks
 }
 
 func eq(expected string) func(string) bool {
@@ -102,6 +115,38 @@ func lteInt(max int) func(string) bool {
 		return v <= max
 	}
 }
+
+// containsNone returns true if the current comma-separated value contains none of the banned items.
+func containsNone(banned []string) func(string) bool {
+	return func(current string) bool {
+		if strings.TrimSpace(current) == "" {
+			return false
+		}
+		lower := strings.ToLower(current)
+		for _, b := range banned {
+			if strings.Contains(lower, strings.ToLower(b)) {
+				return false
+			}
+		}
+		return true
+	}
+}
+
+var (
+	weakCiphers = []string{
+		"3des-cbc", "aes128-cbc", "aes192-cbc", "aes256-cbc",
+		"arcfour", "arcfour128", "arcfour256", "blowfish-cbc",
+		"cast128-cbc", "rijndael-cbc@lysator.liu.se",
+	}
+	weakMACs = []string{
+		"hmac-md5", "hmac-md5-96", "hmac-sha1", "hmac-sha1-96",
+		"hmac-ripemd160", "umac-64@openssh.com",
+	}
+	weakKex = []string{
+		"diffie-hellman-group1-sha1", "diffie-hellman-group14-sha1",
+		"gss-gex-sha1-", "gss-group1-sha1-", "gss-group14-sha1-",
+	}
+)
 
 func defaultChecks(cfg modules.ModuleConfig) []sshdCheck {
 	return []sshdCheck{
@@ -144,6 +189,18 @@ func defaultChecks(cfg modules.ModuleConfig) []sshdCheck {
 		},
 		{
 			check: modules.Check{
+				ID: "ssh-004", Title: "Set LoginGraceTime ≤ 60",
+				Severity: modules.SeverityMedium,
+				Compliance: []modules.ComplianceRef{
+					{Framework: "CIS", Control: "5.2.16"},
+					{Framework: "NIST", Control: "AC-2"},
+				},
+			},
+			key: "logingracetime", expected: "30",
+			validate: lteInt(60),
+		},
+		{
+			check: modules.Check{
 				ID: "ssh-005", Title: "Disable X11 forwarding",
 				Severity: modules.SeverityMedium,
 				Compliance: []modules.ComplianceRef{
@@ -152,6 +209,125 @@ func defaultChecks(cfg modules.ModuleConfig) []sshdCheck {
 			},
 			key: "x11forwarding", expected: "no",
 			validate: eq("no"),
+		},
+		{
+			check: modules.Check{
+				ID: "ssh-006", Title: "Disable TCP forwarding",
+				Severity: modules.SeverityMedium,
+				Compliance: []modules.ComplianceRef{
+					{Framework: "CIS", Control: "5.2.21"},
+				},
+			},
+			key: "allowtcpforwarding", expected: "no",
+			validate: eq("no"),
+		},
+		{
+			check: modules.Check{
+				ID: "ssh-007", Title: "Set ClientAliveInterval and ClientAliveCountMax",
+				Severity: modules.SeverityMedium,
+				Compliance: []modules.ComplianceRef{
+					{Framework: "CIS", Control: "5.2.16"},
+					{Framework: "NIST", Control: "SC-10"},
+					{Framework: "STIG", Control: "V-238233"},
+				},
+			},
+			key: "clientaliveinterval", expected: "300/3",
+			validateFull: func(parsed map[string]string) bool {
+				interval, err1 := strconv.Atoi(strings.TrimSpace(parsed["clientaliveinterval"]))
+				count, err2 := strconv.Atoi(strings.TrimSpace(parsed["clientalivecountmax"]))
+				if err1 != nil || err2 != nil {
+					return false
+				}
+				return interval > 0 && interval <= 300 && count > 0 && count <= 3
+			},
+		},
+		{
+			check: modules.Check{
+				ID: "ssh-008", Title: "Restrict AllowUsers or AllowGroups",
+				Severity: modules.SeverityHigh,
+				Compliance: []modules.ComplianceRef{
+					{Framework: "CIS", Control: "5.2.22"},
+					{Framework: "NIST", Control: "AC-17"},
+				},
+			},
+			key: "allowusers", expected: "<configured>",
+			validateFull: func(parsed map[string]string) bool {
+				return parsed["allowusers"] != "" || parsed["allowgroups"] != ""
+			},
+		},
+		{
+			check: modules.Check{
+				ID: "ssh-009", Title: "Enforce strong ciphers only",
+				Severity: modules.SeverityHigh,
+				Compliance: []modules.ComplianceRef{
+					{Framework: "CIS", Control: "5.2.14"},
+					{Framework: "NIST", Control: "SC-8"},
+					{Framework: "STIG", Control: "V-238234"},
+				},
+			},
+			key:      "ciphers",
+			expected: "chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr",
+			validate: containsNone(weakCiphers),
+		},
+		{
+			check: modules.Check{
+				ID: "ssh-010", Title: "Enforce strong MACs only",
+				Severity: modules.SeverityHigh,
+				Compliance: []modules.ComplianceRef{
+					{Framework: "CIS", Control: "5.2.15"},
+					{Framework: "NIST", Control: "SC-8"},
+					{Framework: "STIG", Control: "V-238235"},
+				},
+			},
+			key:      "macs",
+			expected: "hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-512,hmac-sha2-256",
+			validate: containsNone(weakMACs),
+		},
+		{
+			check: modules.Check{
+				ID: "ssh-011", Title: "Enforce strong KexAlgorithms",
+				Severity: modules.SeverityHigh,
+				Compliance: []modules.ComplianceRef{
+					{Framework: "CIS", Control: "5.2.15"},
+					{Framework: "NIST", Control: "SC-8"},
+				},
+			},
+			key:      "kexalgorithms",
+			expected: "curve25519-sha256,curve25519-sha256@libssh.org,diffie-hellman-group14-sha256,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512",
+			validate: containsNone(weakKex),
+		},
+		{
+			check: modules.Check{
+				ID: "ssh-012", Title: "Set LogLevel VERBOSE",
+				Severity: modules.SeverityMedium,
+				Compliance: []modules.ComplianceRef{
+					{Framework: "CIS", Control: "5.2.5"},
+					{Framework: "NIST", Control: "AU-12"},
+					{Framework: "STIG", Control: "V-238225"},
+				},
+			},
+			key: "loglevel", expected: "VERBOSE",
+			validate: eq("verbose"),
+		},
+		{
+			check: modules.Check{
+				ID: "ssh-013", Title: "Disable IgnoreRhosts",
+				Severity: modules.SeverityMedium,
+				Compliance: []modules.ComplianceRef{
+					{Framework: "CIS", Control: "5.2.9"},
+				},
+			},
+			key: "ignorerhosts", expected: "yes",
+			validate: eq("yes"),
+		},
+		{
+			check: modules.Check{
+				ID: "ssh-014", Title: "Set StrictModes yes",
+				Severity: modules.SeverityMedium,
+				Compliance: []modules.ComplianceRef{},
+			},
+			key: "strictmodes", expected: "yes",
+			validate: eq("yes"),
 		},
 		{
 			check: modules.Check{
@@ -164,6 +340,29 @@ func defaultChecks(cfg modules.ModuleConfig) []sshdCheck {
 			},
 			key: "permitemptypasswords", expected: "no",
 			validate: eq("no"),
+		},
+		{
+			check: modules.Check{
+				ID: "ssh-016", Title: "Set MaxSessions ≤ 10",
+				Severity: modules.SeverityLow,
+				Compliance: []modules.ComplianceRef{
+					{Framework: "CIS", Control: "5.2.20"},
+				},
+			},
+			key: "maxsessions", expected: "4",
+			validate: lteInt(10),
+		},
+		{
+			check: modules.Check{
+				ID: "ssh-017", Title: "Non-default SSH port",
+				Severity: modules.SeverityInfo,
+				Compliance: []modules.ComplianceRef{},
+			},
+			key: "port", expected: "!22",
+			validateFull: func(parsed map[string]string) bool {
+				port := strings.TrimSpace(parsed["port"])
+				return port != "" && port != "22"
+			},
 		},
 	}
 }
