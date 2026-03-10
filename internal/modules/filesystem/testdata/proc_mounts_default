@@ -1,0 +1,9 @@
+sysfs /sys sysfs rw,relatime 0 0
+proc /proc proc rw,relatime 0 0
+tmpfs /tmp tmpfs rw,relatime 0 0
+tmpfs /dev/shm tmpfs rw,relatime 0 0
+/dev/sda1 /home ext4 rw,relatime 0 0
+/dev/sda2 /var ext4 rw,relatime 0 0
+/dev/sda3 /var/log ext4 rw,relatime 0 0
+/dev/sda4 /var/log/audit ext4 rw,relatime 0 0
+/dev/sda5 /boot ext4 rw,relatime 0 0

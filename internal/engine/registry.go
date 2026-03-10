@@ -2,6 +2,7 @@ package engine
 
 import (
 	"github.com/hardbox-io/hardbox/internal/modules"
+	"github.com/hardbox-io/hardbox/internal/modules/filesystem"
 	"github.com/hardbox-io/hardbox/internal/modules/kernel"
 	"github.com/hardbox-io/hardbox/internal/modules/ntp"
 )
@@ -13,10 +14,10 @@ func registeredModules() []modules.Module {
 	// kernel and filesystem first, then services, then daemons, then access control.
 	return []modules.Module{
 		&kernel.Module{},
+		&filesystem.Module{},
 		&ntp.Module{},
 		// Stub placeholders — each will be fully implemented in its own package.
 		// &updates.Module{},
-		// &filesystem.Module{},
 		// &network.Module{},
 		// &services.Module{},
 		// &ssh.Module{},
