@@ -74,7 +74,9 @@ jobs:
         run: go build -o hardbox ./cmd/hardbox
 
       - name: Run audit (dry run, non-interactive)
-        run: sudo ./hardbox audit --profile cis-level1 --format json --output audit-report.json || true
+        run: |
+          sudo ./hardbox audit --profile cis-level1 --format json --output audit-report.json || true
+          sudo chown $(id -u):$(id -g) audit-report.json
 
       - name: Upload audit report
         uses: actions/upload-artifact@v4
