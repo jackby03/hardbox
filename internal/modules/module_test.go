@@ -50,3 +50,51 @@ func TestSeverity_ScoreWeight(t *testing.T) {
 		})
 	}
 }
+
+func TestFinding_IsCompliant(t *testing.T) {
+	tests := []struct {
+		name     string
+		status   Status
+		expected bool
+	}{
+		{
+			name:     "StatusCompliant",
+			status:   StatusCompliant,
+			expected: true,
+		},
+		{
+			name:     "StatusSkipped",
+			status:   StatusSkipped,
+			expected: true,
+		},
+		{
+			name:     "StatusManual",
+			status:   StatusManual,
+			expected: true,
+		},
+		{
+			name:     "StatusNonCompliant",
+			status:   StatusNonCompliant,
+			expected: false,
+		},
+		{
+			name:     "StatusError",
+			status:   StatusError,
+			expected: false,
+		},
+		{
+			name:     "Unknown status",
+			status:   Status("unknown"),
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			finding := Finding{Status: tt.status}
+			if got := finding.IsCompliant(); got != tt.expected {
+				t.Errorf("Finding.IsCompliant() = %v, want %v", got, tt.expected)
+			}
+		})
+	}
+}
