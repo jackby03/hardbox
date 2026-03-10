@@ -245,7 +245,7 @@ func (e *Engine) writeReport(sessionID string, findings []modules.Finding, forma
 		path = filepath.Join(path, fmt.Sprintf("hardbox-report-%s%s", sessionID, ext))
 	}
 
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)
 	if err != nil {
 		return fmt.Errorf("creating report file: %w", err)
 	}
