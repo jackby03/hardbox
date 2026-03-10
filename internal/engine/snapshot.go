@@ -5,13 +5,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"sort"
 	"time"
 
 	"github.com/hardbox-io/hardbox/internal/modules"
+	"github.com/hardbox-io/hardbox/internal/modules/util"
 )
 
 const snapshotBaseDir = "/var/lib/hardbox/snapshots"
@@ -91,7 +91,7 @@ func (s *snapshot) Restore() error {
 		if err != nil {
 			return fmt.Errorf("reading backup for %s: %w", fb.Path, err)
 		}
-		if err := atomicWrite(fb.Path, data, 0644); err != nil {
+		if err := util.AtomicWrite(fb.Path, data, 0644); err != nil {
 			return fmt.Errorf("restoring %s: %w", fb.Path, err)
 		}
 	}
@@ -148,31 +148,4 @@ func latestSnapshot() (*snapshot, error) {
 		return nil, fmt.Errorf("no snapshots found")
 	}
 	return snaps[0], nil
-}
-
-// atomicWrite writes data to path via a temp file rename to avoid partial writes.
-func atomicWrite(path string, data []byte, mode os.FileMode) error {
-	dir := filepath.Dir(path)
-	tmp, err := os.CreateTemp(dir, ".hardbox-tmp-*")
-	if err != nil {
-		return err
-	}
-	tmpName := tmp.Name()
-
-	_, writeErr := io.Writer(tmp).Write(data)
-	closeErr := tmp.Close()
-
-	if writeErr != nil {
-		os.Remove(tmpName)
-		return writeErr
-	}
-	if closeErr != nil {
-		os.Remove(tmpName)
-		return closeErr
-	}
-	if err := os.Chmod(tmpName, mode); err != nil {
-		os.Remove(tmpName)
-		return err
-	}
-	return os.Rename(tmpName, path)
 }
