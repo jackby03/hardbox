@@ -5,13 +5,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"sort"
 	"time"
 
 	"github.com/hardbox-io/hardbox/internal/modules"
+	"github.com/hardbox-io/hardbox/internal/modules/util"
 )
 
 const snapshotBaseDir = "/var/lib/hardbox/snapshots"
@@ -91,7 +91,23 @@ func (s *snapshot) Restore() error {
 		if err != nil {
 			return fmt.Errorf("reading backup for %s: %w", fb.Path, err)
 		}
-		if err := atomicWrite(fb.Path, data, 0644); err != nil {
+
+		// Ensure the parent directory already exists and is a directory before
+		// writing. util.AtomicWrite would create missing parents with mode 0755,
+		// which is unsafe for paths like /root/.ssh that must not be created.
+		parentDir := filepath.Dir(fb.Path)
+		info, statErr := os.Stat(parentDir)
+		if statErr != nil {
+			if os.IsNotExist(statErr) {
+				return fmt.Errorf("restoring %s: parent directory %s does not exist", fb.Path, parentDir)
+			}
+			return fmt.Errorf("restoring %s: stat parent directory %s: %w", fb.Path, parentDir, statErr)
+		}
+		if !info.IsDir() {
+			return fmt.Errorf("restoring %s: parent path %s is not a directory", fb.Path, parentDir)
+		}
+
+		if err := util.AtomicWrite(fb.Path, data, 0644); err != nil {
 			return fmt.Errorf("restoring %s: %w", fb.Path, err)
 		}
 	}
@@ -148,31 +164,4 @@ func latestSnapshot() (*snapshot, error) {
 		return nil, fmt.Errorf("no snapshots found")
 	}
 	return snaps[0], nil
-}
-
-// atomicWrite writes data to path via a temp file rename to avoid partial writes.
-func atomicWrite(path string, data []byte, mode os.FileMode) error {
-	dir := filepath.Dir(path)
-	tmp, err := os.CreateTemp(dir, ".hardbox-tmp-*")
-	if err != nil {
-		return err
-	}
-	tmpName := tmp.Name()
-
-	_, writeErr := io.Writer(tmp).Write(data)
-	closeErr := tmp.Close()
-
-	if writeErr != nil {
-		os.Remove(tmpName)
-		return writeErr
-	}
-	if closeErr != nil {
-		os.Remove(tmpName)
-		return closeErr
-	}
-	if err := os.Chmod(tmpName, mode); err != nil {
-		os.Remove(tmpName)
-		return err
-	}
-	return os.Rename(tmpName, path)
 }
