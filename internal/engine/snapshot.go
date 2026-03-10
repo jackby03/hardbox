@@ -91,6 +91,22 @@ func (s *snapshot) Restore() error {
 		if err != nil {
 			return fmt.Errorf("reading backup for %s: %w", fb.Path, err)
 		}
+
+		// Ensure the parent directory already exists and is a directory before
+		// writing. util.AtomicWrite would create missing parents with mode 0755,
+		// which is unsafe for paths like /root/.ssh that must not be created.
+		parentDir := filepath.Dir(fb.Path)
+		info, statErr := os.Stat(parentDir)
+		if statErr != nil {
+			if os.IsNotExist(statErr) {
+				return fmt.Errorf("restoring %s: parent directory %s does not exist", fb.Path, parentDir)
+			}
+			return fmt.Errorf("restoring %s: stat parent directory %s: %w", fb.Path, parentDir, statErr)
+		}
+		if !info.IsDir() {
+			return fmt.Errorf("restoring %s: parent path %s is not a directory", fb.Path, parentDir)
+		}
+
 		if err := util.AtomicWrite(fb.Path, data, 0644); err != nil {
 			return fmt.Errorf("restoring %s: %w", fb.Path, err)
 		}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/hardbox-io/hardbox/internal/modules"
@@ -350,5 +351,95 @@ func TestAudit_TableDriven(t *testing.T) {
 			findings := runAuditOnConfig(t, tc.config)
 			assertStatus(t, findings, tc.checkID, tc.want)
 		})
+	}
+}
+
+// TestPlan_Apply_Revert exercises the full Plan→Apply→Revert cycle using a
+// temporary sshd_config, verifying that AtomicWrite integration works correctly.
+func TestPlan_Apply_Revert(t *testing.T) {
+	cases := []struct {
+		name        string
+		initial     string // non-compliant config
+		checkID     string
+		applyWant   string // expected substring after Apply
+		revertWant  string // expected substring after Revert
+	}{
+		{
+			name:       "ssh-001 disable PermitRootLogin",
+			initial:    "PermitRootLogin yes\n",
+			checkID:    "ssh-001",
+			applyWant:  "permitrootlogin no",
+			revertWant: "permitrootlogin yes",
+		},
+		{
+			name:       "ssh-002 disable PasswordAuthentication",
+			initial:    "PasswordAuthentication yes\n",
+			checkID:    "ssh-002",
+			applyWant:  "passwordauthentication no",
+			revertWant: "passwordauthentication yes",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			path := writeTempConfig(t, tc.initial)
+			m := ssh.NewModuleForTest(path)
+
+			// Plan: should find at least one non-compliant change for the target check.
+			changes, err := m.Plan(context.Background(), nil)
+			if err != nil {
+				t.Fatalf("Plan(): unexpected error: %v", err)
+			}
+
+			var targetChange *modules.Change
+			for i := range changes {
+				if strings.Contains(changes[i].Description, tc.checkID) {
+					targetChange = &changes[i]
+					break
+				}
+			}
+			if targetChange == nil {
+				t.Fatalf("Plan(): no change found for check %s", tc.checkID)
+			}
+
+			// Apply: the config file must be updated atomically.
+			if err := targetChange.Apply(); err != nil {
+				t.Fatalf("Apply(): unexpected error: %v", err)
+			}
+			assertConfigContains(t, path, tc.applyWant)
+
+			// File mode must be 0600 after Apply.
+			assertFileMode(t, path, 0600)
+
+			// Revert: the config file must be restored to the original value.
+			if err := targetChange.Revert(); err != nil {
+				t.Fatalf("Revert(): unexpected error: %v", err)
+			}
+			assertConfigContains(t, path, tc.revertWant)
+		})
+	}
+}
+
+// assertConfigContains reads the file at path and fails if want is not present.
+func assertConfigContains(t *testing.T, path, want string) {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("reading config: %v", err)
+	}
+	if !strings.Contains(string(data), want) {
+		t.Errorf("config does not contain %q\ngot:\n%s", want, data)
+	}
+}
+
+// assertFileMode checks that the file at path has the expected permission bits.
+func assertFileMode(t *testing.T, path string, want os.FileMode) {
+	t.Helper()
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatalf("stat %s: %v", path, err)
+	}
+	if got := info.Mode().Perm(); got != want {
+		t.Errorf("file mode: got %04o, want %04o", got, want)
 	}
 }

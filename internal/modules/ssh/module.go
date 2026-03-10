@@ -71,20 +71,37 @@ func (m *Module) Plan(ctx context.Context, cfg modules.ModuleConfig) ([]modules.
 		return nil, err
 	}
 
+	path := m.configPath
+	if path == "" {
+		path = sshdConfig
+	}
+
+	// Build a map from check ID to the actual sshd_config key so that
+	// Apply/Revert write the correct directive (e.g. "PermitRootLogin", not "ssh-001").
+	checks := defaultChecks(cfg)
+	keyByID := make(map[string]string, len(checks))
+	for _, chk := range checks {
+		keyByID[chk.check.ID] = chk.key
+	}
+
 	var changes []modules.Change
 	for _, f := range findings {
 		if f.IsCompliant() {
 			continue
 		}
 		f := f // capture
+		sshdKey, ok := keyByID[f.Check.ID]
+		if !ok {
+			return nil, fmt.Errorf("ssh Plan: unknown check ID %s", f.Check.ID)
+		}
 		changes = append(changes, modules.Change{
 			Description:  fmt.Sprintf("SSH: set %s = %s", f.Check.ID, f.Target),
 			DryRunOutput: fmt.Sprintf("  %s: %q → %q", f.Check.Title, f.Current, f.Target),
 			Apply: func() error {
-				return setSshdOption(f.Check.ID, f.Target)
+				return setSshdOption(path, sshdKey, f.Target)
 			},
 			Revert: func() error {
-				return setSshdOption(f.Check.ID, f.Current)
+				return setSshdOption(path, sshdKey, f.Current)
 			},
 		})
 	}
@@ -412,8 +429,8 @@ func parseSshdConfig(data []byte) map[string]string {
 
 // setSshdOption updates or adds a key = value line in sshd_config.
 // It writes atomically and does not leave partial files.
-func setSshdOption(key, value string) error {
-	data, err := os.ReadFile(sshdConfig)
+func setSshdOption(path, key, value string) error {
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}
@@ -433,5 +450,5 @@ func setSshdOption(key, value string) error {
 		lines = append(lines, fmt.Sprintf("%s %s", key, value))
 	}
 
-	return util.AtomicWrite(sshdConfig, []byte(strings.Join(lines, "\n")), 0600)
+	return util.AtomicWrite(path, []byte(strings.Join(lines, "\n")), 0600)
 }
