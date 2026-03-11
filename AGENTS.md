@@ -1,5 +1,12 @@
 # AGENTS.md
 
+## ACS Compliance
+
+This project follows the [Agentic Collaboration Standard v1.0](https://github.com/jackby03/agentic-collaboration-standard).
+ACS-compatible agents should read `.agents/main.yaml` as the entry point for context, skills, commands, and permissions.
+
+---
+
 ## Project Context
 
 `hardbox` is an open-source, TUI-driven Linux server hardening toolkit written in Go.

@@ -1,0 +1,18 @@
+version: "1.0"
+
+project:
+  name: "hardbox"
+  description: "TUI-driven Linux server hardening toolkit written in Go. Modular checks, dry-run, rollback, and compliance profiles (CIS, STIG, NIST, PCI-DSS, ISO 27001, HIPAA)."
+  language: go
+
+layers:
+  context: true
+  skills: true
+  commands: true
+  permissions: true
+
+compatible_with:
+  - antigravity
+  - claude-code
+  - cursor
+  - any
