@@ -48,7 +48,7 @@ func (m dashboardModel) View() string {
 		s.label.Render("Environment:    ")+s.value.Render(m.cfg.Environment),
 	)
 
-	actions := s.actions.Render("[ENTER] Modules   [A] Apply All   [D] Dry Run   [R] Report   [Q] Quit")
+	actions := s.actions.Render("[ENTER] Modules   [A] Apply All   [D] Audit Workflow   [Q] Quit")
 
 	body := lipgloss.JoinVertical(lipgloss.Left,
 		info,
