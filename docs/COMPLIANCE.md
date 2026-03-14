@@ -157,6 +157,8 @@ This document is the authoritative cross-reference index.
 | mac-001 | AppArmor/SELinux installed | 1.6.1 | AC-3 | V-238332 | A.9.4.5 |
 | mac-002 | Enabled at boot | 1.6.2 | AC-3 | V-238333 | A.9.4.5 |
 | mac-003 | Enforcing mode | 1.6.3 | AC-3 | V-238334 | A.9.4.5 |
+| mac-004 | No unconfined processes (AppArmor) | 1.6.4 | AC-3 | — | A.9.4.5 |
+| mac-005 | SELinux policy type targeted or mls | — | AC-3 | V-238335 | A.9.4.5 |
 
 ---
 
