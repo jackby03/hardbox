@@ -65,6 +65,21 @@ This document is the authoritative cross-reference index.
 
 ---
 
+## Network Protocol Hardening Module
+
+| Check ID | Title | CIS | NIST | STIG | PCI | HIPAA | ISO |
+|---|---|---|---|---|---|---|---|
+| net-001 | IPv6 disabled if not used | 3.1.1 | CM-7 | — | 1.3.1 | — | A.13.1.1 |
+| net-002 | DCCP kernel module blacklisted | 3.4.1 | CM-7 | — | 2.2.4 | — | A.13.1.1 |
+| net-003 | SCTP kernel module blacklisted | 3.4.2 | CM-7 | — | 2.2.4 | — | A.13.1.1 |
+| net-004 | RDS kernel module blacklisted | 3.4.3 | CM-7 | — | 2.2.4 | — | A.13.1.1 |
+| net-005 | TIPC kernel module blacklisted | 3.4.4 | CM-7 | — | 2.2.4 | — | A.13.1.1 |
+| net-006 | Wireless interfaces disabled | 3.1.2 | CM-7 | — | 2.2.1 | — | A.13.1.1 |
+| net-007 | hosts.allow / hosts.deny configured | — | AC-4 | — | — | — | A.13.1.1 |
+| net-008 | No .rhosts / .netrc files in home dirs | — | AC-6 | — | 2.2.2 | — | A.9.4.4 |
+
+---
+
 ## NTP Module
 
 | Check ID | Title | CIS | NIST | STIG | PCI | HIPAA | ISO |
