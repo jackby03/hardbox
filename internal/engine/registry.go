@@ -6,6 +6,7 @@ import (
 	"github.com/hardbox-io/hardbox/internal/modules/kernel"
 	"github.com/hardbox-io/hardbox/internal/modules/ntp"
 	"github.com/hardbox-io/hardbox/internal/modules/services"
+	"github.com/hardbox-io/hardbox/internal/modules/updates"
 )
 
 // registeredModules returns the list of all built-in hardening modules.
@@ -18,8 +19,8 @@ func registeredModules() []modules.Module {
 		&filesystem.Module{},
 		&ntp.Module{},
 		&services.Module{},
+		&updates.Module{},
 		// Stub placeholders — each will be fully implemented in its own package.
-		// &updates.Module{},
 		// &network.Module{},
 		// &ssh.Module{},
 		// &firewall.Module{},
