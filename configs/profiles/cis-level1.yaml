@@ -2,6 +2,12 @@
 # Minimum baseline — intended to be applicable to any Linux server.
 # Low disruption to service availability.
 # Reference: CIS Ubuntu Linux 22.04 LTS Benchmark v1.0.0
+#
+# Schema notes:
+#   version:     config schema version (always "1")
+#   profile:     label used in reports and audit output
+#   environment: cloud | onprem | container
+#   modules.<name>.enabled: true|false — controls whether the module runs
 
 version: "1"
 profile: cis-level1
@@ -10,16 +16,18 @@ environment: onprem
 modules:
   ssh:
     enabled: true
-    max_auth_tries: 4
-    login_grace_time: 60
-    client_alive_interval: 300
+    # CIS 5.2.x — SSH server hardening
+    max_auth_tries: 4              # CIS 5.2.7: <= 4
+    login_grace_time: 60           # CIS 5.2.16: <= 60
+    client_alive_interval: 300     # CIS 5.2.17: <= 300
     client_alive_count_max: 3
-    disable_root_login: true
-    disable_empty_passwords: true
-    disable_x11_forwarding: true
-    disable_hostbased_auth: true
-    disable_ignore_rhosts: true
-    log_level: INFO
+    disable_root_login: true       # CIS 5.2.8
+    disable_empty_passwords: true  # CIS 5.2.11
+    disable_x11_forwarding: true   # CIS 5.2.4
+    disable_hostbased_auth: true   # CIS 5.2.9
+    disable_ignore_rhosts: true    # CIS 5.2.10
+    log_level: INFO                # CIS 5.2.5: INFO or VERBOSE
+    # CIS 5.2.13 — only strong ciphers
     ciphers:
       - aes128-ctr
       - aes192-ctr
@@ -27,6 +35,7 @@ modules:
       - aes128-gcm@openssh.com
       - aes256-gcm@openssh.com
       - chacha20-poly1305@openssh.com
+    # CIS 5.2.14 — only ETM MACs
     macs:
       - hmac-sha2-256
       - hmac-sha2-512
@@ -35,39 +44,46 @@ modules:
 
   firewall:
     enabled: true
-    backend: auto
-    default_inbound: drop
+    backend: auto                  # auto-detect: ufw | nftables | firewalld
+    default_inbound: drop          # CIS 3.5.x
     default_outbound: accept
 
   kernel:
     enabled: true
+    # Kernel parameter hardening via /etc/sysctl.d/ (CIS 3.1–3.3)
+    # Individual sysctl checks are defined inside the kernel module.
 
   users:
     enabled: true
-    password_max_days: 365
-    password_min_days: 1
-    password_warn_age: 7
-    password_min_length: 14
-    lockout_attempts: 5
-    lockout_duration: 900
-    inactive_account_lock_days: 30
+    # CIS 5.4.x — password policy
+    password_max_days: 365         # CIS 5.4.1.1: <= 365
+    password_min_days: 1           # CIS 5.4.1.2: >= 1
+    password_warn_age: 7           # CIS 5.4.1.3: >= 7
+    password_min_length: 14        # CIS 5.4.3
+    lockout_attempts: 5            # CIS 5.4.2
+    lockout_duration: 900          # seconds (15 min)
+    inactive_account_lock_days: 30 # CIS 5.4.1.4: <= 30
 
   filesystem:
     enabled: true
-    tmp_nosuid: true
-    tmp_nodev: true
-    tmp_noexec: true
-    devshm_nosuid: true
-    devshm_nodev: true
-    devshm_noexec: true
+    # CIS 1.1.x — partition / mount option hardening
+    tmp_nosuid: true               # CIS 1.1.3
+    tmp_nodev: true                # CIS 1.1.4
+    tmp_noexec: true               # CIS 1.1.5
+    devshm_nosuid: true            # CIS 1.1.16
+    devshm_nodev: true             # CIS 1.1.17
+    devshm_noexec: true            # CIS 1.1.18
 
   auditd:
     enabled: true
-    max_log_file_size: 8
-    action_on_space_left: email
+    # CIS 4.1.x — auditing
+    max_log_file_size: 8           # MB; CIS 4.1.2.1
+    action_on_space_left: email    # CIS 4.1.2.2: email | halt
 
   services:
     enabled: true
+    # CIS 2.x — disable unnecessary services
+    # Modules below are safe to disable on any generic server.
     disable:
       - xinetd
       - inetd
@@ -93,24 +109,49 @@ modules:
 
   network:
     enabled: true
-    disable_dccp: true
-    disable_sctp: true
-    disable_rds: true
-    disable_tipc: true
+    # CIS 3.2–3.5 — network protocol hardening
+    disable_ipv6: false            # not mandated at Level 1; set true if unused
+    disable_wireless: true         # CIS 3.7: disable wireless on servers
+    disable_dccp: true             # CIS 3.4.1
+    disable_sctp: true             # CIS 3.4.2
+    disable_rds: true              # CIS 3.4.3
+    disable_tipc: true             # CIS 3.4.4
+
+  crypto:
+    enabled: true
+    # CIS 3.x / system-wide crypto policy
+    min_tls_version: "1.2"         # reject TLS 1.0 and 1.1
+    disable_weak_ciphers: true     # remove RC4, DES, 3DES, NULL suites
+
+  logging:
+    enabled: true
+    # CIS 4.2.x — logging
+    log_retention_days: 90         # retain logs for 90 days minimum
 
   mac:
     enabled: true
-    enforce: true
+    # CIS 1.6 — Mandatory Access Control (AppArmor / SELinux)
+    enforce: true                  # profiles must be in enforce mode
 
   ntp:
     enabled: true
+    # CIS 2.2.1.x — time synchronisation
+    backend: auto                  # auto: chrony | systemd-timesyncd
+    timezone: UTC
 
   updates:
     enabled: true
+    # CIS 1.9 — keep software up to date
     unattended_security_upgrades: true
 
   containers:
-    enabled: false
+    enabled: false                 # enable only when Docker/Podman is in use
+
+report:
+  format: text
+  output_dir: /var/lib/hardbox/reports
+  include_remediation: true
+  include_evidence: false           # Level 1: remediation only, skip raw evidence
 
 audit:
   fail_on_critical: true
