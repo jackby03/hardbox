@@ -31,6 +31,9 @@ type App struct {
 	dashboard    dashboardModel
 	modules      modulesModel
 	moduleDetail moduleDetailModel
+	audit        auditWorkflowModel
+	applyConfirm applyConfirmModel
+	applyFlow    applyProgressModel
 }
 
 // NewApp creates the root model, wiring in the config.
@@ -42,6 +45,7 @@ func NewApp(cfg *config.Config) App {
 		screen:    screenDashboard,
 		dashboard: newDashboard(cfg),
 		modules:   newModules(eng),
+		audit:     newAuditWorkflow(eng, cfg),
 	}
 }
 
@@ -73,6 +77,14 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "enter":
 				a.screen = screenModules
 				return a, nil
+			case "d":
+				a.audit = newAuditWorkflow(a.eng, a.cfg)
+				a.screen = screenAudit
+				return a, a.audit.Init()
+			case "a":
+				a.applyConfirm = newApplyConfirm(a.eng, a.cfg)
+				a.screen = screenApplyConfirm
+				return a, a.applyConfirm.Init()
 			}
 		case screenModules:
 			switch msg.String() {
@@ -91,8 +103,35 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				a.screen = screenModules
 				return a, nil
 			case "a":
+				a.applyConfirm = newApplyConfirm(a.eng, a.cfg)
 				a.screen = screenApplyConfirm
+				return a, a.applyConfirm.Init()
+			}
+		case screenAudit:
+			switch msg.String() {
+			case "q", "esc":
+				a.screen = screenDashboard
 				return a, nil
+			}
+		case screenApplyConfirm:
+			switch msg.String() {
+			case "q", "esc":
+				a.screen = screenDashboard
+				return a, nil
+			case "y":
+				if a.applyConfirm.Ready() {
+					a.applyFlow = newApplyProgress(a.applyConfirm.Plans())
+					a.screen = screenApplyProgress
+					return a, a.applyFlow.Init()
+				}
+			}
+		case screenApplyProgress:
+			switch msg.String() {
+			case "q", "esc":
+				if a.applyFlow.Done() {
+					a.screen = screenDashboard
+					return a, nil
+				}
 			}
 		}
 	}
@@ -111,6 +150,18 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m, cmd := a.moduleDetail.Update(msg)
 		a.moduleDetail = m.(moduleDetailModel)
 		return a, cmd
+	case screenAudit:
+		m, cmd := a.audit.Update(msg)
+		a.audit = m.(auditWorkflowModel)
+		return a, cmd
+	case screenApplyConfirm:
+		m, cmd := a.applyConfirm.Update(msg)
+		a.applyConfirm = m.(applyConfirmModel)
+		return a, cmd
+	case screenApplyProgress:
+		m, cmd := a.applyFlow.Update(msg)
+		a.applyFlow = m.(applyProgressModel)
+		return a, cmd
 	}
 
 	return a, nil
@@ -125,6 +176,12 @@ func (a App) View() string {
 		return a.modules.View()
 	case screenModuleDetail:
 		return a.moduleDetail.View()
+	case screenAudit:
+		return a.audit.View()
+	case screenApplyConfirm:
+		return a.applyConfirm.View()
+	case screenApplyProgress:
+		return a.applyFlow.View()
 	default:
 		return lipgloss.NewStyle().Padding(1, 2).Render("Loading...")
 	}
