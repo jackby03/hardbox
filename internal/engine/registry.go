@@ -5,6 +5,7 @@ import (
 	"github.com/hardbox-io/hardbox/internal/modules/filesystem"
 	"github.com/hardbox-io/hardbox/internal/modules/kernel"
 	"github.com/hardbox-io/hardbox/internal/modules/mac"
+	"github.com/hardbox-io/hardbox/internal/modules/network"
 	"github.com/hardbox-io/hardbox/internal/modules/ntp"
 	"github.com/hardbox-io/hardbox/internal/modules/services"
 	"github.com/hardbox-io/hardbox/internal/modules/updates"
@@ -19,11 +20,11 @@ func registeredModules() []modules.Module {
 		&kernel.Module{},
 		&filesystem.Module{},
 		&mac.Module{},
+		&network.Module{},
 		&ntp.Module{},
 		&services.Module{},
 		&updates.Module{},
 		// Stub placeholders — each will be fully implemented in its own package.
-		// &network.Module{},
 		// &ssh.Module{},
 		// &firewall.Module{},
 		// &users.Module{},
