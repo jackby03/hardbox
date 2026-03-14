@@ -177,6 +177,26 @@ This document is the authoritative cross-reference index.
 
 ---
 
+## Auditd Module (Linux Audit Framework)
+
+| Check ID | Title | CIS | NIST | STIG | PCI |
+|---|---|---|---|---|---|
+| aud-001 | execve syscall auditing by non-root | 4.1.3 | AU-12 | — | 10.2.7 |
+| aud-002 | Unauthorized file access attempts audited | 4.1.5 | AU-12 | V-238285 | — |
+| aud-003 | User/group identity file modifications audited | 4.1.6 | AU-12 | V-238286 | — |
+| aud-004 | sudo usage logging | 4.1.11 | AU-12 | — | 10.2.5 |
+| aud-005 | Login/logout/SSH events audited | 4.1.8 | AC-17 | — | 10.2.4 |
+| aud-006 | Kernel module loading audited | 4.1.17 | CM-7 | V-238289 | — |
+| aud-007 | chown/chmod/setuid operations audited | 4.1.7 | AU-12 | V-238287 | — |
+| aud-008 | Network config changes audited | 4.1.16 | AU-12 | — | — |
+| aud-009 | Audit log immutability enabled | 4.1.18 | AU-9 | V-238291 | 10.5.2 |
+| aud-010 | Audit log file size configured | 4.1.1.1 | AU-11 | — | 10.7.1 |
+| aud-011 | Audit log full action configured | 4.1.1.2 | AU-5 | — | 10.7.1 |
+| aud-012 | Audit space_left_action configured | 4.1.1.3 | AU-5 | — | — |
+| aud-013 | auditd service enabled and active | 4.1.1 | AU-12 | V-238283 | 10.6.3 |
+
+---
+
 ## Profile → Framework Coverage Matrix
 
 This table shows which compliance frameworks each built-in profile satisfies.

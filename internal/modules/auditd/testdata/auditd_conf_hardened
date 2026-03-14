@@ -1,0 +1,6 @@
+# auditd.conf — hardened
+log_file = /var/log/audit/audit.log
+log_format = RAW
+max_log_file = 8
+max_log_file_action = keep_logs
+space_left_action = email
