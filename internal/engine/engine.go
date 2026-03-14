@@ -120,6 +120,11 @@ func (e *Engine) Apply(ctx context.Context) error {
 	return nil
 }
 
+// GetModules returns the list of registered modules.
+func (e *Engine) GetModules() []modules.Module {
+	return e.modules
+}
+
 // ListSnapshots prints available rollback snapshots.
 func (e *Engine) ListSnapshots(_ context.Context) error {
 	snaps, err := listSnapshots()

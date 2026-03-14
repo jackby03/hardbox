@@ -30,6 +30,7 @@ func newDashboard(cfg *config.Config) dashboardModel {
 func (m dashboardModel) Init() tea.Cmd { return nil }
 
 func (m dashboardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	// All key handling is now done in App.Update()
 	return m, nil
 }
 

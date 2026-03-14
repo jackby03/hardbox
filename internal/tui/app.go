@@ -5,6 +5,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/hardbox-io/hardbox/internal/config"
+	"github.com/hardbox-io/hardbox/internal/engine"
 )
 
 // screen identifies which screen is currently active.
@@ -22,19 +23,24 @@ const (
 // App is the root Bubble Tea model that owns the entire TUI.
 type App struct {
 	cfg    *config.Config
+	eng    *engine.Engine
 	screen screen
 	width  int
 	height int
 
 	dashboard dashboardModel
+	modules   modulesModel
 }
 
 // NewApp creates the root model, wiring in the config.
 func NewApp(cfg *config.Config) App {
+	eng := engine.New(cfg)
 	return App{
 		cfg:       cfg,
+		eng:       eng,
 		screen:    screenDashboard,
 		dashboard: newDashboard(cfg),
+		modules:   newModules(eng),
 	}
 }
 
@@ -51,9 +57,26 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.height = msg.Height
 
 	case tea.KeyMsg:
+		// Global keybinds
 		switch msg.String() {
 		case "q", "ctrl+c":
 			return a, tea.Quit
+		}
+
+		// Screen-specific keybinds
+		switch a.screen {
+		case screenDashboard:
+			switch msg.String() {
+			case "enter":
+				a.screen = screenModules
+				return a, nil
+			}
+		case screenModules:
+			switch msg.String() {
+			case "q", "esc":
+				a.screen = screenDashboard
+				return a, nil
+			}
 		}
 	}
 
@@ -62,6 +85,10 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case screenDashboard:
 		m, cmd := a.dashboard.Update(msg)
 		a.dashboard = m.(dashboardModel)
+		return a, cmd
+	case screenModules:
+		m, cmd := a.modules.Update(msg)
+		a.modules = m.(modulesModel)
 		return a, cmd
 	}
 
@@ -73,6 +100,8 @@ func (a App) View() string {
 	switch a.screen {
 	case screenDashboard:
 		return a.dashboard.View()
+	case screenModules:
+		return a.modules.View()
 	default:
 		return lipgloss.NewStyle().Padding(1, 2).Render("Loading...")
 	}
