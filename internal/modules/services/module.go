@@ -205,10 +205,14 @@ func (m *Module) Plan(ctx context.Context, cfg modules.ModuleConfig) ([]modules.
 			},
 			Revert: func() error {
 				if prevEnabled == "enabled" {
-					exec.Command("systemctl", "enable", unit).Run() //nolint:gosec
+					if err := exec.Command("systemctl", "enable", unit).Run(); err != nil { //nolint:gosec
+						return fmt.Errorf("services: enable %s: %w", unit, err)
+					}
 				}
 				if prevActive == "active" {
-					exec.Command("systemctl", "start", unit).Run() //nolint:gosec
+					if err := exec.Command("systemctl", "start", unit).Run(); err != nil { //nolint:gosec
+						return fmt.Errorf("services: start %s: %w", unit, err)
+					}
 				}
 				return nil
 			},
