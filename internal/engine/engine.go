@@ -125,6 +125,16 @@ func (e *Engine) GetModules() []modules.Module {
 	return e.modules
 }
 
+// AuditModule runs the audit for the named module and returns its findings.
+func (e *Engine) AuditModule(ctx context.Context, name string) ([]modules.Finding, error) {
+	for _, m := range e.modules {
+		if m.Name() == name {
+			return m.Audit(ctx, modules.ModuleConfig(e.cfg.ModuleCfg(m.Name())))
+		}
+	}
+	return nil, fmt.Errorf("module %q not found", name)
+}
+
 // ListSnapshots prints available rollback snapshots.
 func (e *Engine) ListSnapshots(_ context.Context) error {
 	snaps, err := listSnapshots()
