@@ -77,6 +77,18 @@ This document is the authoritative cross-reference index.
 
 ---
 
+## Automatic Updates Module
+
+| Check ID | Title | CIS | NIST | STIG | PCI | HIPAA | ISO |
+|---|---|---|---|---|---|---|---|
+| upd-001 | Package manager GPG keys configured | 1.2.1 | SI-2 | — | 6.3.3 | — | A.12.6.1 |
+| upd-002 | Security updates repository enabled | 1.2.2 | SI-2 | — | 6.3.3 | — | A.12.6.1 |
+| upd-003 | Unattended security upgrades configured | 1.9 | SI-2 | — | 6.3.3 | — | A.12.6.1 |
+| upd-004 | Auto-reboot after kernel updates (configurable) | — | SI-2 | — | — | — | — |
+| upd-005 | apt-get update via local mirror (optional) | — | — | — | — | — | — |
+
+---
+
 ## Users & PAM Module
 
 | Check ID | Title | CIS | NIST | STIG | PCI | HIPAA | ISO |
