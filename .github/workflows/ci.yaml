@@ -75,8 +75,27 @@ jobs:
 
       - name: Run audit (dry run, non-interactive)
         run: |
-          sudo ./hardbox audit --profile cis-level1 --format json --output audit-report.json || true
-          sudo chown $(id -u):$(id -g) audit-report.json
+          ./hardbox audit --profile cis-level1 --format json --output audit-report.json || true
+
+      - name: Validate audit report JSON structure
+        run: |
+          jq -e '
+            has("session_id") and
+            has("timestamp") and
+            has("profile") and
+            has("overall_score") and
+            (.modules | type == "array" and length > 0) and
+            all(.modules[]; has("name") and has("score") and has("findings") and (.findings | type == "array")) and
+            all(.modules[].findings[]?; has("check_id") and has("title") and has("status") and has("severity"))
+          ' audit-report.json > /dev/null
+
+      - name: Assert audit returned findings
+        run: |
+          jq -e '[.modules[].findings[]] | length > 0' audit-report.json > /dev/null
+
+      - name: Assert audit score is non-zero
+        run: |
+          jq -e '.overall_score > 0' audit-report.json > /dev/null
 
       - name: Upload audit report
         uses: actions/upload-artifact@v4

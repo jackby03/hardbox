@@ -354,6 +354,52 @@ func TestAudit_TableDriven(t *testing.T) {
 	}
 }
 
+func TestPlan_DryRunOutput_DoesNotModifyConfig(t *testing.T) {
+	path := writeTempConfig(t, "PermitRootLogin yes\n")
+	before, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(before): %v", err)
+	}
+
+	m := ssh.NewModuleForTest(path)
+	changes, err := m.Plan(context.Background(), nil)
+	if err != nil {
+		t.Fatalf("Plan(): unexpected error: %v", err)
+	}
+
+	if len(changes) == 0 {
+		t.Fatal("Plan(): expected at least one change")
+	}
+
+	var targetChange *modules.Change
+	for i := range changes {
+		if strings.Contains(changes[i].Description, "ssh-001") {
+			targetChange = &changes[i]
+			break
+		}
+	}
+	if targetChange == nil {
+		t.Fatal("Plan(): no change found for ssh-001")
+	}
+	if targetChange.DryRunOutput == "" {
+		t.Fatal("DryRunOutput should not be empty")
+	}
+	if !strings.Contains(targetChange.DryRunOutput, "Disable root login") {
+		t.Fatalf("DryRunOutput = %q, want title for ssh-001", targetChange.DryRunOutput)
+	}
+	if !strings.Contains(targetChange.DryRunOutput, "\"yes\" → \"no\"") {
+		t.Fatalf("DryRunOutput = %q, want current/target transition", targetChange.DryRunOutput)
+	}
+
+	after, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(after): %v", err)
+	}
+	if string(after) != string(before) {
+		t.Fatalf("Plan() modified sshd_config during dry-run planning\nbefore:\n%s\nafter:\n%s", before, after)
+	}
+}
+
 // TestPlan_Apply_Revert exercises the full Plan→Apply→Revert cycle using a
 // temporary sshd_config, verifying that AtomicWrite integration works correctly.
 func TestPlan_Apply_Revert(t *testing.T) {
