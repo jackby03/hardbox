@@ -1,0 +1,6 @@
+# auditd.conf — default (non-hardened)
+log_file = /var/log/audit/audit.log
+log_format = RAW
+max_log_file = 5
+max_log_file_action = ROTATE
+space_left_action = SYSLOG

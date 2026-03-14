@@ -1,0 +1,3 @@
+# Minimal default rules — no hardening applied
+-D
+-b 8192
