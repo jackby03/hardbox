@@ -28,8 +28,9 @@ type App struct {
 	width  int
 	height int
 
-	dashboard dashboardModel
-	modules   modulesModel
+	dashboard    dashboardModel
+	modules      modulesModel
+	moduleDetail moduleDetailModel
 }
 
 // NewApp creates the root model, wiring in the config.
@@ -55,18 +56,20 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		a.width = msg.Width
 		a.height = msg.Height
+		a.moduleDetail.height = msg.Height
 
 	case tea.KeyMsg:
-		// Global keybinds
-		switch msg.String() {
-		case "q", "ctrl+c":
+		// ctrl+c always quits regardless of screen
+		if msg.String() == "ctrl+c" {
 			return a, tea.Quit
 		}
 
-		// Screen-specific keybinds
+		// Screen-specific keybinds take precedence over global ones
 		switch a.screen {
 		case screenDashboard:
 			switch msg.String() {
+			case "q":
+				return a, tea.Quit
 			case "enter":
 				a.screen = screenModules
 				return a, nil
@@ -75,6 +78,20 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch msg.String() {
 			case "q", "esc":
 				a.screen = screenDashboard
+				return a, nil
+			case "enter":
+				mod := a.modules.modules[a.modules.selected]
+				a.moduleDetail = newModuleDetail(a.eng, mod, a.height)
+				a.screen = screenModuleDetail
+				return a, a.moduleDetail.Init()
+			}
+		case screenModuleDetail:
+			switch msg.String() {
+			case "q", "esc":
+				a.screen = screenModules
+				return a, nil
+			case "a":
+				a.screen = screenApplyConfirm
 				return a, nil
 			}
 		}
@@ -90,6 +107,10 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m, cmd := a.modules.Update(msg)
 		a.modules = m.(modulesModel)
 		return a, cmd
+	case screenModuleDetail:
+		m, cmd := a.moduleDetail.Update(msg)
+		a.moduleDetail = m.(moduleDetailModel)
+		return a, cmd
 	}
 
 	return a, nil
@@ -102,6 +123,8 @@ func (a App) View() string {
 		return a.dashboard.View()
 	case screenModules:
 		return a.modules.View()
+	case screenModuleDetail:
+		return a.moduleDetail.View()
 	default:
 		return lipgloss.NewStyle().Padding(1, 2).Render("Loading...")
 	}
