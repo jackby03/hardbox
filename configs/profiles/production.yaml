@@ -9,11 +9,23 @@ environment: cloud
 modules:
   ssh:
     enabled: true
-    max_auth_tries: 3
+    max_auth_tries: 3              # stricter than CIS Level 1 (4)
     login_grace_time: 30
     client_alive_interval: 300
     client_alive_count_max: 3
-    log_level: VERBOSE
+    log_level: VERBOSE             # captures all accepted connections
+    disable_root_login: true
+    disable_empty_passwords: true
+    disable_x11_forwarding: true
+    disable_hostbased_auth: true
+    disable_ignore_rhosts: true
+    ciphers:
+      - aes256-gcm@openssh.com
+      - chacha20-poly1305@openssh.com
+      - aes256-ctr
+    macs:
+      - hmac-sha2-256-etm@openssh.com
+      - hmac-sha2-512-etm@openssh.com
     # Recommended: restrict to your ops team group
     # allow_groups:
     #   - sshusers

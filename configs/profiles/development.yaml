@@ -13,7 +13,9 @@ modules:
     login_grace_time: 60
     client_alive_interval: 600
     client_alive_count_max: 3
-    # Password auth allowed for convenience; recommend switching to keys
+    disable_root_login: true       # required even in dev
+    disable_empty_passwords: true
+    # Key-based auth only; set true to allow password auth for convenience
     password_authentication: false
     log_level: INFO
 
