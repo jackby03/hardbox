@@ -5,6 +5,8 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
 	"github.com/hardbox-io/hardbox/internal/config"
@@ -25,6 +27,7 @@ func rootCmd() *cobra.Command {
 	var (
 		cfgFile     string
 		profile     string
+		logLevel    string
 		dryRun      bool
 		nonInteract bool
 		reportFmt   string
@@ -35,12 +38,17 @@ func rootCmd() *cobra.Command {
 		Use:     "hardbox",
 		Short:   "Production-grade Linux hardening toolkit",
 		Version: version,
+		// Configure the global zerolog logger before any subcommand runs.
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			return applyLogLevel(logLevel)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Default: launch TUI
 			cfg, err := config.Load(cfgFile, profile)
 			if err != nil {
 				return fmt.Errorf("loading config: %w", err)
 			}
+			cfg.LogLevel = logLevel
 			p := tea.NewProgram(tui.NewApp(cfg), tea.WithAltScreen())
 			_, err = p.Run()
 			return err
@@ -49,6 +57,7 @@ func rootCmd() *cobra.Command {
 
 	root.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default: /etc/hardbox/config.yaml)")
 	root.PersistentFlags().StringVarP(&profile, "profile", "p", "production", "hardening profile to use")
+	root.PersistentFlags().StringVar(&logLevel, "log-level", "info", "log verbosity: debug|info|warn|error")
 
 	// apply subcommand
 	apply := &cobra.Command{
@@ -61,6 +70,7 @@ func rootCmd() *cobra.Command {
 			}
 			cfg.DryRun = dryRun
 			cfg.NonInteractive = nonInteract
+			cfg.LogLevel = logLevel
 			e := engine.New(cfg)
 			return e.Apply(cmd.Context())
 		},
@@ -79,11 +89,12 @@ func rootCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("loading config: %w", err)
 			}
+			cfg.LogLevel = logLevel
 			e := engine.New(cfg)
 			return e.Audit(cmd.Context(), reportFmt, reportOut)
 		},
 	}
-	audit.Flags().StringVar(&reportFmt, "format", "text", "output format: json|text|markdown")
+	audit.Flags().StringVar(&reportFmt, "format", "text", "output format: json|text|markdown|html")
 	audit.Flags().StringVarP(&reportOut, "output", "o", "", "write report to this file")
 
 	// rollback subcommand
@@ -115,4 +126,20 @@ func rootCmd() *cobra.Command {
 
 	root.AddCommand(apply, audit, rollback)
 	return root
+}
+
+// applyLogLevel configures the zerolog global logger with the requested level
+// and a human-readable console writer on stderr.
+// Accepted values (case-insensitive): debug, info, warn, error.
+// Unknown values return an error so the user gets clear feedback.
+func applyLogLevel(level string) error {
+	// Human-readable output on stderr.
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+
+	lvl, err := zerolog.ParseLevel(level)
+	if err != nil {
+		return fmt.Errorf("unknown log level %q — valid values: debug, info, warn, error", level)
+	}
+	zerolog.SetGlobalLevel(lvl)
+	return nil
 }

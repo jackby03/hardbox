@@ -14,6 +14,10 @@ type Config struct {
 	Profile     string `mapstructure:"profile"`
 	Environment string `mapstructure:"environment"` // cloud | onprem | container
 
+	// LogLevel controls zerolog verbosity: debug | info | warn | error.
+	// Set via --log-level flag or HARDBOX_LOG_LEVEL env var; defaults to "info".
+	LogLevel string `mapstructure:"log_level"`
+
 	DryRun         bool
 	NonInteractive bool
 
@@ -109,6 +113,7 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("version", "1")
 	v.SetDefault("profile", "production")
 	v.SetDefault("environment", "cloud")
+	v.SetDefault("log_level", "info")
 	v.SetDefault("report.format", "html")
 	v.SetDefault("report.output_dir", "/var/lib/hardbox/reports")
 	v.SetDefault("report.include_remediation", true)

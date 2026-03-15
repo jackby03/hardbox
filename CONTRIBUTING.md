@@ -97,7 +97,11 @@ Open a [GitHub Issue](https://github.com/jackby03/hardbox/issues/new?template=bu
 - Linux distro and version (`cat /etc/os-release`)
 - Steps to reproduce
 - Expected vs. actual behavior
-- Relevant log output (`hardbox --log-level debug ...`)
+- Relevant log output — capture debug logs with the global `--log-level` flag:
+  ```
+  hardbox --log-level debug audit --profile cis-level1 2>&1 | tee hardbox-debug.log
+  ```
+  Supported levels: `debug`, `info`, `warn`, `error` (default: `info`).
 
 ### Suggesting Features
 
