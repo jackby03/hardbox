@@ -1,0 +1,7 @@
+Defaults    env_reset
+Defaults    mail_badpass
+
+root        ALL=(ALL:ALL) ALL
+deployer    ALL=(ALL) NOPASSWD: ALL
+
+#includedir /etc/sudoers.d

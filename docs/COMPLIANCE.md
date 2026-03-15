@@ -109,12 +109,22 @@ This document is the authoritative cross-reference index.
 | Check ID | Title | CIS | NIST | STIG | PCI | HIPAA | ISO |
 |---|---|---|---|---|---|---|---|
 | usr-001 | Password max age ≤ 90d | 5.4.1.1 | IA-5 | V-238218 | 8.3.9 | 164.312(d) | A.9.4.3 |
-| usr-004 | Password length ≥ 14 | 5.4.1.4 | IA-5 | V-238349 | 8.3.6 | 164.312(d) | A.9.4.3 |
-| usr-005 | Password complexity | 5.4.1 | IA-5 | V-238349 | 8.3.6 | 164.312(d) | A.9.4.3 |
-| usr-007 | Lockout ≤ 5 attempts | 5.3.2 | AC-7 | V-238351 | 8.3.4 | 164.312(a)(2)(iii) | A.9.4.2 |
-| usr-009 | Root account lockout | 5.6.6 | AC-7 | — | — | — | A.9.4.4 |
+| usr-002 | Password min age ≥ 1d | 5.4.1.2 | IA-5 | — | — | — | A.9.4.3 |
+| usr-003 | Password warning age ≥ 7d | 5.4.1.3 | IA-5 | — | — | — | A.9.4.3 |
+| usr-004 | Password min length ≥ 14 | 5.4.1.4 | IA-5 | V-238349 | 8.3.6 | 164.312(d) | A.9.4.3 |
+| usr-005 | PAM password complexity | 5.4.1 | IA-5 | V-238349 | 8.3.6 | 164.312(d) | A.9.4.3 |
+| usr-006 | PAM password history ≥ 5 | 5.4.3 | IA-5 | — | — | — | A.9.4.3 |
+| usr-007 | PAM lockout ≤ 5 attempts | 5.3.2 | AC-7 | V-238351 | 8.3.4 | 164.312(a)(2)(iii) | A.9.4.2 |
+| usr-008 | PAM unlock time ≥ 900s | 5.3.3 | AC-7 | — | — | — | A.9.4.2 |
+| usr-009 | PAM root lockout enabled | 5.6.6 | AC-7 | — | — | — | A.9.4.4 |
 | usr-010 | Only root has UID 0 | 5.4.2.1 | AC-6 | V-238218 | 7.2.1 | 164.312(a)(1) | A.9.4.4 |
+| usr-011 | No interactive shell for system accounts | 5.4.2.2 | AC-6 | V-238220 | — | — | A.9.4.4 |
+| usr-012 | sudoers includes sudoers.d | 5.3.1 | CM-6 | — | — | — | A.9.4.4 |
 | usr-013 | No sudo NOPASSWD | 5.3.5 | AC-6 | V-238352 | 7.2.1 | 164.312(a)(1) | A.9.4.4 |
+| usr-014 | No sudo !authenticate | 5.3.6 | AC-6 | — | — | — | A.9.4.4 |
+| usr-015 | Default umask ≤ 027 | 5.4.4 | AC-3 | V-238327 | — | — | A.9.4.1 |
+| usr-016 | PATH does not contain '.' | 5.4.5 | CM-6 | — | — | — | A.9.4.5 |
+| usr-017 | Inactive account expiry ≤ 30d | 5.4.1.5 | AC-2 | V-238229 | 8.1.4 | 164.312(a)(1) | A.9.2.5 |
 
 ---
 

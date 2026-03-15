@@ -1,0 +1,8 @@
+# /etc/default/useradd
+GROUP=100
+HOME=/home
+INACTIVE=30
+EXPIRE=
+SHELL=/bin/sh
+SKEL=/etc/skel
+CREATE_MAIL_SPOOL=no
