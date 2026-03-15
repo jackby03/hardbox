@@ -248,11 +248,14 @@ func TestWrite_UnknownFormat_FallsBackToText(t *testing.T) {
 	r := report.Build("s", "p", testFindings)
 	var buf bytes.Buffer
 	// Should not error, and should produce text-like output
-	if err := report.Write(r, "html", &buf); err != nil {
+	if err := report.Write(r, "xmlreport", &buf); err != nil {
 		t.Fatalf("unknown format should not return error: %v", err)
 	}
 	out := buf.String()
 	if !strings.Contains(out, "ssh-001") {
 		t.Error("fallback text output should contain check IDs")
+	}
+	if !strings.Contains(out, "Warning: unknown format") {
+		t.Error("fallback text output should contain warning about unknown format")
 	}
 }
