@@ -180,6 +180,23 @@ This document is the authoritative cross-reference index.
 
 ---
 
+## Containers Module
+
+| Check ID | Title | CIS | NIST | STIG | PCI | HIPAA | ISO |
+|---|---|---|---|---|---|---|---|
+| cnt-001 | Docker daemon runs in rootless mode | 2.1 | CM-6 | — | — | — | A.14.2.5 |
+| cnt-002 | Inter-container communication disabled | 2.1 | SC-7 | — | 1.3.2 | — | A.13.1.1 |
+| cnt-003 | User namespace remapping enabled | 2.8 | AC-6 | — | — | — | A.9.4.1 |
+| cnt-004 | Docker remote API protected by TLS | 2.6 | SC-8 | — | 4.2.1 | 164.312(e)(2)(ii) | A.14.1.3 |
+| cnt-005 | Default seccomp profile applied | 5.21 | SI-3 | — | — | — | A.14.2.5 |
+| cnt-006 | AppArmor or SELinux profile active | 5.25 | AC-3 | V-235805 | — | — | A.9.4.5 |
+| cnt-007 | No running containers with --privileged | 5.4 | AC-6 | — | 2.2.1 | — | A.9.4.1 |
+| cnt-008 | Docker socket not mounted in containers | 5.31 | AC-3 | — | — | — | A.9.4.1 |
+| cnt-009 | Container images scanned for CVEs | 5.1 | RA-5 | — | 6.3.3 | — | A.12.6.1 |
+| cnt-010 | Audit rules for Docker daemon socket | 1.1.18 | AU-12 | — | 10.2.5 | 164.312(b) | A.12.4.1 |
+
+---
+
 ## Mandatory Access Control
 
 | Check ID | Title | CIS | NIST | STIG | ISO |

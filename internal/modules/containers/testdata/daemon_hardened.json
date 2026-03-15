@@ -1,0 +1,9 @@
+{
+  "icc": false,
+  "userns-remap": "default",
+  "tls": true,
+  "tlsverify": true,
+  "tlscert": "/etc/docker/server-cert.pem",
+  "tlskey": "/etc/docker/server-key.pem",
+  "hosts": ["unix:///var/run/docker.sock"]
+}

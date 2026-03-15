@@ -1,0 +1,2 @@
+-w /var/run/docker.sock -p rwxa -k docker
+-w /usr/bin/docker -p rwxa -k docker
