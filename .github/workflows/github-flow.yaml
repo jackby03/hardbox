@@ -22,11 +22,11 @@ jobs:
         env:
           BRANCH: ${{ github.head_ref }}
         run: |
-          PATTERN='^(feat|fix|chore|refactor|test|docs|release)/.+'
+          PATTERN='^(feat|fix|chore|refactor|test|docs|release|perf)/.+'
           if [[ ! "$BRANCH" =~ $PATTERN ]]; then
             echo "::error::Branch name '$BRANCH' does not follow the convention."
             echo "::error::Expected: <type>/<description>"
-            echo "::error::Valid types: feat, fix, chore, refactor, test, docs, release"
+            echo "::error::Valid types: feat, fix, chore, refactor, test, docs, release, perf"
             echo "::error::Example: feat/firewall-module, fix/ssh-audit-panic"
             exit 1
           fi
@@ -150,6 +150,7 @@ jobs:
           elif [[ "$BRANCH" == test/* ]]; then   LABEL="testing"
           elif [[ "$BRANCH" == refactor/* ]]; then LABEL="refactor"
           elif [[ "$BRANCH" == release/* ]]; then  LABEL="release"
+          elif [[ "$BRANCH" == perf/* ]]; then   LABEL="performance"
           else LABEL=""
           fi
 
