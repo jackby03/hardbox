@@ -3,6 +3,7 @@ package engine
 import (
 	"github.com/hardbox-io/hardbox/internal/modules"
 	"github.com/hardbox-io/hardbox/internal/modules/auditd"
+	"github.com/hardbox-io/hardbox/internal/modules/crypto"
 	"github.com/hardbox-io/hardbox/internal/modules/firewall"
 	"github.com/hardbox-io/hardbox/internal/modules/filesystem"
 	"github.com/hardbox-io/hardbox/internal/modules/kernel"
@@ -32,10 +33,10 @@ func registeredModules() []modules.Module {
 		&logging.Module{},
 		&users.Module{},
 		&firewall.Module{},
+		&crypto.Module{},
 		// Stub placeholders — each will be fully implemented in its own package.
 		// &ssh.Module{},
 		// &pam.Module{},
-		// &crypto.Module{},
 		// &containers.Module{},
 	}
 }
