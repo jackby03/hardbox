@@ -258,8 +258,14 @@ func normalizePolicy(policy string) string {
 	return strings.ToUpper(strings.TrimSpace(policy))
 }
 
+var (
+	reMinProtocol  = regexp.MustCompile(`(?mi)^\s*MinProtocol\s*=\s*([^\s#;]+)`)
+	reSecLevel     = regexp.MustCompile(`(?i)@SECLEVEL\s*=\s*([0-9]+)`)
+	reCipherString = regexp.MustCompile(`(?mi)^\s*CipherString\s*=\s*(.+)$`)
+)
+
 func parseOpenSSLMinProtocol(content string) string {
-	m := regexp.MustCompile(`(?mi)^\s*MinProtocol\s*=\s*([^\s#;]+)`).FindStringSubmatch(content)
+	m := reMinProtocol.FindStringSubmatch(content)
 	if len(m) != 2 {
 		return ""
 	}
@@ -267,7 +273,7 @@ func parseOpenSSLMinProtocol(content string) string {
 }
 
 func parseOpenSSLSecLevel(content string) int {
-	m := regexp.MustCompile(`(?i)@SECLEVEL\s*=\s*([0-9]+)`).FindStringSubmatch(content)
+	m := reSecLevel.FindStringSubmatch(content)
 	if len(m) != 2 {
 		return 0
 	}
@@ -276,7 +282,7 @@ func parseOpenSSLSecLevel(content string) int {
 }
 
 func parseOpenSSLCipherString(content string) string {
-	m := regexp.MustCompile(`(?mi)^\s*CipherString\s*=\s*(.+)$`).FindStringSubmatch(content)
+	m := reCipherString.FindStringSubmatch(content)
 	if len(m) != 2 {
 		return ""
 	}
