@@ -2,10 +2,8 @@ package users
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -53,13 +51,6 @@ type Module struct {
 
 func (m *Module) Name() string    { return "users" }
 func (m *Module) Version() string { return "0.1.0" }
-
-func (m *Module) runner() commandRunner {
-	if m.run != nil {
-		return m.run
-	}
-	return runCommand
-}
 
 func (m *Module) loginDefsPath() string {
 	if m.loginDefs != "" {
@@ -784,17 +775,4 @@ func sudoersActiveLineContains(content, token string) bool {
 	return false
 }
 
-// ── exec ──────────────────────────────────────────────────────────────────────
 
-func runCommand(ctx context.Context, name string, args ...string) (string, error) {
-	cmd := exec.CommandContext(ctx, name, args...)
-	out, err := cmd.CombinedOutput()
-	result := strings.TrimSpace(string(out))
-	if err != nil {
-		if result == "" {
-			return "", fmt.Errorf("run %s %s: %w", name, strings.Join(args, " "), err)
-		}
-		return result, fmt.Errorf("run %s %s: %w", name, strings.Join(args, " "), errors.New(result))
-	}
-	return result, nil
-}
