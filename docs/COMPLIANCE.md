@@ -245,34 +245,39 @@ This document is the authoritative cross-reference index.
 
 ## Profile → Framework Coverage Matrix
 
-This table shows which compliance frameworks each built-in profile satisfies.
+This table shows which compliance frameworks each **shipped** profile satisfies.
 
-| Profile | CIS L1 | CIS L2 | STIG | PCI-DSS | HIPAA | NIST 800-53 | ISO 27001 |
-|---|---|---|---|---|---|---|---|
-| `cis-level1` | ✓ Full | — | Partial | Partial | Partial | Partial | Partial |
-| `cis-level2` | ✓ Full | ✓ Full | Partial | Partial | Partial | Partial | Partial |
-| `stig` | ✓ Full | ✓ Full | ✓ Full | Partial | Partial | ✓ Full | Partial |
-| `pci-dss` | ✓ Full | ✓ Full | Partial | ✓ Full | Partial | Partial | Partial |
-| `hipaa` | ✓ Full | ✓ Full | Partial | Partial | ✓ Full | Partial | Partial |
-| `nist-800-53` | ✓ Full | ✓ Full | ✓ Full | Partial | Partial | ✓ Full | Partial |
-| `iso27001` | ✓ Full | ✓ Full | Partial | Partial | Partial | Partial | ✓ Full |
-| `production` | ✓ Full | Partial | Partial | Partial | Partial | Partial | Partial |
-| `development` | Partial | — | — | — | — | — | — |
+| Profile | CIS L1 | CIS L2 | STIG | PCI-DSS | HIPAA | NIST 800-53 | ISO 27001 | Status |
+|---|---|---|---|---|---|---|---|---|
+| `cis-level1` | ✓ Full | — | Partial | Partial | Partial | Partial | Partial | ✅ Shipped |
+| `production` | ✓ Full | Partial | Partial | Partial | Partial | Partial | Partial | ✅ Shipped |
+| `development` | Partial | — | — | — | — | — | — | ✅ Shipped |
+| `cis-level2` | ✓ Full | ✓ Full | Partial | Partial | Partial | Partial | Partial | 🗓 Roadmap v0.2 |
+| `stig` | ✓ Full | ✓ Full | ✓ Full | Partial | Partial | ✓ Full | Partial | 🗓 Roadmap v0.2 |
+| `pci-dss` | ✓ Full | ✓ Full | Partial | ✓ Full | Partial | Partial | Partial | 🗓 Roadmap v0.2 |
+| `hipaa` | ✓ Full | ✓ Full | Partial | Partial | ✓ Full | Partial | Partial | 🗓 Roadmap v0.3 |
+| `nist-800-53` | ✓ Full | ✓ Full | ✓ Full | Partial | Partial | ✓ Full | Partial | 🗓 Roadmap v0.3 |
+| `iso27001` | ✓ Full | ✓ Full | Partial | Partial | Partial | Partial | ✓ Full | 🗓 Roadmap v0.3 |
 
 > **Partial** = significant coverage with some controls requiring manual evidence or configuration beyond OS-level hardening (e.g., application-layer controls, physical security).
+> Roadmap profiles are not yet shipped — running them will return an error until the corresponding `.yaml` file is added to `configs/profiles/`.
 
 ---
 
 ## Generating a Compliance Report
 
 ```bash
-# Full compliance audit against PCI-DSS profile
-sudo hardbox audit --profile pci-dss --format html --output pci-audit.html
+# Full compliance audit against CIS Level 1
+sudo hardbox audit --profile cis-level1 --format html --output cis-audit.html
 
 # JSON output for SIEM/GRC tool import
-sudo hardbox audit --profile cis-level2 --format json --output cis-audit.json
+sudo hardbox audit --profile cis-level1 --format json --output cis-audit.json
 
 # Fail CI/CD pipeline if critical findings exist
 sudo hardbox audit --profile production --format json
 # exits 1 if audit.fail_on_critical = true and critical findings found
 ```
+
+> **Note:** The `pci-dss`, `cis-level2`, `stig`, and other compliance-specific profiles
+> are on the roadmap and will be available in future releases. Track progress in the
+> [v0.2 milestone](https://github.com/jackby03/hardbox/milestone/2).

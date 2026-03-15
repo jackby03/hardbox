@@ -97,19 +97,20 @@ hardbox/
 ├── configs/
 │   ├── hardbox.yaml                 # Default user config
 │   └── profiles/
-│       ├── base.yaml                # Shared base defaults
-│       ├── cis-level1.yaml
-│       ├── cis-level2.yaml
-│       ├── stig.yaml
-│       ├── pci-dss.yaml
-│       ├── hipaa.yaml
-│       ├── nist-800-53.yaml
-│       ├── iso27001.yaml
-│       ├── production.yaml
-│       ├── development.yaml
-│       ├── cloud-aws.yaml
-│       ├── cloud-gcp.yaml
-│       └── cloud-azure.yaml
+│       ├── cis-level1.yaml          # CIS Benchmarks Level 1 (shipped)
+│       ├── production.yaml          # hardbox curated — cloud production (shipped)
+│       ├── development.yaml         # hardbox curated — dev/staging (shipped)
+│       │
+│       │   # Roadmap — not yet shipped:
+│       ├── cis-level2.yaml          # (v0.2)
+│       ├── stig.yaml                # (v0.2)
+│       ├── pci-dss.yaml             # (v0.2)
+│       ├── hipaa.yaml               # (v0.3)
+│       ├── nist-800-53.yaml         # (v0.3)
+│       ├── iso27001.yaml            # (v0.3)
+│       ├── cloud-aws.yaml           # (v0.3)
+│       ├── cloud-gcp.yaml           # (v0.3)
+│       └── cloud-azure.yaml         # (v0.3)
 │
 ├── docs/
 │   ├── ARCHITECTURE.md              # This file
