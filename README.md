@@ -33,9 +33,9 @@ It covers every layer of the security stack: kernel parameters, SSH, firewall, P
 | Hardening is manual, slow, and inconsistent | Automated modules with dry-run and rollback |
 | Scripts break across distros | Distro-aware engine with a unified API |
 | No visibility into what was changed | Full audit trail + structured HTML/JSON reports |
-| Compliance frameworks are overwhelming | Built-in profiles: CIS L1/L2, STIG, PCI-DSS, HIPAA |
+| Compliance frameworks are overwhelming | Built-in profiles: CIS L1, production, dev (more on roadmap) |
 | Requires deep security expertise | Modern TUI — zero expertise needed to start |
-| Cloud environments have unique requirements | Cloud-native profiles for AWS, GCP, Azure, containers |
+| Cloud environments have unique requirements | Cloud-native profiles for AWS, GCP, Azure (roadmap) |
 
 ---
 
@@ -45,7 +45,7 @@ It covers every layer of the security stack: kernel parameters, SSH, firewall, P
 |:---|:---|
 | **Modern TUI** | Interactive terminal UI (Bubble Tea). Navigate, configure, and apply hardening without memorizing commands |
 | **Modular Architecture** | Enable or disable any module independently. Mix and match profiles at will |
-| **12 Built-in Profiles** | Production cloud, dev, CIS L1/L2, STIG, PCI-DSS, HIPAA, NIST, ISO 27001, AWS/GCP/Azure |
+| **3 Built-in Profiles** | `cis-level1`, `production`, `development` — more profiles on roadmap |
 | **Dry Run Mode** | Preview every exact change before it's applied. Safe to run on live servers |
 | **One-command Rollback** | Every change is snapshotted. Revert any module or an entire session instantly |
 | **Audit Reports** | JSON, HTML, and Markdown output — machine-readable and CI/CD-friendly |
@@ -122,22 +122,33 @@ sudo hardbox rollback --last
 
 ## Compliance Profiles
 
+### Available now
+
 <div align="center">
 
 | Profile | Framework | Best For |
 |:---:|:---|:---|
 | `cis-level1` | CIS Benchmarks Level 1 | Minimum baseline — low disruption |
-| `cis-level2` | CIS Benchmarks Level 2 | High-security, some service trade-offs |
-| `stig` | DoD STIG | Government / regulated environments |
-| `pci-dss` | PCI-DSS v4.0 | Cardholder data environments |
-| `hipaa` | HIPAA Security Rule | Healthcare systems |
-| `iso27001` | ISO/IEC 27001:2022 | Enterprise compliance |
-| `nist-800-53` | NIST SP 800-53 Rev. 5 | Federal / high-assurance |
 | `production` | hardbox curated | Cloud production servers |
 | `development` | hardbox curated | Dev/staging — security + developer usability |
-| `cloud-aws` | hardbox + CIS | AWS EC2 optimized |
-| `cloud-gcp` | hardbox + CIS | GCP Compute optimized |
-| `cloud-azure` | hardbox + CIS | Azure VM optimized |
+
+</div>
+
+### Roadmap — coming in future releases
+
+<div align="center">
+
+| Profile | Framework | Target Release |
+|:---:|:---|:---:|
+| `cis-level2` | CIS Benchmarks Level 2 | v0.2 |
+| `stig` | DoD STIG | v0.2 |
+| `pci-dss` | PCI-DSS v4.0 | v0.2 |
+| `hipaa` | HIPAA Security Rule | v0.3 |
+| `nist-800-53` | NIST SP 800-53 Rev. 5 | v0.3 |
+| `iso27001` | ISO/IEC 27001:2022 | v0.3 |
+| `cloud-aws` | hardbox + CIS | v0.3 |
+| `cloud-gcp` | hardbox + CIS | v0.3 |
+| `cloud-azure` | hardbox + CIS | v0.3 |
 
 </div>
 
