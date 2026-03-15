@@ -1,0 +1,8 @@
+PASS_MAX_DAYS	90
+PASS_MIN_DAYS	1
+PASS_WARN_AGE	14
+PASS_MIN_LEN	14
+UMASK		027
+ENV_PATH	PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV_SUPATH	PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENCRYPT_METHOD	SHA512
