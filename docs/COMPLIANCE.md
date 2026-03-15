@@ -197,6 +197,20 @@ This document is the authoritative cross-reference index.
 
 ---
 
+## System Logging Module (rsyslog / journald)
+
+| Check ID | Title | CIS | NIST | STIG | PCI | HIPAA | ISO |
+|---|---|---|---|---|---|---|---|
+| log-001 | Syslog service installed and active | 4.2.1.1 | AU-9 | — | 10.5.3 | — | A.12.4.1 |
+| log-002 | Rsyslog forwards logs to remote server | 4.2.1.5 | AU-4 | — | 10.5.3 | 164.312(b) | A.12.4.1 |
+| log-003 | Rsyslog config file permissions restricted | 4.2.1.4 | AU-9 | — | — | — | A.12.4.2 |
+| log-004 | Journald persistent storage enabled | 4.2.2.1 | AU-11 | — | — | — | A.12.4.1 |
+| log-005 | Journald forwarding to syslog enabled | 4.2.2.2 | AU-12 | — | — | — | A.12.4.1 |
+| log-006 | Logrotate configured for all logs | 4.2.3 | AU-11 | — | 10.7.1 | — | A.12.4.1 |
+| log-007 | Log files not world-readable | 4.2.1.3 | AU-9 | V-238302 | — | 164.312(b) | A.12.4.2 |
+
+---
+
 ## Profile → Framework Coverage Matrix
 
 This table shows which compliance frameworks each built-in profile satisfies.
