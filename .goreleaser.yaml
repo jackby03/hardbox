@@ -40,6 +40,6 @@ changelog:
 
 release:
   github:
-    owner: hardbox-io
+    owner: jackby03
     name: hardbox
   name_template: "v{{.Version}}"
