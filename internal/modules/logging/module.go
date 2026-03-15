@@ -198,12 +198,7 @@ func (m *Module) auditRemoteTarget(_ context.Context) modules.Finding {
 			Target:  "remote target configured (@@host or action type omfwd)",
 		}
 	}
-	hasRemote := strings.Contains(content, "@@") || // TCP remote
-		strings.Contains(content, "@") && !strings.HasPrefix(strings.TrimSpace(content), "#") ||
-		strings.Contains(content, "omfwd") ||
-		strings.Contains(content, "action(type=\"omfwd\"")
-	// Refine: check for actual forwarding token not just comments
-	hasRemote = rsyslogHasRemoteForwarding(content)
+	hasRemote := rsyslogHasRemoteForwarding(content)
 	status := modules.StatusNonCompliant
 	current := "no remote target found"
 	if hasRemote {
@@ -343,14 +338,6 @@ func (m *Module) worldReadableLogFiles() []string {
 
 // ── plan helpers ──────────────────────────────────────────────────────────────
 
-func (m *Module) planJournaldPersistence() (*modules.Change, error) {
-	return m.planJournaldKey("Storage", "persistent", "log-004: set journald Storage=persistent")
-}
-
-func (m *Module) planJournaldForwardSyslog() (*modules.Change, error) {
-	return m.planJournaldKey("ForwardToSyslog", "yes", "log-005: set journald ForwardToSyslog=yes")
-}
-
 func (m *Module) planJournaldUpdate(setStorage, setForward bool) (*modules.Change, error) {
 	path := m.journaldConfPath()
 	oldContent, readErr := os.ReadFile(path)
@@ -372,32 +359,6 @@ func (m *Module) planJournaldUpdate(setStorage, setForward bool) (*modules.Chang
 
 	ch := &modules.Change{
 		Description:  "logging: set journald " + strings.Join(desc, ", "),
-		DryRunOutput: newContent,
-		Apply: func() error {
-			return util.AtomicWrite(path, []byte(newContent), 0o644)
-		},
-		Revert: func() error {
-			if !fileExisted {
-				return os.Remove(path)
-			}
-			return util.AtomicWrite(path, oldContent, 0o644)
-		},
-	}
-	return ch, nil
-}
-
-func (m *Module) planJournaldKey(key, value, description string) (*modules.Change, error) {
-	path := m.journaldConfPath()
-	oldContent, readErr := os.ReadFile(path)
-	if readErr != nil && !os.IsNotExist(readErr) {
-		return nil, fmt.Errorf("logging: read %s: %w", path, readErr)
-	}
-	fileExisted := readErr == nil
-
-	newContent := setJournaldKey(string(oldContent), key, value)
-
-	ch := &modules.Change{
-		Description:  description,
 		DryRunOutput: newContent,
 		Apply: func() error {
 			return util.AtomicWrite(path, []byte(newContent), 0o644)
