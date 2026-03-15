@@ -1,0 +1,4 @@
+[system_default_sect]
+MinProtocol = TLSv1.2
+CipherString = DEFAULT:@SECLEVEL=2:!RC4:!DES:!3DES:!EXP:!SSLv3:!SSLv2
+Options = -SSLv2 -SSLv3

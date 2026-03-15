@@ -171,10 +171,12 @@ This document is the authoritative cross-reference index.
 
 | Check ID | Title | CIS | NIST | PCI | HIPAA |
 |---|---|---|---|---|---|
+| cry-001 | System crypto policy DEFAULT or stronger | — | SC-17 | 4.2.1 | 164.312(e)(2)(ii) |
 | cry-002 | TLS 1.0/1.1 disabled | — | SC-8 | 4.2.1 | 164.312(e)(2)(ii) |
 | cry-003 | SSLv2/v3 disabled | — | SC-8 | 4.2.1 | 164.312(e)(2)(ii) |
 | cry-004 | Weak ciphers removed | — | SC-8 | 4.2.1 | 164.312(e)(2)(ii) |
 | cry-005 | FIPS 140-2 mode | — | SC-13 | — | 164.312(a)(2)(iv) |
+| cry-006 | GnuPG keyid format long | — | — | — | — |
 
 ---
 
