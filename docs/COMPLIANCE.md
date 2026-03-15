@@ -45,7 +45,10 @@ This document is the authoritative cross-reference index.
 |---|---|---|---|---|---|---|---|
 | fw-001 | Firewall enabled | 3.5.1 | SC-7 | V-238270 | 1.3.1 | 164.312(e)(1) | A.13.1.1 |
 | fw-002 | Default inbound DROP | 3.5.1.1 | SC-7 | V-238270 | 1.3.2 | 164.312(e)(1) | A.13.1.1 |
+| fw-003 | Default outbound DROP or ACCEPT | 3.5.1.2 | SC-7 | — | 1.3.3 | 164.312(e)(1) | A.13.1.1 |
+| fw-004 | Loopback traffic explicitly allowed | 3.5.1.3 | SC-7 | — | 1.3.2 | 164.312(e)(1) | A.13.1.1 |
 | fw-005 | No overly permissive rules | 3.5.1.4 | SC-7 | — | 1.3.4 | 164.312(e)(1) | A.13.1.1 |
+| fw-006 | IPv6 rules present when IPv6 enabled | 3.5.2 | SC-7 | — | 1.3.1 | 164.312(e)(1) | A.13.1.1 |
 
 ---
 
