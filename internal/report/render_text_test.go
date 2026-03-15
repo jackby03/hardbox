@@ -10,19 +10,20 @@ import (
 
 func TestStatusSymbol(t *testing.T) {
 	tests := []struct {
+		name   string
 		status string
 		want   string
 	}{
-		{"compliant", "✓"},
-		{"non-compliant", "✗"},
-		{"manual", "?"},
-		{"skipped", "-"},
-		{"unknown", "!"},
-		{"", "!"},
+		{"compliant", "compliant", "✓"},
+		{"non-compliant", "non-compliant", "✗"},
+		{"manual", "manual", "?"},
+		{"skipped", "skipped", "-"},
+		{"unknown", "unknown", "!"},
+		{"empty", "", "!"},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.status, func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			if got := statusSymbol(tt.status); got != tt.want {
 				t.Errorf("statusSymbol(%q) = %q, want %q", tt.status, got, tt.want)
 			}
@@ -84,8 +85,7 @@ func TestRenderText_Success(t *testing.T) {
 	}
 
 	// Check findings
-	if !strings.Contains(output, "test-001     ✓ compliant non-compliant Test Check 1") &&
-		!strings.Contains(output, "test-001     ✓ compliant high     Test Check 1") {
+	if !strings.Contains(output, "test-001     ✓ compliant high     Test Check 1") {
 		t.Errorf("expected finding 1 in output, got:\n%s", output)
 	}
 	if !strings.Contains(output, "test-002     ✗ non-compliant critical Test Check 2") {
@@ -101,16 +101,16 @@ func TestRenderText_Success(t *testing.T) {
 	}
 }
 
-type failWriter struct {
-	failAfter int
-	calls     int
+type byteLimitWriter struct {
+	limit   int
+	written int
 }
 
-func (w *failWriter) Write(p []byte) (n int, err error) {
-	w.calls++
-	if w.calls > w.failAfter {
+func (w *byteLimitWriter) Write(p []byte) (n int, err error) {
+	if w.written >= w.limit {
 		return 0, errors.New("simulated write error")
 	}
+	w.written += len(p)
 	return len(p), nil
 }
 
@@ -137,13 +137,24 @@ func TestRenderText_WriteErrors(t *testing.T) {
 		},
 	}
 
-	// Test failing at different write calls
-	for i := 0; i < 7; i++ {
-		t.Run(string(rune('0'+i)), func(t *testing.T) {
-			fw := &failWriter{failAfter: i}
+	// Each limit is chosen to allow preceding writes to succeed and then
+	// fail at a distinct fmt.Fprintf call, without depending on exact
+	// write-call counts (which fmt may vary between Go versions).
+	tests := []struct {
+		name  string
+		limit int
+	}{
+		{"fail on first write", 0},   // header write fails immediately
+		{"fail after header", 300},   // module-name write fails (header > 300 bytes)
+		{"fail mid-render", 700},     // finding-row write fails (header+module header > 700 bytes)
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fw := &byteLimitWriter{limit: tt.limit}
 			err := renderText(report, fw)
 			if err == nil {
-				t.Fatalf("expected error when failing after %d calls, got nil", i)
+				t.Fatalf("expected write error with limit=%d bytes, got nil", tt.limit)
 			}
 			if err.Error() != "simulated write error" {
 				t.Errorf("unexpected error: %v", err)
