@@ -191,25 +191,28 @@ sudo hardbox rollback --last
 
 ## Roadmap
 
-### v0.1 — Foundation
-- [ ] Core engine with dry-run and rollback
-- [ ] SSH, Firewall, Kernel, Users/PAM modules
-- [ ] CIS Level 1 & 2 profiles
-- [ ] TUI dashboard + module navigator
-- [ ] JSON audit reports
+### v0.1 — Foundation ✅ _released_
+- [x] Core engine with dry-run and rollback
+- [x] 13 hardening modules — SSH, Firewall, Kernel, Users/PAM, Auditd, Filesystem, Services, Logging, Network, NTP, MAC, Containers
+- [x] `cis-level1`, `production`, `development` profiles
+- [x] Interactive TUI dashboard
+- [x] Reports: JSON, HTML, Text, Markdown
+- [x] `--log-level`, `--dry-run`, `--non-interactive` flags
+- [x] Midnight Shield landing page — [hardbox.jackby03.com](https://hardbox.jackby03.com)
 
 ### v0.2 — Coverage
-- [ ] All 14 hardening modules
-- [ ] STIG and PCI-DSS profiles
-- [ ] HTML and Markdown reports
-- [ ] Ubuntu, Debian, RHEL, Rocky support
+- [ ] `cis-level2`, `pci-dss`, `stig` profiles
+- [ ] `install.sh` one-liner installer
+- [ ] 14th module — mount hardening
+- [ ] Full RHEL / Rocky Linux parity
+- [ ] TUI module detail screens
 
 ### v0.3 — Ecosystem
-- [ ] Headless/CI mode
+- [ ] `hipaa`, `nist-800-53`, `iso27001` profiles
 - [ ] Ansible role integration
 - [ ] Terraform provisioner
 - [ ] cloud-init support
-- [ ] GitHub Actions workflow
+- [ ] `cloud-aws`, `cloud-gcp`, `cloud-azure` profiles
 
 ### v1.0 — Production Ready
 - [ ] Full compliance framework coverage
