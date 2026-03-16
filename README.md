@@ -60,8 +60,11 @@ It covers every layer of the security stack: kernel parameters, SSH, firewall, P
 ### Install
 
 ```bash
-# One-liner installer (Linux, requires sudo)
+# One-liner installer — detects OS/arch, verifies checksum, installs to /usr/local/bin
 curl -sSL https://hardbox.jackby03.com/install.sh | bash
+
+# Or with go install (requires Go 1.22+)
+go install github.com/hardbox-io/hardbox/cmd/hardbox@latest
 
 # Or download a pre-built binary from GitHub Releases
 # https://github.com/jackby03/hardbox/releases
