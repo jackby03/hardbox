@@ -10,7 +10,7 @@ on:
 
 jobs:
   build-and-test:
-    name: Build & Test
+    name: Build and Test
     runs-on: ubuntu-latest
 
     steps:
@@ -58,7 +58,7 @@ jobs:
           version: latest
 
   hardbox-audit:
-    name: Self-Audit (dry run)
+    name: Self-Audit
     runs-on: ubuntu-latest
     needs: build-and-test
 
@@ -104,7 +104,7 @@ jobs:
           path: audit-report.json
 
   markdown-links:
-    name: Markdown Link Check
+    name: Documentation Links
     runs-on: ubuntu-latest
 
     steps:
@@ -143,7 +143,7 @@ jobs:
           exit $FAILED
 
   profile-consistency:
-    name: Profile Consistency Check
+    name: Profile Documentation
     runs-on: ubuntu-latest
 
     steps:
@@ -199,7 +199,7 @@ jobs:
           done
 
   goreleaser-config:
-    name: GoReleaser Config Check
+    name: Release Configuration
     runs-on: ubuntu-latest
 
     steps:

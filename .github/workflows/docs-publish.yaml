@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   deploy:
-    name: Deploy to GitHub Pages
+    name: Publish GitHub Pages Site
     runs-on: ubuntu-latest
     environment:
       name: github-pages
