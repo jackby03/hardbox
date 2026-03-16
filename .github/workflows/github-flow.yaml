@@ -229,8 +229,7 @@ jobs:
               inblock && NF==0 {next}
               inblock {exit}
             ' AGENTS.md \
-            | grep -oP '`[a-z]+`' \
-            | tr -d '`' \
+            | grep -oP '(?<=`)[a-z]+(?=`)' \
             | sort -u
           )
           echo "types<<EOF" >> "$GITHUB_OUTPUT"
