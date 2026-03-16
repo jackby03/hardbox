@@ -15,7 +15,7 @@ on:
 
 jobs:
   publish:
-    name: Build and publish release artifacts
+    name: Publish Release Artifacts
     runs-on: ubuntu-latest
 
     steps:

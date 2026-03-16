@@ -13,7 +13,7 @@ on:
 jobs:
   # ── 1. Branch name validation ─────────────────────────────────────────────
   branch-name:
-    name: Validate Branch Name
+    name: Branch Naming
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
 
@@ -34,7 +34,7 @@ jobs:
 
   # ── 2. PR title validation (Conventional Commits) ─────────────────────────
   pr-title:
-    name: Validate PR Title
+    name: PR Title Convention
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
 
@@ -59,7 +59,7 @@ jobs:
 
   # ── 3. PR size check ──────────────────────────────────────────────────────
   pr-size:
-    name: PR Size Check
+    name: Change Volume
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
 
@@ -96,7 +96,7 @@ jobs:
 
   # ── 4. No direct push to main ─────────────────────────────────────────────
   no-direct-push:
-    name: Block Direct Push to Main
+    name: Direct Push Protection
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
@@ -109,7 +109,7 @@ jobs:
 
   # ── 5. Stale branch check ─────────────────────────────────────────────────
   stale-branch:
-    name: Check Branch Freshness
+    name: Branch Freshness
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
 
@@ -130,7 +130,7 @@ jobs:
 
   # ── 6. Auto-label PR based on branch type ────────────────────────────────
   auto-label:
-    name: Auto-label PR
+    name: PR Label Sync
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request' && github.event.action == 'opened'
     permissions:
@@ -161,7 +161,7 @@ jobs:
           fi
 
   policy-alignment:
-    name: AGENTS.md Policy Alignment
+    name: Policy Alignment
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
 

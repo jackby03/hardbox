@@ -14,7 +14,7 @@ on:
 
 jobs:
   smoke-install:
-    name: One-command install smoke
+    name: Installation and Runtime
     runs-on: ubuntu-latest
 
     steps:
