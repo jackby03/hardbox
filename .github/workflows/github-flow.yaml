@@ -43,15 +43,16 @@ jobs:
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          PATTERN='^(feat|fix|chore|refactor|test|docs|perf|ci)(\([a-z0-9/-]+\))?: .{1,72}$'
+          PATTERN='^(feat|fix|chore|refactor|test|docs|release|perf|ci)(\([a-z0-9/-]+\))?: .{1,72}$'
           if [[ ! "$PR_TITLE" =~ $PATTERN ]]; then
             echo "::error::PR title '$PR_TITLE' does not follow Conventional Commits."
             echo "::error::Expected: <type>(<scope>): <description>"
-            echo "::error::Valid types: feat, fix, chore, refactor, test, docs, perf, ci"
+            echo "::error::Valid types: feat, fix, chore, refactor, test, docs, release, perf, ci"
             echo "::error::Examples:"
             echo "::error::  feat(ssh): add PermitRootLogin check"
             echo "::error::  fix(engine): prevent nil deref on empty module list"
             echo "::error::  chore(ci): pin golangci-lint to v1.57"
+            echo "::error::  release(v0.1): cut first pre-release"
             exit 1
           fi
           echo "PR title '$PR_TITLE' is valid."

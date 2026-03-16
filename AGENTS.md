@@ -61,12 +61,13 @@ Branch format:
 - No underscores, no camelCase, no issue numbers in the branch name.
 
 Allowed prefixes:
-- `feat/`, `fix/`, `chore/`, `refactor/`, `test/`, `docs/`, `release/`.
+- `feat/`, `fix/`, `chore/`, `refactor/`, `test/`, `docs/`, `release/`, `perf/`.
 
 Examples:
 - `feat/firewall-module`
 - `fix/ssh-audit-panic`
 - `docs/modules-reference`
+- `perf/engine-registry-cache`
 
 Lifecycle:
 1. Start from updated `main`.
@@ -89,9 +90,17 @@ Commit/PR title format (Conventional Commits):
 - Scope is recommended (`ssh`, `engine`, `tui`, `config`, `ci`, etc.).
 - Lowercase type/scope.
 
+Allowed PR title types:
+- `feat`, `fix`, `chore`, `refactor`, `test`, `docs`, `release`, `perf`, `ci`.
+- Note: `ci` is valid as a PR title type (e.g. workflow-only changes) but does not have a
+  corresponding branch prefix — use `chore/` for the branch name in that case.
+
 Examples:
 - `feat(ssh): add PermitRootLogin check`
 - `fix(engine): prevent nil deref on empty module list`
+- `perf(engine): cache registered modules slice at startup`
+- `ci(workflows): pin golangci-lint to v1.57`
+- `release(v0.1): cut first pre-release`
 
 PR workflow:
 1. Open PR against `main` (draft if still WIP).
