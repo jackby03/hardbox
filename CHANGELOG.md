@@ -89,6 +89,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- `install-smoke.yaml` workflow to validate one-command installation on each published release.
+
+### Changed
+- `install.sh` now resolves release assets via GitHub API instead of hardcoded filenames, improving compatibility across release archive naming formats.
+- `install.sh` now returns explicit errors when a tag exists without a published GitHub Release or missing linux/checksum artifacts.
+- README Quick Start now uses the one-command installer and corrected rollback example (`hardbox rollback apply --last`).
+
 ### Planned for v0.2
 - `cis-level2`, `pci-dss`, `stig` compliance profiles
 - 14th module — mount and partition hardening

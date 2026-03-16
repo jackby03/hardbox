@@ -61,9 +61,11 @@ It covers every layer of the security stack: kernel parameters, SSH, firewall, P
 ### Install
 
 ```bash
-# Download the latest binary (Linux amd64)
-curl -sSL https://github.com/jackby03/hardbox/releases/latest/download/hardbox_linux_amd64.tar.gz \
-  | tar -xz && sudo mv hardbox /usr/local/bin/
+# One-command install (auto-detects linux/amd64 or linux/arm64)
+curl -fsSL https://hardbox.jackby03.com/install.sh | bash
+
+# Install a specific release or pre-release
+curl -fsSL https://hardbox.jackby03.com/install.sh | HARDBOX_VERSION=v0.1.0 bash
 
 # Verify installation
 hardbox --version
@@ -95,7 +97,7 @@ sudo hardbox apply --profile production --report ./hardbox-$(date +%Y%m%d).html
 sudo hardbox apply --config /etc/hardbox/config.yaml --non-interactive
 
 # Rollback the last session
-sudo hardbox rollback --last
+sudo hardbox rollback apply --last
 ```
 
 ---
