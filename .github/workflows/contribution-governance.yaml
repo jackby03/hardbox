@@ -1,4 +1,4 @@
-name: GitHub Flow
+name: Contribution Governance
 
 permissions:
   contents: read
@@ -174,7 +174,7 @@ jobs:
           RAW=$(awk '
             /Check branch naming convention/ {inblock=1; next}
             inblock && /PATTERN=/ {print; exit}
-          ' .github/workflows/github-flow.yaml)
+          ' .github/workflows/contribution-governance.yaml)
           TYPES=$(echo "$RAW" | sed -E "s/.*\^\(([^)]*)\).*/\1/" | tr '|' '\n' | sort -u)
           echo "types<<EOF" >> "$GITHUB_OUTPUT"
           echo "$TYPES" >> "$GITHUB_OUTPUT"
@@ -205,7 +205,7 @@ jobs:
 
           DIFF=$(diff <(echo "$WF") <(echo "$DOC") || true)
           if [ -n "$DIFF" ]; then
-            echo "::error file=AGENTS.md::Branch prefix drift detected between AGENTS.md and github-flow.yaml"
+            echo "::error file=AGENTS.md::Branch prefix drift detected between AGENTS.md and contribution-governance.yaml"
             echo "$DIFF"
             exit 1
           fi
@@ -217,7 +217,7 @@ jobs:
           RAW=$(awk '
             /Check PR title follows Conventional Commits/ {inblock=1; next}
             inblock && /PATTERN=/ {print; exit}
-          ' .github/workflows/github-flow.yaml)
+          ' .github/workflows/contribution-governance.yaml)
           TYPES=$(echo "$RAW" | sed -E "s/.*\^\(([^)]*)\).*/\1/" | tr '|' '\n' | sort -u)
           echo "types<<EOF" >> "$GITHUB_OUTPUT"
           echo "$TYPES" >> "$GITHUB_OUTPUT"
@@ -247,7 +247,7 @@ jobs:
 
           DIFF=$(diff <(echo "$WF") <(echo "$DOC") || true)
           if [ -n "$DIFF" ]; then
-            echo "::error file=AGENTS.md::PR title type drift detected between AGENTS.md and github-flow.yaml"
+            echo "::error file=AGENTS.md::PR title type drift detected between AGENTS.md and contribution-governance.yaml"
             echo "$DIFF"
             exit 1
           fi

@@ -1,4 +1,4 @@
-name: CI
+name: Quality Gates
 permissions:
   contents: read
 

@@ -126,8 +126,11 @@ hardbox/
 │
 ├── .github/
 │   └── workflows/
-│       ├── ci.yaml                  # Build + test
-│       └── release.yaml             # GoReleaser on tag
+│       ├── quality-gates.yaml       # Build, lint, audit, repository checks
+│       ├── contribution-governance.yaml # Branch, PR, and policy rules
+│       ├── release-publish.yaml     # GoReleaser on version tags
+│       ├── release-smoke.yaml       # Post-release install and runtime smoke
+│       └── docs-publish.yaml        # GitHub Pages deploy
 │
 ├── go.mod
 ├── go.sum
