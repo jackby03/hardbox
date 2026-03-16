@@ -181,8 +181,17 @@ jobs:
       - name: Extract branch types from AGENTS.md
         id: doc_branch
         run: |
-          LINE=$(grep -A3 'Allowed prefixes:' AGENTS.md | grep -m1 '^- ')
-          TYPES=$(echo "$LINE" | grep -oP '`[a-z]+/' | tr -d '`/' | sort)
+          TYPES=$(
+            awk '
+              /^Allowed prefixes:/ {inblock=1; next}
+              inblock && /^- / {print; next}
+              inblock && NF==0 {next}
+              inblock {exit}
+            ' AGENTS.md \
+            | grep -oP '`[a-z]+/' \
+            | tr -d '`/' \
+            | sort -u
+          )
           echo "types<<EOF" >> "$GITHUB_OUTPUT"
           echo "$TYPES" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
@@ -213,8 +222,17 @@ jobs:
       - name: Extract PR title types from AGENTS.md
         id: doc_pr
         run: |
-          LINE=$(grep -A3 'Allowed PR title types:' AGENTS.md | grep -m1 '^- ')
-          TYPES=$(echo "$LINE" | grep -oP '`[a-z]+`' | tr -d '`' | sort)
+          TYPES=$(
+            awk '
+              /^Allowed PR title types:/ {inblock=1; next}
+              inblock && /^- / {print; next}
+              inblock && NF==0 {next}
+              inblock {exit}
+            ' AGENTS.md \
+            | grep -oP '`[a-z]+`' \
+            | tr -d '`' \
+            | sort -u
+          )
           echo "types<<EOF" >> "$GITHUB_OUTPUT"
           echo "$TYPES" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
