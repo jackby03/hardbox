@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  README HERO BANNER — hardbox
+  Size: 1280 × 480 px
+  Usage: Screenshot at 1280×480 → save as .github/assets/hardbox-hero.png
+  Command: npx playwright screenshot --viewport-size 1280,480 hero.html hero.png
+-->
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 1280px; height: 480px; overflow: hidden;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #0f172a;
+      color: #f1f5f9;
+    }
+
+    /* ── grid ── */
+    .grid-bg {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(59,130,246,.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(59,130,246,.05) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+
+    /* ── glows ── */
+    .glow-l { position:absolute; top:-200px; left:-150px; width:700px; height:700px; border-radius:50%; background:radial-gradient(circle, rgba(59,130,246,.18) 0%, transparent 60%); }
+    .glow-r { position:absolute; bottom:-200px; right:-100px; width:600px; height:600px; border-radius:50%; background:radial-gradient(circle, rgba(6,182,212,.12) 0%, transparent 60%); }
+    .glow-c { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:800px; height:400px; border-radius:50%; background:radial-gradient(ellipse, rgba(59,130,246,.06) 0%, transparent 70%); }
+
+    /* ── layout ── */
+    .wrap {
+      position: relative; z-index: 1;
+      width: 1280px; height: 480px;
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 56px 80px;
+    }
+
+    /* ── left ── */
+    .left { flex: 1; padding-right: 40px; }
+
+    .version-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 5px 14px; border-radius: 20px;
+      background: rgba(59,130,246,.10);
+      border: 1px solid rgba(59,130,246,.25);
+      font-size: 13px; font-weight: 600; color: #22d3ee;
+      margin-bottom: 22px;
+    }
+    .pulse { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 8px #22c55e; animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(.85)} }
+
+    .logo-wrap {
+      display: flex; align-items: center; gap: 18px;
+      margin-bottom: 18px;
+    }
+    .logo-box {
+      width: 64px; height: 64px; border-radius: 16px;
+      background: linear-gradient(135deg, #1d4ed8, #06b6d4);
+      display: flex; align-items: center; justify-content: center;
+      font-family: monospace; font-size: 24px; font-weight: 900; color: #fff;
+      box-shadow: 0 0 30px rgba(59,130,246,.35);
+    }
+    .logo-name {
+      font-size: 52px; font-weight: 900; letter-spacing: -.04em; line-height: 1;
+    }
+    .logo-name span { color: #60a5fa; }
+
+    .tagline {
+      font-size: 19px; color: #94a3b8; line-height: 1.55;
+      margin-bottom: 30px; max-width: 520px;
+    }
+    .tagline strong { color: #f1f5f9; }
+
+    .badge-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .b {
+      padding: 5px 12px; border-radius: 6px;
+      font-size: 12.5px; font-weight: 600; border: 1px solid;
+    }
+    .b-blue  { background:rgba(59,130,246,.12); border-color:rgba(59,130,246,.28); color:#60a5fa; }
+    .b-cyan  { background:rgba(6,182,212,.10);  border-color:rgba(6,182,212,.25);  color:#22d3ee; }
+    .b-green { background:rgba(34,197,94,.10);  border-color:rgba(34,197,94,.25);  color:#22c55e; }
+    .b-violet{ background:rgba(139,92,246,.10); border-color:rgba(139,92,246,.25); color:#a78bfa; }
+    .b-slate { background:rgba(100,116,139,.08);border-color:rgba(100,116,139,.20);color:#94a3b8; }
+
+    /* ── right: terminal ── */
+    .right { width: 460px; flex-shrink: 0; }
+
+    .term {
+      background: #020817;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,.5), 0 0 60px rgba(59,130,246,.15), 0 0 0 1px rgba(59,130,246,.08);
+    }
+    .t-bar {
+      display: flex; align-items: center; gap: 7px; padding: 11px 16px;
+      background: rgba(30,41,59,.90); border-bottom: 1px solid #334155;
+    }
+    .d { width: 11px; height: 11px; border-radius: 50%; }
+    .t-ttl { flex:1; text-align:center; font-size:12px; color:#64748b; font-family:monospace; }
+    .t-body { padding: 16px 18px; font-family:monospace; font-size:12.5px; line-height:1.8; }
+
+    .t-pr   { color: #60a5fa; }
+    .t-cmd  { color: #f1f5f9; }
+    .t-info { color: #22d3ee; }
+    .t-ok   { color: #22c55e; }
+    .t-warn { color: #f59e0b; }
+    .t-err  { color: #ef4444; }
+    .t-dim  { color: #475569; }
+    .t-sc   { color: #60a5fa; font-weight: 700; }
+
+    /* ── bottom gradient bar ── */
+    .bar { position:absolute; bottom:0; left:0; right:0; height:3px; background:linear-gradient(to right, #1d4ed8, #06b6d4, #8b5cf6); }
+  </style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+  <div class="glow-l"></div>
+  <div class="glow-r"></div>
+  <div class="glow-c"></div>
+
+  <div class="wrap">
+    <div class="left">
+      <div class="version-pill">
+        <span class="pulse"></span>
+        v0.1 Pre-release · Open Source
+      </div>
+
+      <div class="logo-wrap">
+        <div class="logo-box">[]</div>
+        <div class="logo-name">hard<span>box</span></div>
+      </div>
+
+      <div class="tagline">
+        <strong>Production-grade Linux hardening toolkit.</strong><br/>
+        Automated CIS hardening with dry-run, rollback, and audit reports.
+      </div>
+
+      <div class="badge-row">
+        <span class="b b-green">✓ 13 modules</span>
+        <span class="b b-blue">100+ checks</span>
+        <span class="b b-cyan">CIS · STIG · PCI-DSS</span>
+        <span class="b b-violet">Dry-run + Rollback</span>
+        <span class="b b-slate">Go 1.22 · MIT · CGO=0</span>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="term">
+        <div class="t-bar">
+          <span class="d" style="background:#ff5f57"></span>
+          <span class="d" style="background:#febc2e"></span>
+          <span class="d" style="background:#28c840"></span>
+          <span class="t-ttl">hardbox — cis-level1 audit</span>
+        </div>
+        <div class="t-body">
+<span class="t-pr">$</span> <span class="t-cmd">sudo hardbox audit --profile cis-level1</span><br/>
+<br/>
+<span class="t-info">[INFO] session: a3f7b291  modules: 13</span><br/>
+<span class="t-dim">────────────────────────────────────────</span><br/>
+<span class="t-ok"> ✓</span> <span class="t-dim">[ssh    ]</span> PermitRootLogin disabled   <span class="t-dim">CRIT</span><br/>
+<span class="t-err"> ✗</span> <span class="t-dim">[ssh    ]</span> PasswordAuth disabled      <span class="t-dim">HIGH</span><br/>
+<span class="t-ok"> ✓</span> <span class="t-dim">[kernel ]</span> ASLR enabled               <span class="t-dim">HIGH</span><br/>
+<span class="t-ok"> ✓</span> <span class="t-dim">[fw     ]</span> UFW enabled and active     <span class="t-dim">CRIT</span><br/>
+<span class="t-ok"> ✓</span> <span class="t-dim">[crypto ]</span> Weak ciphers disabled      <span class="t-dim">HIGH</span><br/>
+<span class="t-ok"> ✓</span> <span class="t-dim">[auditd ]</span> auditd service active      <span class="t-dim">HIGH</span><br/>
+<span class="t-dim">────────────────────────────────────────</span><br/>
+<span class="t-sc">[DONE]</span> <span class="t-ok">Score: 87%</span> &nbsp;<span class="t-dim">2 findings · report saved</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bar"></div>
+</body>
+</html>

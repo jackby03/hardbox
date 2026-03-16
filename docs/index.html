@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hardbox — Production-Grade Linux Hardening Toolkit</title>
+  <meta name="description" content="Automate CIS, STIG, PCI-DSS, and HIPAA hardening across Ubuntu, Debian, RHEL, Rocky, and Amazon Linux. Dry-run, rollback, audit reports." />
+  <meta property="og:title" content="hardbox — Linux Hardening Toolkit" />
+  <meta property="og:description" content="13 hardening modules. 100+ checks. CIS benchmarks. Dry-run + rollback. JSON/HTML/Markdown reports." />
+  <meta property="og:image" content="https://hardbox.jackby03.com/og-image.png" />
+  <meta property="og:url" content="https://hardbox.jackby03.com" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="hardbox — Linux Hardening Toolkit" />
+  <meta name="twitter:description" content="Automated Linux hardening with dry-run, rollback, and audit reports." />
+  <meta name="twitter:image" content="https://hardbox.jackby03.com/og-image.png" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%230f172a'/><text y='24' x='4' font-size='22' font-family='monospace' fill='%233b82f6'>[&#93;</text></svg>" />
+  <style>
+    /* ── Design tokens ─────────────────────────────────────────────────────── */
+    :root {
+      --bg:           #0f172a;
+      --bg-card:      #1e293b;
+      --bg-hover:     #263550;
+      --border:       #334155;
+      --border-glow:  rgba(59,130,246,.35);
+      --primary:      #3b82f6;
+      --primary-l:    #60a5fa;
+      --primary-d:    #2563eb;
+      --cyan:         #06b6d4;
+      --cyan-l:       #22d3ee;
+      --violet:       #8b5cf6;
+      --green:        #22c55e;
+      --amber:        #f59e0b;
+      --red:          #ef4444;
+      --text:         #f1f5f9;
+      --text-2:       #94a3b8;
+      --text-3:       #64748b;
+      --radius:       12px;
+      --radius-lg:    20px;
+      --shadow:       0 0 40px rgba(59,130,246,.12);
+      --glow:         0 0 60px rgba(59,130,246,.20);
+    }
+
+    /* ── Reset & base ──────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+    code, pre, .mono { font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace; }
+
+    /* ── Grid background ───────────────────────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background-image:
+        linear-gradient(rgba(59,130,246,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(59,130,246,.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+    }
+
+    /* gradient orbs */
+    body::after {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 20%, rgba(59,130,246,.12) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 35% at 80% 70%, rgba(6,182,212,.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    main, nav, footer, section { position: relative; z-index: 1; }
+
+    /* ── Navbar ────────────────────────────────────────────────────────────── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 clamp(1rem, 5vw, 3rem);
+      height: 64px;
+      background: rgba(15,23,42,.80);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 1.2rem; font-weight: 700; letter-spacing: -.02em;
+    }
+    .nav-logo-icon {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 34px; height: 34px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--primary-d), var(--cyan));
+      font-size: .85rem; font-weight: 800; color: #fff; font-family: monospace;
+    }
+    .nav-logo-text { color: var(--text); }
+    .nav-logo-text span { color: var(--primary-l); }
+
+    .nav-links {
+      display: flex; align-items: center; gap: 2rem;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: .9rem; color: var(--text-2);
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-cta {
+      display: flex; align-items: center; gap: .75rem;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: .5rem;
+      padding: .5rem 1.25rem; border-radius: 8px;
+      font-size: .875rem; font-weight: 600;
+      cursor: pointer; border: none; transition: all .2s;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 0 20px rgba(59,130,246,.40);
+    }
+    .btn-primary:hover {
+      background: var(--primary-l);
+      box-shadow: 0 0 30px rgba(59,130,246,.60);
+      transform: translateY(-1px);
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-2);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover {
+      border-color: var(--primary);
+      color: var(--text);
+    }
+    .badge-version {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: .25rem .7rem; border-radius: 20px;
+      background: rgba(59,130,246,.12);
+      border: 1px solid rgba(59,130,246,.30);
+      font-size: .75rem; font-weight: 600; color: var(--primary-l);
+    }
+    .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+
+    /* ── Hero ──────────────────────────────────────────────────────────────── */
+    #hero {
+      min-height: calc(100vh - 64px);
+      display: grid; grid-template-columns: 1fr 1fr;
+      align-items: center;
+      gap: 3rem;
+      padding: 5rem clamp(1rem, 5vw, 3rem);
+      max-width: 1280px; margin: 0 auto;
+    }
+
+    .hero-label {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: .35rem 1rem; border-radius: 20px;
+      background: rgba(59,130,246,.10);
+      border: 1px solid rgba(59,130,246,.25);
+      font-size: .8rem; font-weight: 500; color: var(--cyan-l);
+      margin-bottom: 1.5rem;
+    }
+    .hero-label svg { width: 14px; height: 14px; }
+
+    .hero-h1 {
+      font-size: clamp(2.2rem, 4.5vw, 3.6rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -.03em;
+      margin-bottom: 1.25rem;
+    }
+    .hero-h1 .grad {
+      background: linear-gradient(135deg, var(--primary-l) 0%, var(--cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-desc {
+      font-size: 1.1rem;
+      color: var(--text-2);
+      max-width: 480px;
+      margin-bottom: 2.5rem;
+      line-height: 1.7;
+    }
+
+    .hero-actions {
+      display: flex; flex-wrap: wrap; gap: 1rem;
+      margin-bottom: 3rem;
+    }
+    .hero-actions .btn { padding: .75rem 1.75rem; font-size: 1rem; }
+
+    .hero-badges {
+      display: flex; flex-wrap: wrap; gap: .5rem;
+    }
+    .hbadge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: .3rem .75rem; border-radius: 6px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border);
+      font-size: .78rem; color: var(--text-3);
+    }
+    .hbadge .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+    /* ── Terminal window ───────────────────────────────────────────────────── */
+    .terminal-wrap {
+      position: relative;
+    }
+    .terminal-glow {
+      position: absolute; inset: -20px;
+      background: radial-gradient(ellipse at center, rgba(59,130,246,.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .terminal {
+      background: #020817;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow), 0 0 0 1px rgba(59,130,246,.10);
+    }
+    .terminal-bar {
+      display: flex; align-items: center; gap: 8px;
+      padding: .75rem 1.25rem;
+      background: rgba(30,41,59,.80);
+      border-bottom: 1px solid var(--border);
+    }
+    .t-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .t-dot.r { background: #ff5f57; }
+    .t-dot.y { background: #febc2e; }
+    .t-dot.g { background: #28c840; }
+    .terminal-title {
+      flex: 1; text-align: center;
+      font-size: .78rem; color: var(--text-3); font-family: monospace;
+    }
+    .terminal-body {
+      padding: 1.25rem 1.5rem;
+      font-size: .82rem; line-height: 1.8;
+      min-height: 280px;
+    }
+    .t-prompt { color: var(--primary-l); }
+    .t-cmd    { color: var(--text); }
+    .t-info   { color: var(--cyan); }
+    .t-ok     { color: var(--green); }
+    .t-warn   { color: var(--amber); }
+    .t-err    { color: var(--red); }
+    .t-dim    { color: var(--text-3); }
+    .t-score  { color: var(--primary-l); font-weight: 700; }
+    .t-line   { display: block; }
+    .cursor   { display: inline-block; width: 8px; height: 14px; background: var(--primary); animation: blink 1s step-end infinite; vertical-align: text-bottom; }
+    @keyframes blink { 0%,100%{ opacity:1 } 50%{ opacity:0 } }
+
+    /* ── Stats bar ─────────────────────────────────────────────────────────── */
+    #stats {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: rgba(30,41,59,.40);
+    }
+    .stats-inner {
+      max-width: 1280px; margin: 0 auto;
+      display: flex; justify-content: space-around; flex-wrap: wrap;
+      padding: 2rem clamp(1rem, 5vw, 3rem);
+      gap: 1.5rem;
+    }
+    .stat {
+      text-align: center;
+    }
+    .stat-number {
+      font-size: 2rem; font-weight: 800;
+      background: linear-gradient(135deg, var(--primary-l), var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .stat-label {
+      font-size: .8rem; color: var(--text-3); letter-spacing: .06em; text-transform: uppercase;
+    }
+    .stat-divider {
+      width: 1px; background: var(--border); align-self: stretch;
+    }
+
+    /* ── Section wrapper ───────────────────────────────────────────────────── */
+    .section {
+      max-width: 1280px; margin: 0 auto;
+      padding: 6rem clamp(1rem, 5vw, 3rem);
+    }
+    .section-label {
+      display: inline-block;
+      font-size: .75rem; font-weight: 700; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--primary);
+      margin-bottom: .75rem;
+    }
+    .section-title {
+      font-size: clamp(1.8rem, 3vw, 2.6rem);
+      font-weight: 800; letter-spacing: -.02em;
+      margin-bottom: 1rem;
+    }
+    .section-sub {
+      font-size: 1.05rem; color: var(--text-2);
+      max-width: 560px; line-height: 1.7;
+      margin-bottom: 3.5rem;
+    }
+
+    /* ── Features grid ─────────────────────────────────────────────────────── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+    .feat-card {
+      padding: 1.75rem;
+      background: rgba(30,41,59,.60);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      backdrop-filter: blur(8px);
+      transition: all .25s;
+      cursor: default;
+    }
+    .feat-card:hover {
+      border-color: var(--primary);
+      background: rgba(37,53,80,.70);
+      box-shadow: 0 0 30px rgba(59,130,246,.12), inset 0 1px 0 rgba(59,130,246,.10);
+      transform: translateY(-2px);
+    }
+    .feat-icon {
+      width: 44px; height: 44px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; margin-bottom: 1rem;
+    }
+    .feat-title { font-size: 1.05rem; font-weight: 700; margin-bottom: .5rem; }
+    .feat-desc  { font-size: .9rem; color: var(--text-2); line-height: 1.6; }
+    .feat-tags  { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: 1rem; }
+    .feat-tag {
+      padding: .2rem .6rem; border-radius: 4px;
+      font-size: .72rem; font-weight: 600; font-family: monospace;
+      background: rgba(59,130,246,.10); color: var(--primary-l);
+    }
+
+    /* ── Modules list ──────────────────────────────────────────────────────── */
+    .modules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .mod-card {
+      padding: 1rem 1.25rem;
+      background: rgba(30,41,59,.50);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      display: flex; align-items: center; gap: .75rem;
+      transition: all .2s;
+    }
+    .mod-card:hover {
+      border-color: rgba(59,130,246,.50);
+      background: rgba(37,53,80,.60);
+    }
+    .mod-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--green); flex-shrink: 0;
+      box-shadow: 0 0 6px rgba(34,197,94,.6);
+    }
+    .mod-name { font-size: .9rem; font-weight: 600; font-family: monospace; }
+    .mod-count { font-size: .78rem; color: var(--text-3); margin-left: auto; }
+
+    /* ── Install section ───────────────────────────────────────────────────── */
+    #install { background: linear-gradient(to bottom, transparent, rgba(59,130,246,.04), transparent); }
+
+    .install-box {
+      background: #020817;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      max-width: 720px;
+      box-shadow: var(--shadow);
+    }
+    .install-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+    }
+    .install-tab {
+      padding: .75rem 1.5rem;
+      font-size: .85rem; font-weight: 600; color: var(--text-3);
+      cursor: pointer; border: none; background: transparent;
+      border-bottom: 2px solid transparent; transition: all .2s;
+    }
+    .install-tab.active {
+      color: var(--primary-l);
+      border-bottom-color: var(--primary);
+    }
+    .install-body {
+      padding: 1.5rem;
+    }
+    .install-cmd {
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: .85rem 1.25rem;
+      font-family: monospace; font-size: .9rem;
+      color: var(--cyan-l);
+    }
+    .copy-btn {
+      background: rgba(59,130,246,.15);
+      border: 1px solid rgba(59,130,246,.30);
+      color: var(--primary-l);
+      padding: .35rem .85rem;
+      border-radius: 6px;
+      font-size: .78rem; font-weight: 600;
+      cursor: pointer; transition: all .2s; white-space: nowrap;
+    }
+    .copy-btn:hover { background: rgba(59,130,246,.30); }
+    .copy-btn.copied { color: var(--green); border-color: rgba(34,197,94,.40); background: rgba(34,197,94,.10); }
+
+    .install-steps {
+      margin-top: 1.5rem;
+      display: flex; flex-direction: column; gap: .75rem;
+    }
+    .install-step {
+      display: flex; gap: 1rem; align-items: flex-start;
+      font-size: .88rem; color: var(--text-2);
+    }
+    .step-num {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: rgba(59,130,246,.15); border: 1px solid rgba(59,130,246,.30);
+      font-size: .72rem; font-weight: 700; color: var(--primary-l);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .step-code { font-family: monospace; color: var(--cyan-l); }
+
+    /* ── Profiles table ────────────────────────────────────────────────────── */
+    .profiles-wrap {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;
+    }
+    .profile-group-title {
+      font-size: .75rem; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; margin-bottom: 1rem;
+    }
+    .profile-group-title.shipped { color: var(--green); }
+    .profile-group-title.roadmap { color: var(--text-3); }
+
+    .profile-table {
+      width: 100%; border-collapse: collapse; font-size: .88rem;
+    }
+    .profile-table th {
+      text-align: left; padding: .6rem 1rem;
+      color: var(--text-3); font-weight: 600; font-size: .78rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .profile-table td {
+      padding: .75rem 1rem;
+      border-bottom: 1px solid rgba(51,65,85,.50);
+      color: var(--text-2);
+    }
+    .profile-table tr:hover td { background: rgba(59,130,246,.04); }
+    .profile-table td:first-child { font-family: monospace; color: var(--primary-l); font-size: .85rem; }
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: .2rem .6rem; border-radius: 4px;
+      font-size: .72rem; font-weight: 600;
+    }
+    .status-badge.shipped { background: rgba(34,197,94,.10); color: var(--green); }
+    .status-badge.roadmap { background: rgba(100,116,139,.10); color: var(--text-3); }
+
+    /* ── Compliance strip ──────────────────────────────────────────────────── */
+    .compliance-strip {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem;
+      padding: 2rem;
+    }
+    .comp-badge {
+      padding: .5rem 1.25rem; border-radius: 8px;
+      border: 1px solid var(--border);
+      background: rgba(30,41,59,.50);
+      font-size: .85rem; font-weight: 600; color: var(--text-2);
+      transition: all .2s;
+    }
+    .comp-badge:hover { border-color: var(--primary); color: var(--text); }
+
+    /* ── CTA strip ─────────────────────────────────────────────────────────── */
+    #cta {
+      text-align: center;
+      padding: 6rem clamp(1rem, 5vw, 3rem);
+      background: radial-gradient(ellipse 70% 50% at 50% 50%, rgba(59,130,246,.08) 0%, transparent 70%);
+    }
+    #cta h2 {
+      font-size: clamp(1.8rem, 3vw, 2.8rem);
+      font-weight: 800; letter-spacing: -.02em; margin-bottom: 1rem;
+    }
+    #cta p { font-size: 1.05rem; color: var(--text-2); margin-bottom: 2.5rem; }
+    .cta-group { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .cta-group .btn { padding: .85rem 2.25rem; font-size: 1rem; }
+
+    /* ── Footer ────────────────────────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      background: rgba(15,23,42,.80);
+    }
+    .footer-inner {
+      max-width: 1280px; margin: 0 auto;
+      padding: 3rem clamp(1rem, 5vw, 3rem);
+      display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 3rem;
+    }
+    .footer-brand { }
+    .footer-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; }
+    .footer-desc { font-size: .88rem; color: var(--text-3); line-height: 1.7; max-width: 280px; }
+    .footer-col-title { font-size: .8rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); margin-bottom: 1rem; }
+    .footer-links { list-style: none; display: flex; flex-direction: column; gap: .6rem; }
+    .footer-links a { font-size: .88rem; color: var(--text-3); transition: color .2s; }
+    .footer-links a:hover { color: var(--text); }
+    .footer-bottom {
+      border-top: 1px solid var(--border);
+      padding: 1.5rem clamp(1rem, 5vw, 3rem);
+      max-width: 1280px; margin: 0 auto;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
+      font-size: .82rem; color: var(--text-3);
+    }
+    .footer-bottom a { color: var(--text-3); }
+    .footer-bottom a:hover { color: var(--primary-l); }
+
+    /* ── Divider ───────────────────────────────────────────────────────────── */
+    .divider {
+      max-width: 1280px; margin: 0 auto;
+      height: 1px; background: linear-gradient(to right, transparent, var(--border), transparent);
+    }
+
+    /* ── Scroll reveal ─────────────────────────────────────────────────────── */
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity .6s ease, transform .6s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    /* ── Responsive ────────────────────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      #hero { grid-template-columns: 1fr; padding-top: 3rem; }
+      .terminal-wrap { order: -1; }
+      .profiles-wrap { grid-template-columns: 1fr; }
+      .footer-inner { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+      .nav-links { display: none; }
+      .footer-inner { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAVBAR ───────────────────────────────────────────────────────────────── -->
+<nav>
+  <a href="#" class="nav-logo">
+    <span class="nav-logo-icon mono">[]</span>
+    <span class="nav-logo-text">hard<span>box</span></span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#modules">Modules</a></li>
+    <li><a href="#install">Install</a></li>
+    <li><a href="#profiles">Profiles</a></li>
+    <li><a href="https://github.com/jackby03/hardbox/tree/main/docs">Docs</a></li>
+  </ul>
+  <div class="nav-cta">
+    <span class="badge-version"><span class="badge-dot"></span>v0.1 pre-release</span>
+    <a href="https://github.com/jackby03/hardbox" class="btn btn-ghost" target="_blank">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      GitHub
+    </a>
+  </div>
+</nav>
+
+<!-- ── HERO ─────────────────────────────────────────────────────────────────── -->
+<section id="hero">
+  <div class="hero-content">
+    <div class="hero-label">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Open Source Linux Security Toolkit
+    </div>
+    <h1 class="hero-h1">
+      Harden your servers.<br/>
+      <span class="grad">Stay compliant.</span>
+    </h1>
+    <p class="hero-desc">
+      Automated CIS, STIG, and PCI-DSS hardening across Ubuntu, Debian, RHEL, Rocky, and Amazon Linux.
+      Dry-run everything. Roll back anything. Report in JSON, HTML, or Markdown.
+    </p>
+    <div class="hero-actions">
+      <a href="#install" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Get Started
+      </a>
+      <a href="https://github.com/jackby03/hardbox" class="btn btn-ghost" target="_blank">
+        View on GitHub →
+      </a>
+    </div>
+    <div class="hero-badges">
+      <span class="hbadge"><span class="dot" style="background:var(--green)"></span>Go 1.22+</span>
+      <span class="hbadge"><span class="dot" style="background:var(--primary)"></span>CGO_ENABLED=0</span>
+      <span class="hbadge"><span class="dot" style="background:var(--cyan)"></span>MIT License</span>
+      <span class="hbadge"><span class="dot" style="background:var(--violet)"></span>CIS Benchmarks</span>
+      <span class="hbadge"><span class="dot" style="background:var(--amber)"></span>No root? Dry-run</span>
+    </div>
+  </div>
+
+  <div class="terminal-wrap reveal">
+    <div class="terminal-glow"></div>
+    <div class="terminal">
+      <div class="terminal-bar">
+        <span class="t-dot r"></span>
+        <span class="t-dot y"></span>
+        <span class="t-dot g"></span>
+        <span class="terminal-title">hardbox — audit</span>
+      </div>
+      <div class="terminal-body" id="termBody">
+        <span class="t-line"><span class="t-prompt">user@server:~$</span> <span class="t-cmd">sudo hardbox audit --profile cis-level1 --format json</span></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── STATS BAR ─────────────────────────────────────────────────────────────── -->
+<section id="stats">
+  <div class="stats-inner">
+    <div class="stat">
+      <div class="stat-number" id="cnt-modules">13</div>
+      <div class="stat-label">Hardening Modules</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat">
+      <div class="stat-number" id="cnt-checks">100+</div>
+      <div class="stat-label">Security Checks</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat">
+      <div class="stat-number" id="cnt-distros">5</div>
+      <div class="stat-label">Distro Families</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat">
+      <div class="stat-number" id="cnt-profiles">3</div>
+      <div class="stat-label">Built-in Profiles</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat">
+      <div class="stat-number">MIT</div>
+      <div class="stat-label">License</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── FEATURES ──────────────────────────────────────────────────────────────── -->
+<section id="features">
+  <div class="section">
+    <span class="section-label">Features</span>
+    <h2 class="section-title">Everything you need to harden at scale</h2>
+    <p class="section-sub">hardbox removes the guesswork from Linux hardening. Audit, plan, apply, and roll back — all from a single binary with zero dependencies.</p>
+    <div class="features-grid reveal">
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(59,130,246,.15)">🛡️</div>
+        <div class="feat-title">Modular Architecture</div>
+        <div class="feat-desc">Enable or disable any module independently. Each module is isolated, testable, and distro-aware. Mix and match profiles at will.</div>
+        <div class="feat-tags"><span class="feat-tag">ssh</span><span class="feat-tag">kernel</span><span class="feat-tag">firewall</span><span class="feat-tag">+10</span></div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(34,197,94,.15)">🔄</div>
+        <div class="feat-title">Dry-run + Rollback</div>
+        <div class="feat-desc">Preview every exact change before it's applied. Every session creates a snapshot. Revert any module or the entire session in one command.</div>
+        <div class="feat-tags"><span class="feat-tag">--dry-run</span><span class="feat-tag">rollback list</span><span class="feat-tag">rollback apply</span></div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(6,182,212,.15)">📊</div>
+        <div class="feat-title">Structured Reports</div>
+        <div class="feat-desc">JSON, HTML, and Markdown output. Machine-readable for SIEM integration. Human-readable for compliance reviews and audit trails.</div>
+        <div class="feat-tags"><span class="feat-tag">--format json</span><span class="feat-tag">--format html</span><span class="feat-tag">--format markdown</span></div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(139,92,246,.15)">🖥️</div>
+        <div class="feat-title">Modern TUI</div>
+        <div class="feat-desc">Interactive terminal UI built with Bubble Tea. Navigate modules, configure profiles, and apply hardening without memorizing any flags.</div>
+        <div class="feat-tags"><span class="feat-tag">Bubble Tea</span><span class="feat-tag">Lipgloss</span><span class="feat-tag">interactive</span></div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(245,158,11,.15)">⚙️</div>
+        <div class="feat-title">CI/CD Headless Mode</div>
+        <div class="feat-desc">Unattended runs via YAML config and <code>--non-interactive</code> flag. Drop it into Ansible, Terraform, cloud-init, or GitHub Actions.</div>
+        <div class="feat-tags"><span class="feat-tag">--non-interactive</span><span class="feat-tag">--config</span><span class="feat-tag">HARDBOX_PROFILE</span></div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(239,68,68,.15)">🐧</div>
+        <div class="feat-title">Distro-Aware Engine</div>
+        <div class="feat-desc">A single binary handles Ubuntu, Debian, RHEL, Rocky Linux, AlmaLinux, and Amazon Linux. Each module adapts to the host's package manager and init system.</div>
+        <div class="feat-tags"><span class="feat-tag">Ubuntu</span><span class="feat-tag">RHEL</span><span class="feat-tag">Debian</span><span class="feat-tag">Rocky</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── MODULES ────────────────────────────────────────────────────────────────── -->
+<section id="modules">
+  <div class="section">
+    <span class="section-label">Hardening Modules</span>
+    <h2 class="section-title">13 modules. 100+ checks. Zero gaps.</h2>
+    <p class="section-sub">Every module implements the same interface — Audit, Plan, Apply, Rollback — and ships with table-driven unit tests and compliance references.</p>
+    <div class="modules-grid reveal">
+      <div class="mod-card"><span class="mod-dot"></span><span class="mod-name">ssh</span><span class="mod-count">17 checks</span></div>
+      <div class="mod-card"><span class="mod-dot"></span><span class="mod-name">kernel</span><span class="mod-count">12 checks</span></div>
+      <div class="mod-card"><span class="mod-dot"></span><span class="mod-name">firewall</span><span class="mod-count">8 checks</span></div>
+      <div class="mod-card"><span class="mod-dot"></span><span class="mod-name">users</span><span class="mod-count">14 checks</span></div>
+      <div class="mod-card"><span class="mod-dot"></span><span class="mod-name">filesystem</span><span class="mod-count">11 checks</span></div>
+      <div class="mod-card"><span class="mod-dot"></span><span class="mod-name">network</span><span class="mod-count">9 checks</span></div>
+      <div class="mod-card"><span class="mod-dot"></span><span class="mod-name">crypto</span><span class="mod-count">7 checks</span></div>
+      <div class="mod-card"><span class="mod-dot"></span><span class="mod-name">auditd</span><span class="mod-count">10 checks</span></div>
+      <div class="mod-card"><span class="mod-dot"></span><span class="mod-name">logging</span><span class="mod-count">7 checks</span></div>
+      <div class="mod-card"><span class="mod-dot"></span><span class="mod-name">mac</span><span class="mod-count">6 checks</span></div>
+      <div class="mod-card"><span class="mod-dot"></span><span class="mod-name">containers</span><span class="mod-count">9 checks</span></div>
+      <div class="mod-card"><span class="mod-dot"></span><span class="mod-name">services</span><span class="mod-count">5 checks</span></div>
+      <div class="mod-card"><span class="mod-dot"></span><span class="mod-name">updates</span><span class="mod-count">6 checks</span></div>
+    </div>
+    <div class="compliance-strip reveal" style="margin-top:3rem">
+      <span class="comp-badge">CIS Benchmarks L1</span>
+      <span class="comp-badge">CIS Benchmarks L2 ✦ roadmap</span>
+      <span class="comp-badge">DoD STIG ✦ roadmap</span>
+      <span class="comp-badge">PCI-DSS v4.0 ✦ roadmap</span>
+      <span class="comp-badge">HIPAA Security ✦ roadmap</span>
+      <span class="comp-badge">NIST 800-53 ✦ roadmap</span>
+      <span class="comp-badge">ISO 27001 ✦ roadmap</span>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── INSTALL ────────────────────────────────────────────────────────────────── -->
+<section id="install">
+  <div class="section">
+    <span class="section-label">Installation</span>
+    <h2 class="section-title">Up and running in 30 seconds</h2>
+    <p class="section-sub">A single statically-linked binary. No runtime dependencies. No CGO. Runs on any Linux x86_64 or ARM64 server.</p>
+
+    <div class="install-box reveal">
+      <div class="install-tabs">
+        <button class="install-tab active" onclick="switchTab(this,'tab-curl')">curl one-liner</button>
+        <button class="install-tab" onclick="switchTab(this,'tab-go')">go install</button>
+        <button class="install-tab" onclick="switchTab(this,'tab-release')">GitHub Release</button>
+      </div>
+
+      <div class="install-body" id="tab-curl">
+        <div class="install-cmd">
+          <span>curl -fsSL https://raw.githubusercontent.com/jackby03/hardbox/main/install.sh | sudo bash</span>
+          <button class="copy-btn" onclick="copyCmd(this, 'curl -fsSL https://raw.githubusercontent.com/jackby03/hardbox/main/install.sh | sudo bash')">Copy</button>
+        </div>
+        <div class="install-steps">
+          <div class="install-step"><span class="step-num">1</span><span>Downloads the latest release binary for your architecture</span></div>
+          <div class="install-step"><span class="step-num">2</span><span>Installs to <span class="step-code">/usr/local/bin/hardbox</span></span></div>
+          <div class="install-step"><span class="step-num">3</span><span>Run <span class="step-code">sudo hardbox audit --profile cis-level1</span> to verify</span></div>
+        </div>
+      </div>
+
+      <div class="install-body" id="tab-go" style="display:none">
+        <div class="install-cmd">
+          <span>go install github.com/hardbox-io/hardbox/cmd/hardbox@latest</span>
+          <button class="copy-btn" onclick="copyCmd(this, 'go install github.com/hardbox-io/hardbox/cmd/hardbox@latest')">Copy</button>
+        </div>
+        <div class="install-steps">
+          <div class="install-step"><span class="step-num">1</span><span>Requires Go 1.22+. Installs to <span class="step-code">$GOPATH/bin</span></span></div>
+          <div class="install-step"><span class="step-num">2</span><span>Builds with <span class="step-code">CGO_ENABLED=0</span> — fully static binary</span></div>
+          <div class="install-step"><span class="step-num">3</span><span>Cross-compiles for Linux amd64 and arm64</span></div>
+        </div>
+      </div>
+
+      <div class="install-body" id="tab-release" style="display:none">
+        <div class="install-cmd">
+          <span>https://github.com/jackby03/hardbox/releases/latest</span>
+          <button class="copy-btn" onclick="copyCmd(this, 'https://github.com/jackby03/hardbox/releases/latest')">Copy</button>
+        </div>
+        <div class="install-steps">
+          <div class="install-step"><span class="step-num">1</span><span>Download <span class="step-code">hardbox_v0.1_linux_amd64.tar.gz</span></span></div>
+          <div class="install-step"><span class="step-num">2</span><span>Verify with <span class="step-code">hardbox_v0.1_checksums.txt</span> (SHA256)</span></div>
+          <div class="install-step"><span class="step-num">3</span><span>Extract and move to <span class="step-code">/usr/local/bin/</span></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── PROFILES ───────────────────────────────────────────────────────────────── -->
+<section id="profiles">
+  <div class="section">
+    <span class="section-label">Compliance Profiles</span>
+    <h2 class="section-title">Start with a profile. Customize from there.</h2>
+    <p class="section-sub">Profiles define which modules run, which checks are enforced, and what severity thresholds trigger CI failures.</p>
+    <div class="profiles-wrap reveal">
+      <div>
+        <div class="profile-group-title shipped">✓ Available in v0.1</div>
+        <table class="profile-table">
+          <thead><tr><th>Profile</th><th>Framework</th><th>Best For</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>cis-level1</td><td>CIS Benchmarks L1</td><td>Minimum baseline</td><td><span class="status-badge shipped">● Shipped</span></td></tr>
+            <tr><td>production</td><td>hardbox curated</td><td>Cloud production</td><td><span class="status-badge shipped">● Shipped</span></td></tr>
+            <tr><td>development</td><td>hardbox curated</td><td>Dev/staging</td><td><span class="status-badge shipped">● Shipped</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <div class="profile-group-title roadmap">◌ Roadmap</div>
+        <table class="profile-table">
+          <thead><tr><th>Profile</th><th>Framework</th><th>Target</th></tr></thead>
+          <tbody>
+            <tr><td>cis-level2</td><td>CIS Benchmarks L2</td><td>v0.2</td></tr>
+            <tr><td>stig</td><td>DoD STIG</td><td>v0.2</td></tr>
+            <tr><td>pci-dss</td><td>PCI-DSS v4.0</td><td>v0.2</td></tr>
+            <tr><td>hipaa</td><td>HIPAA Security Rule</td><td>v0.3</td></tr>
+            <tr><td>nist-800-53</td><td>NIST SP 800-53 Rev.5</td><td>v0.3</td></tr>
+            <tr><td>iso27001</td><td>ISO/IEC 27001:2022</td><td>v0.3</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── CTA ───────────────────────────────────────────────────────────────────── -->
+<section id="cta">
+  <h2>Ready to harden your fleet?</h2>
+  <p>hardbox is open source, MIT licensed, and built for production. Start hardening today.</p>
+  <div class="cta-group">
+    <a href="#install" class="btn btn-primary">Install hardbox</a>
+    <a href="https://github.com/jackby03/hardbox" class="btn btn-ghost" target="_blank">Star on GitHub ★</a>
+  </div>
+</section>
+
+<!-- ── FOOTER ─────────────────────────────────────────────────────────────────── -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="footer-logo">
+        <span class="nav-logo-icon mono">[]</span>
+        <span style="font-weight:700;font-size:1.1rem">hard<span style="color:var(--primary-l)">box</span></span>
+      </div>
+      <p class="footer-desc">Production-grade Linux hardening toolkit for IT, Cloud, Infrastructure, and Security teams.</p>
+    </div>
+    <div>
+      <div class="footer-col-title">Docs</div>
+      <ul class="footer-links">
+        <li><a href="https://github.com/jackby03/hardbox/blob/main/docs/ARCHITECTURE.md">Architecture</a></li>
+        <li><a href="https://github.com/jackby03/hardbox/blob/main/docs/MODULES.md">Modules</a></li>
+        <li><a href="https://github.com/jackby03/hardbox/blob/main/docs/COMPLIANCE.md">Compliance</a></li>
+        <li><a href="https://github.com/jackby03/hardbox/blob/main/CONTRIBUTING.md">Contributing</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-col-title">Project</div>
+      <ul class="footer-links">
+        <li><a href="https://github.com/jackby03/hardbox">GitHub</a></li>
+        <li><a href="https://github.com/jackby03/hardbox/releases">Releases</a></li>
+        <li><a href="https://github.com/jackby03/hardbox/issues">Issues</a></li>
+        <li><a href="https://github.com/jackby03/hardbox/blob/main/SECURITY.md">Security</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-col-title">Legal</div>
+      <ul class="footer-links">
+        <li><a href="https://github.com/jackby03/hardbox/blob/main/LICENSE">MIT License</a></li>
+        <li><a href="https://github.com/jackby03/hardbox/blob/main/CODE_OF_CONDUCT.md">Code of Conduct</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 hardbox contributors — <a href="https://github.com/jackby03/hardbox/blob/main/LICENSE">MIT License</a></span>
+    <span>Built with Go 1.22 · <a href="https://github.com/jackby03/hardbox">github.com/jackby03/hardbox</a></span>
+  </div>
+</footer>
+
+<!-- ── JS ────────────────────────────────────────────────────────────────────── -->
+<script>
+/* Terminal animation */
+const lines = [
+  { txt: '', delay: 400 },
+  { txt: '<span class="t-line t-info">[INFO] hardbox v0.1 — session: a3f7b291</span>', delay: 0 },
+  { txt: '<span class="t-line t-info">[INFO] Loading profile: cis-level1</span>', delay: 0 },
+  { txt: '<span class="t-line t-info">[INFO] Registered modules: 13</span>', delay: 0 },
+  { txt: '<span class="t-line t-dim">─────────────────────────────────────────</span>', delay: 0 },
+  { txt: '<span class="t-line"><span class="t-ok">✓</span> <span class="t-dim">[ssh    ]</span> PermitRootLogin disabled          <span class="t-dim">CRITICAL</span></span>', delay: 80 },
+  { txt: '<span class="t-line"><span class="t-err">✗</span> <span class="t-dim">[ssh    ]</span> PasswordAuthentication disabled   <span class="t-dim">HIGH    </span></span>', delay: 80 },
+  { txt: '<span class="t-line"><span class="t-ok">✓</span> <span class="t-dim">[ssh    ]</span> Protocol version 2 enforced       <span class="t-dim">HIGH    </span></span>', delay: 80 },
+  { txt: '<span class="t-line"><span class="t-ok">✓</span> <span class="t-dim">[kernel ]</span> ASLR enabled (randomize_va_space)  <span class="t-dim">HIGH    </span></span>', delay: 80 },
+  { txt: '<span class="t-line"><span class="t-ok">✓</span> <span class="t-dim">[kernel ]</span> SYN cookies protection active      <span class="t-dim">MEDIUM  </span></span>', delay: 80 },
+  { txt: '<span class="t-line"><span class="t-ok">✓</span> <span class="t-dim">[fw     ]</span> UFW enabled and active             <span class="t-dim">CRITICAL</span></span>', delay: 80 },
+  { txt: '<span class="t-line"><span class="t-warn">?</span> <span class="t-dim">[users  ]</span> Password aging policy (manual)     <span class="t-dim">MEDIUM  </span></span>', delay: 80 },
+  { txt: '<span class="t-line"><span class="t-ok">✓</span> <span class="t-dim">[crypto ]</span> Weak ciphers disabled in sshd      <span class="t-dim">HIGH    </span></span>', delay: 80 },
+  { txt: '<span class="t-line"><span class="t-ok">✓</span> <span class="t-dim">[auditd ]</span> auditd service active              <span class="t-dim">HIGH    </span></span>', delay: 80 },
+  { txt: '<span class="t-line t-dim">─────────────────────────────────────────</span>', delay: 100 },
+  { txt: '<span class="t-line"><span class="t-score">[DONE]</span> <span class="t-ok">Score: 87%</span> — 2 findings need attention</span>', delay: 0 },
+  { txt: '<span class="t-line t-dim">Report: /var/lib/hardbox/reports/audit-a3f7b291.json</span>', delay: 0 },
+];
+
+let lineIndex = 0;
+const body = document.getElementById('termBody');
+
+function appendLine(html, delay) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.innerHTML = html;
+      body.appendChild(el);
+      body.scrollTop = body.scrollHeight;
+      resolve();
+    }, delay);
+  });
+}
+
+async function runTerminal() {
+  for (const line of lines) {
+    await appendLine(line.txt, line.delay || 50);
+  }
+  const cursor = document.createElement('span');
+  cursor.className = 'cursor';
+  body.appendChild(cursor);
+}
+
+/* Start terminal after a short delay */
+setTimeout(runTerminal, 1200);
+
+/* Scroll reveal */
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); }});
+}, { threshold: 0.15 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+/* Tab switcher */
+function switchTab(btn, id) {
+  document.querySelectorAll('.install-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.install-body').forEach(b => b.style.display = 'none');
+  document.getElementById(id).style.display = 'block';
+}
+
+/* Copy button */
+function copyCmd(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+</script>
+</body>
+</html>
