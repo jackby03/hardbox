@@ -181,8 +181,8 @@ jobs:
       - name: Extract branch types from AGENTS.md
         id: doc_branch
         run: |
-          TYPES=$(grep -A1 'Allowed prefixes:' AGENTS.md \
-                  | grep -oP '`\K[a-z]+(?=/)' | sort)
+          LINE=$(grep -A3 'Allowed prefixes:' AGENTS.md | grep -m1 '^- ')
+          TYPES=$(echo "$LINE" | grep -oP '`[a-z]+/' | tr -d '`/' | sort)
           echo "types<<EOF" >> "$GITHUB_OUTPUT"
           echo "$TYPES" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
@@ -213,8 +213,8 @@ jobs:
       - name: Extract PR title types from AGENTS.md
         id: doc_pr
         run: |
-          TYPES=$(grep -A1 'Allowed PR title types:' AGENTS.md \
-                  | grep -oP '`\K[a-z]+`' | tr -d '`' | sort)
+          LINE=$(grep -A3 'Allowed PR title types:' AGENTS.md | grep -m1 '^- ')
+          TYPES=$(echo "$LINE" | grep -oP '`[a-z]+`' | tr -d '`' | sort)
           echo "types<<EOF" >> "$GITHUB_OUTPUT"
           echo "$TYPES" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
