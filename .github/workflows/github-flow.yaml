@@ -159,3 +159,96 @@ jobs:
             gh pr edit "$PR_NUMBER" --repo "$REPO" --add-label "$LABEL" || \
               echo "::notice::Could not add label '$LABEL' — it may need to be created first."
           fi
+
+  policy-alignment:
+    name: AGENTS.md Policy Alignment
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract branch types from workflow
+        id: wf_branch
+        run: |
+          RAW=$(awk '
+            /Check branch naming convention/ {inblock=1; next}
+            inblock && /PATTERN=/ {print; exit}
+          ' .github/workflows/github-flow.yaml)
+          TYPES=$(echo "$RAW" | sed -E "s/.*\^\(([^)]*)\).*/\1/" | tr '|' '\n' | sort -u)
+          echo "types<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$TYPES" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Extract branch types from AGENTS.md
+        id: doc_branch
+        run: |
+          TYPES=$(
+            awk '
+              /^Allowed prefixes:/ {inblock=1; next}
+              inblock && /^- / {print; next}
+              inblock && NF==0 {next}
+              inblock {exit}
+            ' AGENTS.md \
+            | grep -oP '`[a-z]+/' \
+            | tr -d '`/' \
+            | sort -u
+          )
+          echo "types<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$TYPES" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Assert branch prefixes match
+        run: |
+          WF=$(echo "${{ steps.wf_branch.outputs.types }}")
+          DOC=$(echo "${{ steps.doc_branch.outputs.types }}")
+
+          DIFF=$(diff <(echo "$WF") <(echo "$DOC") || true)
+          if [ -n "$DIFF" ]; then
+            echo "::error file=AGENTS.md::Branch prefix drift detected between AGENTS.md and github-flow.yaml"
+            echo "$DIFF"
+            exit 1
+          fi
+          echo "✓ Branch prefixes are aligned"
+
+      - name: Extract PR title types from workflow
+        id: wf_pr
+        run: |
+          RAW=$(awk '
+            /Check PR title follows Conventional Commits/ {inblock=1; next}
+            inblock && /PATTERN=/ {print; exit}
+          ' .github/workflows/github-flow.yaml)
+          TYPES=$(echo "$RAW" | sed -E "s/.*\^\(([^)]*)\).*/\1/" | tr '|' '\n' | sort -u)
+          echo "types<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$TYPES" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Extract PR title types from AGENTS.md
+        id: doc_pr
+        run: |
+          TYPES=$(
+            awk '
+              /^Allowed PR title types:/ {inblock=1; next}
+              inblock && /^- / {print; next}
+              inblock && NF==0 {next}
+              inblock {exit}
+            ' AGENTS.md \
+            | grep -oP '(?<=`)[a-z]+(?=`)' \
+            | sort -u
+          )
+          echo "types<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$TYPES" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Assert PR title types match
+        run: |
+          WF=$(echo "${{ steps.wf_pr.outputs.types }}")
+          DOC=$(echo "${{ steps.doc_pr.outputs.types }}")
+
+          DIFF=$(diff <(echo "$WF") <(echo "$DOC") || true)
+          if [ -n "$DIFF" ]; then
+            echo "::error file=AGENTS.md::PR title type drift detected between AGENTS.md and github-flow.yaml"
+            echo "$DIFF"
+            exit 1
+          fi
+          echo "✓ PR title types are aligned"
