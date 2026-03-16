@@ -171,9 +171,11 @@ jobs:
       - name: Extract branch types from workflow
         id: wf_branch
         run: |
-          RAW=$(grep -A2 'PATTERN=.*feat.*fix' .github/workflows/github-flow.yaml \
-                | grep 'PATTERN=' | head -1)
-          TYPES=$(echo "$RAW" | grep -oP '\(\K[^)]+' | head -1 | tr '|' '\n' | sort)
+          RAW=$(awk '
+            /Check branch naming convention/ {inblock=1; next}
+            inblock && /PATTERN=/ {print; exit}
+          ' .github/workflows/github-flow.yaml)
+          TYPES=$(echo "$RAW" | sed -E "s/.*\^\(([^)]*)\).*/\1/" | tr '|' '\n' | sort -u)
           echo "types<<EOF" >> "$GITHUB_OUTPUT"
           echo "$TYPES" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
@@ -212,9 +214,11 @@ jobs:
       - name: Extract PR title types from workflow
         id: wf_pr
         run: |
-          RAW=$(grep -A2 'PATTERN=.*feat.*fix' .github/workflows/github-flow.yaml \
-                | grep 'PATTERN=' | tail -1)
-          TYPES=$(echo "$RAW" | grep -oP '\(\K[^)]+' | head -1 | tr '|' '\n' | sort)
+          RAW=$(awk '
+            /Check PR title follows Conventional Commits/ {inblock=1; next}
+            inblock && /PATTERN=/ {print; exit}
+          ' .github/workflows/github-flow.yaml)
+          TYPES=$(echo "$RAW" | sed -E "s/.*\^\(([^)]*)\).*/\1/" | tr '|' '\n' | sort -u)
           echo "types<<EOF" >> "$GITHUB_OUTPUT"
           echo "$TYPES" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
