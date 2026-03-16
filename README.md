@@ -9,7 +9,7 @@
 [![CIS Benchmarks](https://img.shields.io/badge/CIS-Level%201%20%26%202-2563EB?style=flat-square)](docs/COMPLIANCE.md)
 [![Build](https://img.shields.io/github/actions/workflow/status/jackby03/hardbox/ci.yaml?style=flat-square&label=CI)](https://github.com/jackby03/hardbox/actions)
 [![Platforms](https://img.shields.io/badge/platform-Ubuntu%20%7C%20Debian%20%7C%20RHEL%20%7C%20Rocky%20%7C%20Amazon%20Linux-475569?style=flat-square)]()
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](docs/CONTRIBUTING.md)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](CONTRIBUTING.md)
 [![Code of Conduct](https://img.shields.io/badge/conduct-Contributor%20Covenant-5865F2?style=flat-square)](CODE_OF_CONDUCT.md)
 [![ACS compatible](https://img.shields.io/badge/ACS-compatible%20v1.0-4CAF50?style=flat-square)](https://acs.jackby03.com)
 
@@ -224,7 +224,7 @@ sudo go run ./cmd/hardbox
 ```
 
 Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.  
-See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines, module development guide, and test conventions.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines, module development guide, and test conventions.
 
 ---
 
