@@ -1,24 +1,25 @@
 #!/usr/bin/env bash
 # hardbox installer
-# Usage: curl -sSL https://hardbox.jackby03.com/install.sh | bash
+# Usage: curl -fsSL https://hardbox.jackby03.com/install.sh | bash
 #
-# Detects OS/arch, downloads the latest release from GitHub,
+# Detects OS/arch, resolves release assets from GitHub API,
 # verifies the SHA-256 checksum, and installs to /usr/local/bin/hardbox.
 #
-# Requirements: curl, tar, sha256sum (or shasum on macOS)
+# Requirements: curl, tar, grep, awk, sed, sha256sum (or shasum)
 # Supported:    Linux amd64, Linux arm64
 #
 # Environment overrides:
-#   HARDBOX_VERSION   — install a specific version tag (e.g. v0.1.0)
-#   HARDBOX_INSTALL_DIR — override install directory (default: /usr/local/bin)
+#   HARDBOX_VERSION       install a specific tag (e.g. v0.1.0)
+#   HARDBOX_INSTALL_DIR   install directory (default: /usr/local/bin)
+#   HARDBOX_REPO          override GitHub repo owner/name (default: jackby03/hardbox)
 
 set -euo pipefail
 
-REPO="jackby03/hardbox"
+REPO="${HARDBOX_REPO:-jackby03/hardbox}"
 INSTALL_DIR="${HARDBOX_INSTALL_DIR:-/usr/local/bin}"
 VERSION="${HARDBOX_VERSION:-}"
+API_BASE="https://api.github.com/repos/${REPO}"
 
-# ── helpers ───────────────────────────────────────────────────────────────────
 info()  { printf '\033[34m[hardbox]\033[0m %s\n' "$*"; }
 ok()    { printf '\033[32m[hardbox]\033[0m %s\n' "$*"; }
 err()   { printf '\033[31m[hardbox]\033[0m ERROR: %s\n' "$*" >&2; exit 1; }
@@ -29,7 +30,6 @@ need() {
   done
 }
 
-# ── platform detection ────────────────────────────────────────────────────────
 detect_os() {
   case "$(uname -s)" in
     Linux)  echo "linux" ;;
@@ -45,7 +45,6 @@ detect_arch() {
   esac
 }
 
-# ── checksum verification ─────────────────────────────────────────────────────
 verify_checksum() {
   local file="$1" expected="$2"
   local actual
@@ -59,69 +58,94 @@ verify_checksum() {
   fi
 
   if [ "$actual" != "$expected" ]; then
-    err "Checksum mismatch!\n  Expected: $expected\n  Got:      $actual"
+    err "Checksum mismatch! Expected: $expected, got: $actual"
   fi
   ok "Checksum verified."
 }
 
-# ── latest version lookup ─────────────────────────────────────────────────────
-latest_version() {
-  local version
-  version=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" \
-    | grep '"tag_name"' \
-    | sed -E 's/.*"tag_name":\s*"([^"]+)".*/\1/')
-  [ -n "$version" ] || err "Could not determine latest hardbox version. Set HARDBOX_VERSION to override."
-  echo "$version"
+json_get_tag_name() {
+  sed -n -E 's/.*"tag_name"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p' "$1" | head -n1
 }
 
-# ── main ──────────────────────────────────────────────────────────────────────
+json_find_asset_url() {
+  local json_file="$1"
+  local pattern="$2"
+  grep -Eo 'https://[^"[:space:]]+' "$json_file" | grep -E "$pattern" | head -n1 || true
+}
+
+fetch_release_json() {
+  local json_file="$1"
+  local endpoint
+  if [ -n "$VERSION" ]; then
+    endpoint="${API_BASE}/releases/tags/${VERSION}"
+  else
+    endpoint="${API_BASE}/releases/latest"
+  fi
+
+  if ! curl -fsSL "$endpoint" -o "$json_file"; then
+    if [ -n "$VERSION" ]; then
+      err "Release for tag ${VERSION} not found. Publish a GitHub Release (not just a git tag) and attach Linux binaries."
+    fi
+    err "Could not determine latest release. If you want a pre-release, set HARDBOX_VERSION=vX.Y.Z first."
+  fi
+}
+
 main() {
-  need curl tar
+  need curl tar grep awk sed
 
   local os arch
   os=$(detect_os)
   arch=$(detect_arch)
 
-  if [ -z "$VERSION" ]; then
-    info "Fetching latest release..."
-    VERSION=$(latest_version)
-  fi
-
-  local ver_clean="${VERSION#v}"   # strip leading 'v' for filename
-  local archive="hardbox_${ver_clean}_${os}_${arch}.tar.gz"
-  local base_url="https://github.com/${REPO}/releases/download/${VERSION}"
-  local checksum_file="hardbox_${ver_clean}_checksums.txt"
-
-  info "Installing hardbox ${VERSION} (${os}/${arch})"
-  info "Download: ${base_url}/${archive}"
-
-  # ── download to temp dir ──────────────────────────────────────────────────
-  local tmpdir
+  local tmpdir release_json
   tmpdir=$(mktemp -d)
   trap 'rm -rf "$tmpdir"' EXIT
+  release_json="${tmpdir}/release.json"
+
+  if [ -z "$VERSION" ]; then
+    info "Fetching latest stable release..."
+  else
+    info "Fetching release metadata for ${VERSION}..."
+  fi
+  fetch_release_json "$release_json"
+
+  if [ -z "$VERSION" ]; then
+    VERSION=$(json_get_tag_name "$release_json")
+    [ -n "$VERSION" ] || err "Could not parse release tag from GitHub API response."
+  fi
+
+  local archive_url checksum_url archive_name checksum_file
+  archive_url=$(json_find_asset_url "$release_json" "_${os}_${arch}\\.tar\\.gz$")
+  checksum_url=$(json_find_asset_url "$release_json" "checksums\\.txt$")
+
+  [ -n "$archive_url" ] || err "No ${os}/${arch} tar.gz asset found for ${VERSION}. Ensure release assets are published for this architecture."
+  [ -n "$checksum_url" ] || err "No checksums.txt asset found for ${VERSION}."
+
+  archive_name="$(basename "$archive_url")"
+  checksum_file="$(basename "$checksum_url")"
+
+  info "Installing hardbox ${VERSION} (${os}/${arch})"
+  info "Download: ${archive_url}"
 
   info "Downloading archive..."
-  curl -fsSL --progress-bar "${base_url}/${archive}" -o "${tmpdir}/${archive}"
+  curl -fsSL --progress-bar "$archive_url" -o "${tmpdir}/${archive_name}"
 
   info "Downloading checksums..."
-  curl -fsSL "${base_url}/${checksum_file}" -o "${tmpdir}/${checksum_file}"
+  curl -fsSL "$checksum_url" -o "${tmpdir}/${checksum_file}"
 
-  # ── verify checksum ───────────────────────────────────────────────────────
   info "Verifying checksum..."
   local expected
-  expected=$(grep "${archive}" "${tmpdir}/${checksum_file}" | awk '{print $1}')
-  [ -n "$expected" ] || err "Could not find checksum for ${archive} in ${checksum_file}"
-  verify_checksum "${tmpdir}/${archive}" "$expected"
+  expected=$(grep "${archive_name}" "${tmpdir}/${checksum_file}" | awk '{print $1}' | head -n1)
+  [ -n "$expected" ] || err "Could not find checksum entry for ${archive_name} in ${checksum_file}."
+  verify_checksum "${tmpdir}/${archive_name}" "$expected"
 
-  # ── extract + install ─────────────────────────────────────────────────────
   info "Extracting..."
-  tar -xzf "${tmpdir}/${archive}" -C "$tmpdir"
+  tar -xzf "${tmpdir}/${archive_name}" -C "$tmpdir"
 
   local binary="${tmpdir}/hardbox"
-  [ -f "$binary" ] || err "Binary not found in archive. Expected: ${tmpdir}/hardbox"
+  [ -f "$binary" ] || err "Binary not found in archive. Expected ${binary}."
   chmod +x "$binary"
 
-  # ── place binary ──────────────────────────────────────────────────────────
   if [ -w "$INSTALL_DIR" ]; then
     mv "$binary" "${INSTALL_DIR}/hardbox"
   else

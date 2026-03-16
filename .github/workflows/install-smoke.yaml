@@ -1,0 +1,44 @@
+name: Install Smoke Test
+permissions:
+  contents: read
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Optional tag to test (for example v0.1.0)
+        required: false
+        type: string
+
+jobs:
+  smoke-install:
+    name: One-command install smoke
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Determine version under test
+        id: vars
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" = "release" ]; then
+            echo "version=${{ github.event.release.tag_name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run installer
+        run: |
+          if [ -n "${{ steps.vars.outputs.version }}" ]; then
+            curl -fsSL https://hardbox.jackby03.com/install.sh | HARDBOX_VERSION=${{ steps.vars.outputs.version }} HARDBOX_INSTALL_DIR=$HOME/.local/bin bash
+          else
+            curl -fsSL https://hardbox.jackby03.com/install.sh | HARDBOX_INSTALL_DIR=$HOME/.local/bin bash
+          fi
+
+      - name: Verify binary
+        run: |
+          $HOME/.local/bin/hardbox --version
+          $HOME/.local/bin/hardbox audit --profile cis-level1 --format json --output /tmp/audit.json || true
+          test -s /tmp/audit.json
