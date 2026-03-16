@@ -4,9 +4,10 @@
 
 **The definitive Linux hardening toolkit for IT, Cloud, Infrastructure, and Security teams.**
 
+[![Release](https://img.shields.io/github/v/release/jackby03/hardbox?style=flat-square&label=release&color=3b82f6)](https://github.com/jackby03/hardbox/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 [![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go&logoColor=white)](go.mod)
-[![CIS Benchmarks](https://img.shields.io/badge/CIS-Level%201%20%26%202-2563EB?style=flat-square)](docs/COMPLIANCE.md)
+[![CIS Benchmarks](https://img.shields.io/badge/CIS-Level%201-2563EB?style=flat-square)](docs/COMPLIANCE.md)
 [![Build](https://img.shields.io/github/actions/workflow/status/jackby03/hardbox/ci.yaml?style=flat-square&label=CI)](https://github.com/jackby03/hardbox/actions)
 [![Platforms](https://img.shields.io/badge/platform-Ubuntu%20%7C%20Debian%20%7C%20RHEL%20%7C%20Rocky%20%7C%20Amazon%20Linux-475569?style=flat-square)]()
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](CONTRIBUTING.md)
@@ -60,15 +61,20 @@ It covers every layer of the security stack: kernel parameters, SSH, firewall, P
 ### Install
 
 ```bash
-# One-liner installer — detects OS/arch, verifies checksum, installs to /usr/local/bin
-curl -sSL https://hardbox.jackby03.com/install.sh | bash
+# Download the latest binary (Linux amd64)
+curl -sSL https://github.com/jackby03/hardbox/releases/latest/download/hardbox_linux_amd64.tar.gz \
+  | tar -xz && sudo mv hardbox /usr/local/bin/
 
-# Or with go install (requires Go 1.22+)
-go install github.com/hardbox-io/hardbox/cmd/hardbox@latest
-
-# Or download a pre-built binary from GitHub Releases
-# https://github.com/jackby03/hardbox/releases
+# Verify installation
+hardbox --version
 ```
+
+> **go install** (requires Go 1.22+)
+> ```bash
+> go install github.com/hardbox-io/hardbox/cmd/hardbox@latest
+> ```
+>
+> Or grab any release tarball from **[github.com/jackby03/hardbox/releases](https://github.com/jackby03/hardbox/releases)**.
 
 ### Usage
 
