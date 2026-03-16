@@ -4,7 +4,7 @@
 
 **The definitive Linux hardening toolkit for IT, Cloud, Infrastructure, and Security teams.**
 
-[![Release](https://img.shields.io/github/v/release/jackby03/hardbox?style=flat-square&label=release&color=3b82f6)](https://github.com/jackby03/hardbox/releases/latest)
+[![Pre-release](https://img.shields.io/github/v/release/jackby03/hardbox?display_name=tag&include_prereleases&sort=semver&style=flat-square&label=pre-release&color=3b82f6)](https://github.com/jackby03/hardbox/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 [![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go&logoColor=white)](go.mod)
 [![CIS Benchmarks](https://img.shields.io/badge/CIS-Level%201-2563EB?style=flat-square)](docs/COMPLIANCE.md)
@@ -200,7 +200,7 @@ sudo hardbox rollback apply --last
 
 ## Roadmap
 
-### v0.1 — Foundation ✅ _released_
+### v0.1 — Foundation ✅ _pre-release_
 - [x] Core engine with dry-run and rollback
 - [x] 13 hardening modules — SSH, Firewall, Kernel, Users/PAM, Auditd, Filesystem, Services, Logging, Network, NTP, MAC, Containers
 - [x] `cis-level1`, `production`, `development` profiles
