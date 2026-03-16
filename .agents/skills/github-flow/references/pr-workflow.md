@@ -127,7 +127,7 @@ hardbox uses **Squash and Merge** for all PRs:
 
 ## PR Title Validation
 
-PR titles are validated by CI (`.github/workflows/github-flow.yaml`).
+PR titles are validated by the contribution governance workflow (`.github/workflows/contribution-governance.yaml`).
 
 Valid format: `<type>(<scope>): <description>`
 

@@ -1,4 +1,4 @@
-name: Deploy GitHub Pages
+name: Documentation Publish
 permissions:
   contents: read
   pages: write

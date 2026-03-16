@@ -1,4 +1,4 @@
-name: Install Smoke Test
+name: Release Smoke
 permissions:
   contents: read
 

@@ -8,7 +8,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 [![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go&logoColor=white)](go.mod)
 [![CIS Benchmarks](https://img.shields.io/badge/CIS-Level%201-2563EB?style=flat-square)](docs/COMPLIANCE.md)
-[![Build](https://img.shields.io/github/actions/workflow/status/jackby03/hardbox/ci.yaml?style=flat-square&label=CI)](https://github.com/jackby03/hardbox/actions)
+[![Build](https://img.shields.io/github/actions/workflow/status/jackby03/hardbox/quality-gates.yaml?style=flat-square&label=quality)](https://github.com/jackby03/hardbox/actions)
 [![Platforms](https://img.shields.io/badge/platform-Ubuntu%20%7C%20Debian%20%7C%20RHEL%20%7C%20Rocky%20%7C%20Amazon%20Linux-475569?style=flat-square)]()
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](CONTRIBUTING.md)
 [![Code of Conduct](https://img.shields.io/badge/conduct-Contributor%20Covenant-5865F2?style=flat-square)](CODE_OF_CONDUCT.md)
