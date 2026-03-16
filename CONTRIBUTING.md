@@ -198,6 +198,21 @@ Tests that write system files should use `t.TempDir()` and mock paths instead of
 4. Push and open a PR against `main`.
 5. Fill in the PR template — link the relevant issue with `Closes #<n>`.
 
+Recommended merge-blocking checks:
+- `Quality Gates / Build and Test`
+- `Quality Gates / Lint`
+- `Quality Gates / Self-Audit`
+- `Contribution Governance / Branch Naming`
+- `Contribution Governance / PR Title Convention`
+- `Contribution Governance / Policy Alignment`
+
+Recommended informational checks:
+- `Quality Gates / Documentation Links`
+- `Quality Gates / Profile Documentation`
+- `Quality Gates / Release Configuration`
+- `Contribution Governance / Change Volume`
+- `Contribution Governance / Branch Freshness`
+
 **Commit message format** (conventional commits):
 - `feat(module):` — new module or check
 - `fix(module):` — bug fix
@@ -206,6 +221,8 @@ Tests that write system files should use `t.TempDir()` and mock paths instead of
 - `test:` — tests only
 - `refactor:` — internal restructuring, no behavior change
 - `chore:` — tooling, deps, CI
+
+Operational guidance for branch protection, release publication, and smoke validation lives in [docs/DEVSECOPS.md](docs/DEVSECOPS.md).
 
 ---
 

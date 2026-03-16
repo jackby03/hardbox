@@ -191,6 +191,13 @@ sudo hardbox rollback apply --last
 
 ---
 
+## Operations
+
+- Contributor workflow and development setup: [CONTRIBUTING.md](CONTRIBUTING.md)
+- DevSecOps, branch protection, and release automation: [docs/DEVSECOPS.md](docs/DEVSECOPS.md)
+
+---
+
 ## Roadmap
 
 ### v0.1 — Foundation ✅ _released_
