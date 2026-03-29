@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -479,8 +480,13 @@ func assertConfigContains(t *testing.T, path, want string) {
 }
 
 // assertFileMode checks that the file at path has the expected permission bits.
+// On Windows, Unix permission bits are not enforced by the OS, so the check is skipped.
 func assertFileMode(t *testing.T, path string, want os.FileMode) {
 	t.Helper()
+	if runtime.GOOS == "windows" {
+		// Windows does not support Unix-style permission bits; skip the mode assertion.
+		return
+	}
 	info, err := os.Stat(path)
 	if err != nil {
 		t.Fatalf("stat %s: %v", path, err)
