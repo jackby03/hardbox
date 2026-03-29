@@ -252,7 +252,7 @@ This table shows which compliance frameworks each **shipped** profile satisfies.
 | `cis-level1` | ✓ Full | — | Partial | Partial | Partial | Partial | Partial | ✅ Shipped |
 | `production` | ✓ Full | Partial | Partial | Partial | Partial | Partial | Partial | ✅ Shipped |
 | `development` | Partial | — | — | — | — | — | — | ✅ Shipped |
-| `cis-level2` | ✓ Full | ✓ Full | Partial | Partial | Partial | Partial | Partial | 🗓 Roadmap v0.2 |
+| `cis-level2` | ✓ Full | ✓ Full | Partial | Partial | Partial | Partial | Partial | ✅ Shipped |
 | `stig` | ✓ Full | ✓ Full | ✓ Full | Partial | Partial | ✓ Full | Partial | 🗓 Roadmap v0.2 |
 | `pci-dss` | ✓ Full | ✓ Full | Partial | ✓ Full | Partial | Partial | Partial | 🗓 Roadmap v0.2 |
 | `hipaa` | ✓ Full | ✓ Full | Partial | Partial | ✓ Full | Partial | Partial | 🗓 Roadmap v0.3 |
@@ -260,7 +260,7 @@ This table shows which compliance frameworks each **shipped** profile satisfies.
 | `iso27001` | ✓ Full | ✓ Full | Partial | Partial | Partial | Partial | ✓ Full | 🗓 Roadmap v0.3 |
 
 > **Partial** = significant coverage with some controls requiring manual evidence or configuration beyond OS-level hardening (e.g., application-layer controls, physical security).
-> Roadmap profiles are not yet shipped — running them will return an error until the corresponding `.yaml` file is added to `configs/profiles/`.
+> Roadmap profiles (`stig`, `pci-dss`, and later) are not yet shipped — running them will return an error until the corresponding `.yaml` file is added to `configs/profiles/`.
 
 ---
 
@@ -270,14 +270,17 @@ This table shows which compliance frameworks each **shipped** profile satisfies.
 # Full compliance audit against CIS Level 1
 sudo hardbox audit --profile cis-level1 --format html --output cis-audit.html
 
+# CIS Level 2 — high-security audit with evidence included
+sudo hardbox audit --profile cis-level2 --format html --output cis-l2-audit.html
+
 # JSON output for SIEM/GRC tool import
 sudo hardbox audit --profile cis-level1 --format json --output cis-audit.json
 
-# Fail CI/CD pipeline if critical findings exist
-sudo hardbox audit --profile production --format json
-# exits 1 if audit.fail_on_critical = true and critical findings found
+# Fail CI/CD pipeline if critical or high findings exist
+sudo hardbox audit --profile cis-level2 --format json
+# exits 1 if audit.fail_on_critical or audit.fail_on_high = true and findings exist
 ```
 
-> **Note:** The `pci-dss`, `cis-level2`, `stig`, and other compliance-specific profiles
+> **Note:** The `pci-dss`, `stig`, and other compliance-specific profiles
 > are on the roadmap and will be available in future releases. Track progress in the
 > [v0.2 milestone](https://github.com/jackby03/hardbox/milestone/2).
