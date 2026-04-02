@@ -207,16 +207,15 @@ sudo hardbox rollback apply --last
 - [x] Interactive TUI dashboard
 - [x] Reports: JSON, HTML, Text, Markdown
 - [x] `--log-level`, `--dry-run`, `--non-interactive` flags
+- [x] `install.sh` one-liner installer
 - [x] Midnight Shield landing page — [hardbox.jackby03.com](https://hardbox.jackby03.com)
 
 ### v0.2 — Coverage
 - [x] `cis-level2` profile
 - [x] `pci-dss` profile
 - [ ] `stig` profile
-- [ ] `install.sh` one-liner installer
 - [ ] 14th module — mount hardening
 - [ ] Full RHEL / Rocky Linux parity
-- [ ] TUI module detail screens
 
 ### v0.3 — Ecosystem
 - [ ] `hipaa`, `nist-800-53`, `iso27001` profiles
