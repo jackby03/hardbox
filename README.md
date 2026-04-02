@@ -46,7 +46,7 @@ It covers every layer of the security stack: kernel parameters, SSH, firewall, P
 |:---|:---|
 | **Modern TUI** | Interactive terminal UI (Bubble Tea). Navigate, configure, and apply hardening without memorizing commands |
 | **Modular Architecture** | Enable or disable any module independently. Mix and match profiles at will |
-| **3 Built-in Profiles** | `cis-level1`, `production`, `development` — more profiles on roadmap |
+| **5 Built-in Profiles** | `cis-level1`, `cis-level2`, `pci-dss`, `production`, `development` — more on roadmap |
 | **Dry Run Mode** | Preview every exact change before it's applied. Safe to run on live servers |
 | **One-command Rollback** | Every change is snapshotted. Revert any module or an entire session instantly |
 | **Audit Reports** | JSON, HTML, and Markdown output — machine-readable and CI/CD-friendly |
@@ -141,6 +141,7 @@ sudo hardbox rollback apply --last
 |:---:|:---|:---|
 | `cis-level1` | CIS Benchmarks Level 1 | Minimum baseline — low disruption |
 | `cis-level2` | CIS Benchmarks Level 2 | High-security — sensitive data and compliance |
+| `pci-dss` | PCI-DSS v4.0 | Cardholder data environments (CDE) |
 | `production` | hardbox curated | Cloud production servers |
 | `development` | hardbox curated | Dev/staging — security + developer usability |
 
@@ -153,7 +154,6 @@ sudo hardbox rollback apply --last
 | Profile | Framework | Target Release |
 |:---:|:---|:---:|
 | `stig` | DoD STIG | v0.2 |
-| `pci-dss` | PCI-DSS v4.0 | v0.2 |
 | `hipaa` | HIPAA Security Rule | v0.3 |
 | `nist-800-53` | NIST SP 800-53 Rev. 5 | v0.3 |
 | `iso27001` | ISO/IEC 27001:2022 | v0.3 |
@@ -211,7 +211,8 @@ sudo hardbox rollback apply --last
 
 ### v0.2 — Coverage
 - [x] `cis-level2` profile
-- [ ] `pci-dss`, `stig` profiles
+- [x] `pci-dss` profile
+- [ ] `stig` profile
 - [ ] `install.sh` one-liner installer
 - [ ] 14th module — mount hardening
 - [ ] Full RHEL / Rocky Linux parity
