@@ -91,19 +91,20 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 - `release-smoke.yaml` workflow to validate published release artifacts, installation, and minimal runtime behavior.
+- `cis-level2` compliance profile — CIS Benchmarks Level 2, high-security baseline for sensitive-data servers ([#84](https://github.com/jackby03/hardbox/issues/84))
+- `pci-dss` compliance profile — PCI-DSS v4.0, full cardholder data environment hardening with per-control requirement annotations ([#86](https://github.com/jackby03/hardbox/issues/86))
 
 ### Changed
 - `install.sh` now resolves release assets via GitHub API instead of hardcoded filenames, improving compatibility across release archive naming formats.
 - `install.sh` now returns explicit errors when a tag exists without a published GitHub Release or missing linux/checksum artifacts.
 - README Quick Start now uses the one-command installer and corrected rollback example (`hardbox rollback apply --last`).
-- Workflow files were renamed for clearer operational intent: `quality-gates.yaml`, `contribution-governance.yaml`, `release-publish.yaml`, `release-smoke.yaml`, and `docs-publish.yaml`.
+- Workflow files were renamed for clearer operational intent: `quality-gates.yaml`, `release-publish.yaml`, `release-smoke.yaml`, and `docs-publish.yaml`.
+- Removed `contribution-governance.yaml` — branch/PR enforcement rules are unnecessary overhead for a solo-maintainer project.
 
 ### Planned for v0.2
-- `cis-level2`, `pci-dss`, `stig` compliance profiles
+- `stig` compliance profile
 - 14th module — mount and partition hardening
 - Full RHEL / Rocky Linux test parity
-- TUI module detail and finding screens
-- `install.sh` published to hardbox.jackby03.com
 
 ### Planned for v0.3
 - `hipaa`, `nist-800-53`, `iso27001` profiles
