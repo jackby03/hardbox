@@ -140,6 +140,7 @@ sudo hardbox rollback apply --last
 | Profile | Framework | Best For |
 |:---:|:---|:---|
 | `cis-level1` | CIS Benchmarks Level 1 | Minimum baseline — low disruption |
+| `cis-level2` | CIS Benchmarks Level 2 | High-security — sensitive data and compliance |
 | `production` | hardbox curated | Cloud production servers |
 | `development` | hardbox curated | Dev/staging — security + developer usability |
 
@@ -151,7 +152,6 @@ sudo hardbox rollback apply --last
 
 | Profile | Framework | Target Release |
 |:---:|:---|:---:|
-| `cis-level2` | CIS Benchmarks Level 2 | v0.2 |
 | `stig` | DoD STIG | v0.2 |
 | `pci-dss` | PCI-DSS v4.0 | v0.2 |
 | `hipaa` | HIPAA Security Rule | v0.3 |
@@ -210,7 +210,8 @@ sudo hardbox rollback apply --last
 - [x] Midnight Shield landing page — [hardbox.jackby03.com](https://hardbox.jackby03.com)
 
 ### v0.2 — Coverage
-- [ ] `cis-level2`, `pci-dss`, `stig` profiles
+- [x] `cis-level2` profile
+- [ ] `pci-dss`, `stig` profiles
 - [ ] `install.sh` one-liner installer
 - [ ] 14th module — mount hardening
 - [ ] Full RHEL / Rocky Linux parity
