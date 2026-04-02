@@ -253,14 +253,14 @@ This table shows which compliance frameworks each **shipped** profile satisfies.
 | `production` | ✓ Full | Partial | Partial | Partial | Partial | Partial | Partial | ✅ Shipped |
 | `development` | Partial | — | — | — | — | — | — | ✅ Shipped |
 | `cis-level2` | ✓ Full | ✓ Full | Partial | Partial | Partial | Partial | Partial | ✅ Shipped |
-| `stig` | ✓ Full | ✓ Full | ✓ Full | Partial | Partial | ✓ Full | Partial | 🗓 Roadmap v0.2 |
+| `stig` | ✓ Full | ✓ Full | ✓ Full | Partial | Partial | ✓ Full | Partial | ✅ Shipped |
 | `pci-dss` | ✓ Full | ✓ Full | Partial | ✓ Full | Partial | Partial | Partial | ✅ Shipped |
 | `hipaa` | ✓ Full | ✓ Full | Partial | Partial | ✓ Full | Partial | Partial | 🗓 Roadmap v0.3 |
 | `nist-800-53` | ✓ Full | ✓ Full | ✓ Full | Partial | Partial | ✓ Full | Partial | 🗓 Roadmap v0.3 |
 | `iso27001` | ✓ Full | ✓ Full | Partial | Partial | Partial | Partial | ✓ Full | 🗓 Roadmap v0.3 |
 
 > **Partial** = significant coverage with some controls requiring manual evidence or configuration beyond OS-level hardening (e.g., application-layer controls, physical security).
-> Roadmap profiles (`stig`, and later) are not yet shipped — running them will return an error until the corresponding `.yaml` file is added to `configs/profiles/`.
+> Roadmap profiles (`hipaa`, `nist-800-53`, `iso27001`, and later) are not yet shipped — running them will return an error until the corresponding `.yaml` file is added to `configs/profiles/`.
 
 ---
 
@@ -278,6 +278,9 @@ sudo hardbox audit --profile cis-level1 --format json --output cis-audit.json
 
 # PCI-DSS v4.0 audit — cardholder data environment
 sudo hardbox audit --profile pci-dss --format html --output pci-dss-audit.html
+
+# DISA STIG audit — DoD / high-assurance systems
+sudo hardbox audit --profile stig --format html --output stig-audit.html
 
 # Fail CI/CD pipeline if critical or high findings exist
 sudo hardbox audit --profile cis-level2 --format json

@@ -1,0 +1,256 @@
+# DISA STIG Profile
+# Defense Information Systems Agency (DISA) Security Technical Implementation Guide
+# for Ubuntu 22.04 LTS — V1R1, with cross-references to RHEL 9 STIG where applicable.
+#
+# Intended for U.S. DoD systems and any environment requiring STIG compliance.
+# This profile is stricter than CIS Level 2 in several areas (password length,
+# lockout thresholds, audit immutability, FIPS-grade crypto).
+#
+# Each control is annotated with the STIG Vulnerability ID (V-XXXXXX).
+# Reference: https://public.cyber.mil/stigs/
+
+version: "1"
+profile: stig
+environment: onprem
+
+modules:
+  ssh:
+    enabled: true
+    # V-238202 — SSH must not allow login with empty passwords
+    disable_empty_passwords: true
+    # V-238203 — SSH must not permit root login
+    disable_root_login: true
+    # V-238210 — MaxAuthTries must be set to 4 or less
+    max_auth_tries: 4
+    # V-238213 — ClientAliveInterval must be 600 or less (10 min)
+    client_alive_interval: 600
+    # V-238214 — ClientAliveCountMax must be 0 (disconnect immediately on timeout)
+    client_alive_count_max: 0
+    # V-238204 — X11 forwarding must be disabled
+    disable_x11_forwarding: true
+    # V-238206 — Host-based auth must be disabled
+    disable_hostbased_auth: true
+    # V-238207 — .rhosts and .shosts must be ignored
+    disable_ignore_rhosts: true
+    # V-238209 — TCP forwarding must be disabled
+    disable_tcp_forwarding: true
+    # V-238208 — Agent forwarding must be disabled
+    disable_agent_forwarding: true
+    # V-238215 — SSH must use VERBOSE log level
+    log_level: VERBOSE
+    login_grace_time: 60
+    max_sessions: 10
+    # V-238218 — Only FIPS-approved ciphers
+    ciphers:
+      - aes256-ctr
+      - aes192-ctr
+      - aes128-ctr
+      - aes256-gcm@openssh.com
+      - aes128-gcm@openssh.com
+    # V-238219 — Only FIPS-approved MACs
+    macs:
+      - hmac-sha2-256
+      - hmac-sha2-512
+      - hmac-sha2-256-etm@openssh.com
+      - hmac-sha2-512-etm@openssh.com
+    # V-238220 — Only FIPS-approved key exchange algorithms
+    kex_algorithms:
+      - ecdh-sha2-nistp256
+      - ecdh-sha2-nistp384
+      - ecdh-sha2-nistp521
+      - diffie-hellman-group14-sha256
+      - diffie-hellman-group16-sha512
+      - diffie-hellman-group18-sha512
+
+  firewall:
+    enabled: true
+    # V-238267 — A host-based firewall must be installed and active
+    backend: auto                   # auto-detect: ufw | nftables | firewalld
+    default_inbound: drop           # V-238268: deny all inbound by default
+    default_outbound: drop          # V-238269: restrict outbound as well
+    log_dropped: true               # V-238270: log all denied connection attempts
+
+  kernel:
+    enabled: true
+    # Kernel module enforces the following sysctl controls:
+    # V-238228 — kernel.randomize_va_space = 2 (full ASLR)
+    # V-238234 — net.ipv4.conf.all.send_redirects = 0
+    # V-238235 — net.ipv4.conf.default.send_redirects = 0
+    # V-238236 — net.ipv4.conf.all.accept_redirects = 0
+    # V-238237 — net.ipv4.conf.default.accept_redirects = 0
+    # V-238238 — net.ipv4.conf.all.accept_source_route = 0
+    # V-238239 — net.ipv4.conf.default.accept_source_route = 0
+    # V-238240 — net.ipv4.conf.all.log_martians = 1
+    # V-238241 — net.ipv4.conf.default.log_martians = 1
+    # V-238242 — net.ipv4.icmp_echo_ignore_broadcasts = 1
+    # V-238244 — net.ipv4.tcp_syncookies = 1
+    # V-238246 — kernel.dmesg_restrict = 1
+    # V-238247 — kernel.kptr_restrict = 1
+    # V-238248 — fs.suid_dumpable = 0 (disable SUID core dumps)
+
+  users:
+    enabled: true
+    # V-238222 — passwords must be at least 15 characters (stricter than CIS/PCI)
+    password_min_length: 15
+    # V-238223 — passwords must contain at least 1 uppercase character
+    # V-238224 — passwords must contain at least 1 lowercase character
+    # V-238225 — passwords must contain at least 1 numeric character
+    # V-238226 — passwords must contain at least 1 special character
+    password_complexity: true
+    # V-238227 — passwords must not contain the user's account name
+    # V-238229 — maximum password age must be 60 days (stricter than PCI/CIS)
+    password_max_days: 60
+    password_min_days: 1
+    # V-238230 — warn 7 days before expiry
+    password_warn_age: 7
+    # V-238231 — must not reuse last 5 passwords
+    password_history: 5
+    # V-238232 — account must be locked after 3 failed attempts
+    lockout_attempts: 3
+    # V-238233 — lockout for at least 15 minutes (900s)
+    lockout_duration: 900
+    # V-238221 — inactive accounts must be locked after 35 days
+    inactive_account_lock_days: 35
+    su_restricted: true             # V-238200: restrict su to authorized users
+    umask: "077"                    # V-238201: restrictive default umask
+
+  filesystem:
+    enabled: true
+    # V-238149 — /tmp must be mounted with nodev
+    # V-238150 — /tmp must be mounted with nosuid
+    # V-238151 — /tmp must be mounted with noexec
+    tmp_nosuid: true
+    tmp_nodev: true
+    tmp_noexec: true
+    # V-238152 — /dev/shm must be mounted with nodev, nosuid, noexec
+    devshm_nosuid: true
+    devshm_nodev: true
+    devshm_noexec: true
+    # V-238153–V-238158 — /var, /var/tmp, /home mount options
+    var_nosuid: true
+    var_nodev: true
+    var_tmp_nosuid: true
+    var_tmp_nodev: true
+    var_tmp_noexec: true
+    home_nosuid: true
+    home_nodev: true
+    # V-238100–V-238107 — disable unneeded/insecure filesystems
+    disable_cramfs: true
+    disable_freevxfs: true
+    disable_jffs2: true
+    disable_hfs: true
+    disable_hfsplus: true
+    disable_squashfs: true
+    disable_udf: true
+
+  auditd:
+    enabled: true
+    # V-238286 — audit log files must be owned and protected
+    max_log_file_size: 8            # MB — rotate frequently per STIG guidance
+    num_logs: 5
+    # V-238287 — system must take action when audit storage is nearly full
+    action_on_space_left: halt      # V-238288: halt on critical low disk
+    space_left_mb: 75
+    # V-238289 — audit configuration must be immutable (requires reboot to change)
+    immutable: true
+    # V-238282–V-238285 — required STIG audit events
+    audit_privileged_commands: true # V-238282: setuid/setgid binary execution
+    audit_file_access: true         # V-238283: unauthorized file access attempts
+    audit_user_events: true         # V-238284: login/logout/session events
+    audit_sudo_commands: true       # V-238285: all commands via sudo
+    audit_network_changes: true     # V-238290: network config modifications
+    audit_time_change: true         # V-238291: system time modifications
+
+  services:
+    enabled: true
+    # V-238200 series — disable all services not required for mission
+    disable:
+      - xinetd                      # V-238310: xinetd must not be installed
+      - inetd
+      - avahi-daemon                # V-238311: Avahi must not be active
+      - cups                        # V-238312: CUPS must not be active
+      - dhcpd                       # V-238313: DHCP server must not be active
+      - slapd                       # V-238314: LDAP server must not be active
+      - nfs-server                  # V-238315: NFS server must not be active
+      - bind                        # V-238316: DNS server must not be active
+      - vsftpd                      # V-238317: FTP server must not be active
+      - httpd
+      - apache2                     # V-238318: HTTP server must not be active
+      - nginx
+      - dovecot                     # V-238319: IMAP/POP3 must not be active
+      - sendmail
+      - samba                       # V-238320: SMB server must not be active
+      - squid                       # V-238321: proxy must not be active
+      - snmpd                       # V-238322: SNMP must not be active (v1/v2c cleartext)
+      - nis                         # V-238323: NIS must not be active
+      - telnet                      # V-238324: telnet must not be installed
+      - rsh-server                  # V-238325: rsh must not be installed
+      - tftp-server                 # V-238326: TFTP must not be active
+      - talk
+      - rsync
+
+  network:
+    enabled: true
+    # V-238301 — IPv6 must be disabled if not operationally required
+    disable_ipv6: true
+    # V-238302 — wireless interfaces must be disabled on wired servers
+    disable_wireless: true
+    # V-238303–V-238306 — uncommon network protocols must be disabled
+    disable_dccp: true
+    disable_sctp: true
+    disable_rds: true
+    disable_tipc: true
+    disable_bluetooth: true         # V-238307: Bluetooth must be disabled
+
+  crypto:
+    enabled: true
+    # V-238218 — must use FIPS 140-2/140-3 validated algorithms
+    # V-238250 — TLS 1.0 and 1.1 are prohibited
+    min_tls_version: "1.2"
+    disable_weak_ciphers: true      # remove RC4, DES, 3DES, NULL, EXPORT
+    disable_weak_hashes: true       # reject MD5 and SHA-1 for signing
+
+  logging:
+    enabled: true
+    # V-238292 — audit records must be retained for at least one year
+    log_retention_days: 365
+    # V-238293 — audit logs must be offloaded to a remote server
+    remote_log_host: ""             # set your SIEM/syslog server IP/hostname
+    remote_log_protocol: tcp        # TCP for reliable, ordered delivery
+
+  mac:
+    enabled: true
+    # V-238335 — AppArmor (Ubuntu) or SELinux (RHEL) must be in enforcing mode
+    enforce: true
+    # V-238336 — deny access to processes without an active security policy
+    deny_unknown: true
+
+  ntp:
+    enabled: true
+    # V-238337 — system clock must be synchronized to an authoritative DoD time source
+    backend: auto                   # auto: chrony | systemd-timesyncd
+    timezone: UTC
+    # Recommended: configure two DoD-approved NTP sources
+    # servers:
+    #   - tick.usno.navy.mil
+    #   - tock.usno.navy.mil
+
+  updates:
+    enabled: true
+    # V-238338 — security-relevant patches must be applied within 30 days
+    unattended_security_upgrades: true
+    auto_reboot: false
+
+  containers:
+    enabled: false                  # enable only when containers are operationally required
+
+report:
+  format: html
+  output_dir: /var/lib/hardbox/reports
+  include_remediation: true
+  include_evidence: true            # required for ATO (Authority to Operate) documentation
+
+audit:
+  fail_on_critical: true
+  fail_on_high: true                # STIG CAT I and CAT II findings must be resolved
+  fail_on_medium: true              # STIG CAT III findings must also be addressed
