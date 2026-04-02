@@ -93,6 +93,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `release-smoke.yaml` workflow to validate published release artifacts, installation, and minimal runtime behavior.
 - `cis-level2` compliance profile — CIS Benchmarks Level 2, high-security baseline for sensitive-data servers ([#84](https://github.com/jackby03/hardbox/issues/84))
 - `pci-dss` compliance profile — PCI-DSS v4.0, full cardholder data environment hardening with per-control requirement annotations ([#86](https://github.com/jackby03/hardbox/issues/86))
+- `stig` compliance profile — DISA STIG for Ubuntu 22.04 LTS V1R1, DoD-grade hardening with V-number annotations for every control ([#85](https://github.com/jackby03/hardbox/issues/85))
 
 ### Changed
 - `install.sh` now resolves release assets via GitHub API instead of hardcoded filenames, improving compatibility across release archive naming formats.
@@ -102,7 +103,6 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Removed `contribution-governance.yaml` — branch/PR enforcement rules are unnecessary overhead for a solo-maintainer project.
 
 ### Planned for v0.2
-- `stig` compliance profile
 - 14th module — mount and partition hardening
 - Full RHEL / Rocky Linux test parity
 
