@@ -1,0 +1,213 @@
+# PCI-DSS v4.0 Compliance Profile
+# Designed for systems that store, process, or transmit cardholder data (CHD)
+# or are part of the cardholder data environment (CDE).
+# Reference: PCI DSS v4.0 (March 2022)
+#
+# This profile maps directly to PCI-DSS requirements. The relevant
+# requirement number is annotated on each control.
+
+version: "1"
+profile: pci-dss
+environment: onprem
+
+modules:
+  ssh:
+    enabled: true
+    # Req 2.2 — no vendor defaults; Req 8.6 — manage all accounts
+    max_auth_tries: 4               # Req 8.3.4: lock after ≤10 failed attempts
+    login_grace_time: 60            # Req 8.2.8: idle session timeout
+    client_alive_interval: 900      # Req 8.2.8: idle timeout ≤15 min (900s)
+    client_alive_count_max: 0       # strict: disconnect after one interval
+    max_sessions: 5
+    disable_root_login: true        # Req 8.2.1: unique IDs; root is shared
+    disable_empty_passwords: true   # Req 8.3.6: passwords must meet complexity
+    disable_x11_forwarding: true    # Req 2.2.4: disable unnecessary services
+    disable_hostbased_auth: true    # Req 8.2.1: no shared credentials
+    disable_ignore_rhosts: true     # Req 8.2.1
+    disable_tcp_forwarding: false   # keep false unless not needed by workload
+    disable_agent_forwarding: false
+    log_level: VERBOSE              # Req 10.2: log all individual user access
+    # Req 4.2.1 — strong cryptography for data in transit
+    ciphers:
+      - aes128-ctr
+      - aes192-ctr
+      - aes256-ctr
+      - aes128-gcm@openssh.com
+      - aes256-gcm@openssh.com
+      - chacha20-poly1305@openssh.com
+    macs:
+      - hmac-sha2-256-etm@openssh.com
+      - hmac-sha2-512-etm@openssh.com
+    kex_algorithms:
+      - curve25519-sha256
+      - curve25519-sha256@libssh.org
+      - diffie-hellman-group14-sha256
+      - diffie-hellman-group16-sha512
+      - diffie-hellman-group18-sha512
+
+  firewall:
+    enabled: true
+    # Req 1.3 — network access controls to and from the CDE
+    backend: auto                   # auto-detect: ufw | nftables | firewalld
+    default_inbound: drop           # Req 1.3.2: deny all inbound by default
+    default_outbound: drop          # Req 1.3.3: restrict outbound from CDE
+    log_dropped: true               # Req 10.2: log all access attempts
+    # Define only the ports required for your CDE here.
+    # Req 1.3.1: allow only documented necessary traffic.
+    # Example:
+    # allowed_ingress:
+    #   - port: 443
+    #     proto: tcp
+    #     comment: "HTTPS — cardholder data transmissions"
+    #   - port: 22
+    #     proto: tcp
+    #     comment: "SSH — restrict source IP to admin jump host"
+
+  kernel:
+    enabled: true
+    # Req 2.2.1 — configuration standards for all system components
+    # Enforced by the kernel module (sysctl hardening):
+    # - kernel.randomize_va_space = 2  (ASLR)
+    # - kernel.kptr_restrict = 2
+    # - kernel.dmesg_restrict = 1
+    # - net.ipv4 source routing and ICMP redirects disabled
+    # - net.ipv4.conf.all.log_martians = 1  (Req 10.2)
+
+  users:
+    enabled: true
+    # Req 8.3 — strong authentication for all users
+    password_max_days: 90           # Req 8.3.9: change every 90 days
+    password_min_days: 1
+    password_warn_age: 14
+    password_min_length: 12         # Req 8.3.6: minimum 12 characters (v4.0)
+    password_complexity: true       # Req 8.3.6: uppercase, digit, symbol
+    password_history: 4             # Req 8.3.7: prevent reuse of last 4 passwords
+    lockout_attempts: 6             # Req 8.3.4: lock after ≤10 attempts (6 = safe margin)
+    lockout_duration: 1800          # Req 8.3.5: ≥30 min (1800s) or manual unlock
+    inactive_account_lock_days: 90  # Req 8.2.6: remove/disable inactive accounts
+    su_restricted: true             # Req 7.2: restrict access to minimum necessary
+    umask: "027"
+
+  filesystem:
+    enabled: true
+    # Req 2.2 — secure configuration standards
+    tmp_nosuid: true
+    tmp_nodev: true
+    tmp_noexec: true
+    devshm_nosuid: true
+    devshm_nodev: true
+    devshm_noexec: true
+    var_nosuid: true
+    var_tmp_nosuid: true
+    var_tmp_nodev: true
+    var_tmp_noexec: true
+    # Req 2.2.4 — disable all unnecessary, insecure, or unused components
+    disable_cramfs: true
+    disable_freevxfs: true
+    disable_jffs2: true
+    disable_hfs: true
+    disable_hfsplus: true
+    disable_udf: true
+
+  auditd:
+    enabled: true
+    # Req 10 — log and monitor all access to system components and CHD
+    max_log_file_size: 32           # MB
+    num_logs: 5
+    action_on_space_left: email     # Req 10.5.1: alert on log storage issues
+    space_left_mb: 75
+    immutable: false                # set true for high-security CDE
+    # Req 10.2 — audit events required by PCI-DSS
+    audit_privileged_commands: true # Req 10.2.1.7 — privilege escalation
+    audit_file_access: true         # Req 10.2.1.3 — invalid logical access attempts
+    audit_user_events: true         # Req 10.2.1.1 — all individual user access
+    audit_sudo_commands: true       # Req 10.2.1.2 — actions by root / admin accounts
+    audit_network_changes: true     # Req 10.2.1.5 — use of network mechanisms
+    audit_time_change: true         # Req 10.2.1.6 — system clock modifications
+
+  services:
+    enabled: true
+    # Req 2.2.4 — enable only necessary services, protocols, daemons
+    disable:
+      - xinetd
+      - inetd
+      - avahi-daemon
+      - cups
+      - dhcpd
+      - slapd
+      - nfs-server
+      - bind
+      - vsftpd
+      - httpd
+      - apache2
+      - nginx
+      - dovecot
+      - sendmail
+      - samba
+      - squid
+      - snmpd                       # Req 2.2.4: SNMPv1/v2c transmits in cleartext
+      - nis
+      - telnet                      # Req 4.2.2: no cleartext protocols for CHD
+      - rsh-server                  # Req 4.2.2
+      - tftp-server
+      - rsync
+
+  network:
+    enabled: true
+    # Req 1.3 / Req 4.2 — secure network configuration
+    disable_ipv6: false             # set true if your CDE does not use IPv6
+    disable_wireless: true          # Req 1.3.x: no wireless in CDE unless encrypted
+    disable_dccp: true
+    disable_sctp: true
+    disable_rds: true
+    disable_tipc: true
+
+  crypto:
+    enabled: true
+    # Req 4.2.1 — strong cryptography for all CHD transmissions
+    min_tls_version: "1.2"          # Req 4.2.1: TLS 1.0 and 1.1 are prohibited
+    disable_weak_ciphers: true      # remove RC4, DES, 3DES, NULL, EXPORT suites
+    disable_weak_hashes: true       # reject MD5 and SHA-1 for signing
+
+  logging:
+    enabled: true
+    # Req 10.5 — retain audit logs for at least 12 months; 3 months online
+    log_retention_days: 365         # Req 10.7: 12-month retention minimum
+    remote_log_host: ""             # Req 10.5.1: protect logs via remote storage
+    remote_log_protocol: tcp        # TCP for reliable delivery
+
+  mac:
+    enabled: true
+    # Req 2.2.1 — enforce access control policy at OS level
+    enforce: true
+    deny_unknown: false
+
+  ntp:
+    enabled: true
+    # Req 10.6 — synchronize all critical system clocks
+    backend: auto                   # auto: chrony | systemd-timesyncd
+    timezone: UTC
+    # Req 10.6.1: use at least two NTP sources
+    # servers:
+    #   - 0.pool.ntp.org
+    #   - 1.pool.ntp.org
+
+  updates:
+    enabled: true
+    # Req 6.3.3 — all system components are protected from known vulnerabilities
+    unattended_security_upgrades: true
+    auto_reboot: false
+
+  containers:
+    enabled: false                  # enable if Docker/Podman is in use in the CDE
+
+report:
+  format: html
+  output_dir: /var/lib/hardbox/reports
+  include_remediation: true
+  include_evidence: true            # Req 12.3: document and verify security controls
+
+audit:
+  fail_on_critical: true
+  fail_on_high: true                # PCI-DSS: all high-risk findings must be addressed
+  fail_on_medium: false
