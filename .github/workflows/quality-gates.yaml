@@ -226,7 +226,11 @@ jobs:
 
     steps:
       - name: Install system dependencies
-        run: dnf install -y --nodocs git tar gzip ca-certificates
+        run: |
+          dnf install -y --nodocs git tar gzip ca-certificates
+          # Mark any directory as safe so Go's VCS stamping doesn't fail when
+          # the workspace UID (runner) differs from the container UID (root).
+          git config --global --add safe.directory '*'
 
       - uses: actions/checkout@v4
 
