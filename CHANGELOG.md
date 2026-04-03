@@ -98,6 +98,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Distro Parity Gate` required check — blocks merge if any distro leg fails; `docs/DEVSECOPS.md` documents parity scope and how to add distros
 - Filesystem module check `fs-008` — `/var/tmp` must be mounted `nodev,nosuid,noexec` (CIS 1.1.8–1.1.10, STIG V-238149); this control was present in all compliance profiles but absent from the audit check list ([#88](https://github.com/jackby03/hardbox/issues/88))
 - `hipaa` compliance profile — HIPAA Security Rule (45 CFR Part 164), full ePHI environment hardening with per-section annotations (§164.308/310/312); 6-year log retention per §164.316(b)(2)(i) ([#103](https://github.com/jackby03/hardbox/issues/103))
+- `iso27001` compliance profile — ISO/IEC 27001:2022, ISMS-aligned OS hardening with Annex A control annotations (A.5–A.8) covering access control, cryptography, logging, network security, and vulnerability management ([#105](https://github.com/jackby03/hardbox/issues/105))
 
 ### Changed
 - `install.sh` now resolves release assets via GitHub API instead of hardcoded filenames, improving compatibility across release archive naming formats.
@@ -110,7 +111,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - 14th module — mount and partition hardening
 
 ### Planned for v0.3
-- `nist-800-53`, `iso27001` profiles
+- `nist-800-53` profile
 - `cloud-aws`, `cloud-gcp`, `cloud-azure` profiles
 - Ansible role integration
 - Terraform provisioner

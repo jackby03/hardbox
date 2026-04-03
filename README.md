@@ -46,7 +46,7 @@ It covers every layer of the security stack: kernel parameters, SSH, firewall, P
 |:---|:---|
 | **Modern TUI** | Interactive terminal UI (Bubble Tea). Navigate, configure, and apply hardening without memorizing commands |
 | **Modular Architecture** | Enable or disable any module independently. Mix and match profiles at will |
-| **7 Built-in Profiles** | `cis-level1`, `cis-level2`, `pci-dss`, `stig`, `hipaa`, `production`, `development` — more on roadmap |
+| **8 Built-in Profiles** | `cis-level1`, `cis-level2`, `pci-dss`, `stig`, `hipaa`, `iso27001`, `production`, `development` — more on roadmap |
 | **Dry Run Mode** | Preview every exact change before it's applied. Safe to run on live servers |
 | **One-command Rollback** | Every change is snapshotted. Revert any module or an entire session instantly |
 | **Audit Reports** | JSON, HTML, and Markdown output — machine-readable and CI/CD-friendly |
@@ -144,6 +144,7 @@ sudo hardbox rollback apply --last
 | `pci-dss` | PCI-DSS v4.0 | Cardholder data environments (CDE) |
 | `stig` | DISA STIG (Ubuntu 22.04 V1R1) | DoD and high-assurance systems |
 | `hipaa` | HIPAA Security Rule (45 CFR Part 164) | Healthcare — ePHI environments |
+| `iso27001` | ISO/IEC 27001:2022 | ISMS-certified and compliant organisations |
 | `production` | hardbox curated | Cloud production servers |
 | `development` | hardbox curated | Dev/staging — security + developer usability |
 
@@ -156,7 +157,6 @@ sudo hardbox rollback apply --last
 | Profile | Framework | Target Release |
 |:---:|:---|:---:|
 | `nist-800-53` | NIST SP 800-53 Rev. 5 | v0.3 |
-| `iso27001` | ISO/IEC 27001:2022 | v0.3 |
 | `cloud-aws` | hardbox + CIS | v0.3 |
 | `cloud-gcp` | hardbox + CIS | v0.3 |
 | `cloud-azure` | hardbox + CIS | v0.3 |
@@ -219,7 +219,8 @@ sudo hardbox rollback apply --last
 
 ### v0.3 — Ecosystem
 - [x] `hipaa` profile
-- [ ] `nist-800-53`, `iso27001` profiles
+- [x] `iso27001` profile
+- [ ] `nist-800-53` profile
 - [ ] `cloud-aws`, `cloud-gcp`, `cloud-azure` profiles
 - [ ] Ansible role integration
 - [ ] Terraform provisioner
