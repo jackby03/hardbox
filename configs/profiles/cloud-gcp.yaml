@@ -1,0 +1,293 @@
+# GCP Cloud Compliance Profile
+# Designed for hardbox on Google Cloud Compute Engine VM instances.
+# Combines OS-level hardening with GCP-specific security control annotations.
+#
+# References:
+#   CIS Google Cloud Platform Foundation Benchmark v2.0.0
+#   CIS Google Container-Optimized OS Benchmark v1.0.0
+#   Google Cloud Security Command Center (SCC) findings
+#   NIST SP 800-53 Rev. 5 (mapped where applicable)
+#
+# GCP-specific controls (IAM, VPC Firewall, Cloud Audit Logs, CMEK, GKE)
+# operate at the GCP project/API layer and must be validated via:
+#   - Google Cloud Security Command Center
+#   - gcloud CLI / Terraform policy checks
+#   - Organization Policy constraints
+#
+# OS hardening controls align with CIS GCP Foundations Benchmark and
+# CIS Linux benchmarks for Compute Engine VM instances.
+
+version: "1"
+profile: cloud-gcp
+environment: cloud-gcp
+
+modules:
+  ssh:
+    enabled: true
+    # CIS GCP 4.3  — Ensure OS login is enabled for a project (preferred over SSH keys)
+    # CIS GCP 4.6  — Ensure SSH access is restricted from the internet (use IAP tunnels)
+    # GCP Note: prefer OS Login (gcloud compute os-login) + IAP TCP tunnelling over
+    # traditional SSH key pairs. If OS Login is used, this profile handles OS-level hardening.
+    client_alive_interval: 300     # 5-minute idle timeout appropriate for cloud instances
+    client_alive_count_max: 0      # disconnect immediately on interval expiry
+    login_grace_time: 60           # limit unauthenticated SSH connection window
+    disable_root_login: true       # CIS GCP 4.4: prohibit root login over SSH
+    disable_empty_passwords: true  # reject empty password authentication
+    disable_x11_forwarding: true   # X11 forwarding not required on Compute Engine VMs
+    disable_hostbased_auth: true   # host-based auth bypasses OS Login integration
+    disable_ignore_rhosts: true    # .rhosts trust relationships prohibited
+    disable_tcp_forwarding: true   # reduce attack surface; use IAP for tunnelling
+    disable_agent_forwarding: false
+    log_level: VERBOSE             # feed SSH events to Cloud Logging via ops agent
+    max_auth_tries: 4              # limit brute-force attempts
+    max_sessions: 10
+    # Enforce strong cryptographic algorithms for SSH transport
+    ciphers:
+      - aes128-ctr
+      - aes192-ctr
+      - aes256-ctr
+      - aes128-gcm@openssh.com
+      - aes256-gcm@openssh.com
+      - chacha20-poly1305@openssh.com
+    macs:
+      - hmac-sha2-256-etm@openssh.com
+      - hmac-sha2-512-etm@openssh.com
+    kex_algorithms:
+      - curve25519-sha256
+      - curve25519-sha256@libssh.org
+      - diffie-hellman-group14-sha256
+      - diffie-hellman-group16-sha512
+      - diffie-hellman-group18-sha512
+
+  firewall:
+    enabled: true
+    # CIS GCP 3.6  — Ensure SSH access is restricted from the internet
+    # CIS GCP 3.7  — Ensure RDP access is restricted from the internet
+    # CIS GCP 3.9  — Ensure VPC flow logs are enabled for every subnet
+    # GCP Note: VPC Firewall rules are the primary network control.
+    # OS-level firewall provides defence-in-depth within the VM.
+    # Use VPC Firewall rules tagged to service accounts, not to instance/network tags alone.
+    backend: auto                  # auto-detect: ufw | nftables | firewalld
+    default_inbound: drop          # defence-in-depth: OS-level default-deny
+    default_outbound: drop         # restrict egress to complement VPC Firewall egress rules
+    log_dropped: true              # forward to Cloud Logging via Google Cloud Ops Agent
+    # Mirror your VPC Firewall allow rules here for defence-in-depth.
+    # CIS GCP 3.6: no 0.0.0.0/0 source on port 22 in VPC Firewall rules.
+    # Example:
+    # allowed_ingress:
+    #   - port: 443
+    #     proto: tcp
+    #     comment: "HTTPS — load balancer health check IP ranges"
+    #   - port: 22
+    #     proto: tcp
+    #     comment: "SSH via IAP — use IAP tunnel; restrict to 35.235.240.0/20"
+
+  kernel:
+    enabled: true
+    # CIS GCP 4.x  — VM instance configuration
+    # GCP Note: Compute Engine supports Shielded VM (vTPM, Secure Boot, Integrity Monitoring)
+    # Enable via: gcloud compute instances update --shielded-secure-boot --shielded-vtpm
+    # Kernel module enforces:
+    # - kernel.randomize_va_space = 2   (ASLR — memory protection)
+    # - kernel.kptr_restrict = 2        (restrict kernel pointer exposure)
+    # - kernel.dmesg_restrict = 1       (restrict dmesg to root)
+    # - net.ipv4 source routing disabled
+    # - net.ipv4.conf.all.log_martians = 1 (log suspicious packets to Cloud Logging)
+    # - fs.suid_dumpable = 0            (prevent SUID core dumps)
+
+  users:
+    enabled: true
+    # CIS GCP 4.x  — User account management on VM instances
+    # GCP Note: OS Login maps Google identities to Linux user accounts.
+    # When OS Login is enabled, traditional /etc/passwd management is reduced.
+    # These settings apply to any local accounts that remain on the instance.
+    password_max_days: 90          # enforce regular credential rotation
+    password_min_days: 7           # prevent immediate password recycling
+    password_warn_age: 14          # advance notification before expiry
+    password_min_length: 14        # enforce minimum 14-character passwords
+    password_complexity: true      # enforce PAM password complexity
+    password_history: 5            # remember last 5 passwords
+    lockout_attempts: 5            # lock after 5 consecutive failures
+    lockout_duration: 900          # 15-minute lockout (900 seconds)
+    inactive_account_lock_days: 30 # disable accounts inactive for 30 days
+    su_restricted: true            # restrict su to authorised groups only
+    umask: "027"                   # restrictive default file creation permissions
+
+  filesystem:
+    enabled: true
+    # GCP Note: use persistent disk encryption with CMEK (Customer-Managed Encryption Keys)
+    # for data-at-rest protection. Enforce via Organization Policy:
+    # constraints/gcp.restrictCmekCryptoKeyProjects
+    # CIS GCP 4.7  — Ensure VM disks for critical VMs are encrypted with CMEK
+    tmp_nosuid: true
+    tmp_nodev: true
+    tmp_noexec: true
+    devshm_nosuid: true
+    devshm_nodev: true
+    devshm_noexec: true
+    var_nosuid: true
+    var_tmp_nosuid: true
+    var_tmp_nodev: true
+    var_tmp_noexec: true
+    home_nodev: true
+    disable_cramfs: true
+    disable_freevxfs: true
+    disable_jffs2: true
+    disable_hfs: true
+    disable_hfsplus: true
+    disable_udf: true
+
+  auditd:
+    enabled: true
+    # GCP Note: Cloud Audit Logs capture API-level events (Admin Activity, Data Access).
+    # auditd captures OS-level syscall events on the VM.
+    # Forward auditd logs to Cloud Logging using the Google Cloud Ops Agent:
+    #   /etc/google-cloud-ops-agent/config.yaml — add auditd log source
+    # CIS GCP 2.x  — Logging configuration
+    max_log_file_size: 32
+    num_logs: 10
+    action_on_space_left: email
+    space_left_mb: 100
+    immutable: false               # set true for Shielded VM / high-assurance workloads
+    audit_privileged_commands: true
+    audit_file_access: true
+    audit_user_events: true
+    audit_sudo_commands: true
+    audit_network_changes: true
+    audit_time_change: true
+
+  services:
+    enabled: true
+    # Disable unnecessary services on Compute Engine VM instances
+    # GCP-managed services (metadata server, ops agent) are excluded
+    disable:
+      - xinetd
+      - inetd
+      - avahi-daemon             # mDNS unnecessary in GCP VPC environments
+      - cups
+      - dhcpd
+      - slapd
+      - nfs-server
+      - bind
+      - vsftpd
+      - httpd
+      - apache2
+      - nginx                    # disable unless documented application requirement
+      - dovecot
+      - sendmail
+      - samba
+      - squid
+      - snmpd                    # not appropriate in cloud-native environments
+      - nis
+      - telnet                   # use IAP TCP tunnelling instead of telnet
+      - rsh-server
+      - tftp-server
+      - rsync
+
+  network:
+    enabled: true
+    # CIS GCP 3.x  — Networking
+    # GCP Note: Compute Engine VMs in standard VPCs typically use IPv4 only;
+    # dual-stack support is available but not always required.
+    # CIS GCP 3.9: enable VPC flow logs on all subnets for network monitoring
+    disable_ipv6: false            # set true if your GCP VPC subnet does not use IPv6
+    disable_wireless: true         # no wireless interfaces on Compute Engine VMs
+    disable_dccp: true             # disable uncommon protocols
+    disable_sctp: true
+    disable_rds: true
+    disable_tipc: true
+
+  crypto:
+    enabled: true
+    # CIS GCP 3.10 — Ensure KMS is used to encrypt disks with CMEK
+    # GCP Note: HTTPS load balancing enforces TLS at the frontend; configure
+    # minimum TLS 1.2 in SSL policies: gcloud compute ssl-policies create
+    min_tls_version: "1.2"         # enforce TLS 1.2+ for OS-level connections
+    disable_weak_ciphers: true
+    disable_weak_hashes: true
+
+  logging:
+    enabled: true
+    # CIS GCP 2.x  — Logging and monitoring
+    # GCP Note: Cloud Logging retains Admin Activity logs for 400 days (free).
+    # Data Access logs require explicit enablement and have custom retention.
+    # Forward OS logs to Cloud Logging using Google Cloud Ops Agent.
+    log_retention_days: 400        # align with Cloud Logging default Admin Activity retention
+    remote_log_host: ""            # set to Cloud Logging API endpoint or on-prem SIEM
+    remote_log_protocol: tcp
+
+  mac:
+    enabled: true
+    # Mandatory access control via AppArmor (Ubuntu/Debian) or SELinux (RHEL-based)
+    enforce: true
+    deny_unknown: false
+
+  ntp:
+    enabled: true
+    # GCP Note: Compute Engine VMs use Google's NTP servers automatically via DHCP option.
+    # The metadata server (169.254.169.254) also provides time via the hypervisor clock.
+    # CIS GCP: ensure time synchronisation is active and validated.
+    backend: auto
+    timezone: UTC
+    # servers:
+    #   - metadata.google.internal  # GCP metadata server NTP (via hypervisor clock)
+    #   - time.google.com           # Google public NTP (RFC 5905 + leap second smearing)
+
+  updates:
+    enabled: true
+    # GCP Note: use OS Config (VM Manager) for patch management and compliance reporting.
+    # Enable: gcloud compute instances add-metadata --metadata enable-osconfig=TRUE
+    # Track compliance via Security Command Center or OS Config API.
+    unattended_security_upgrades: true
+    auto_reboot: false             # coordinate with GCP maintenance windows
+
+  containers:
+    enabled: false                 # enable if running Docker/containerd on Compute Engine
+    # GCP Note: for containerised workloads prefer GKE Autopilot or GKE Standard
+    # with Binary Authorization, Workload Identity, and Container Analysis scanning.
+
+report:
+  format: html
+  output_dir: /var/lib/hardbox/reports
+  include_remediation: true
+  include_evidence: true
+
+audit:
+  fail_on_critical: true
+  fail_on_high: true
+  fail_on_medium: false
+
+# GCP-specific controls requiring validation outside OS hardening:
+# ---------------------------------------------------------------
+# IAM:
+#   - CIS GCP 1.1:  Ensure that corporate login credentials are used (Workspace accounts)
+#   - CIS GCP 1.3:  Ensure service account keys are not created for default service accounts
+#   - CIS GCP 1.4:  Ensure service account keys are rotated within 90 days
+#   - CIS GCP 1.7:  Ensure Separation of Duties for service account assignment
+#   - CIS GCP 4.1:  Ensure service accounts do not have admin privileges
+#   Validate via: gcloud iam service-accounts list
+#                 gcloud projects get-iam-policy PROJECT_ID
+#
+# VPC / Networking:
+#   - CIS GCP 3.1:  Ensure the default network does not exist in any project
+#   - CIS GCP 3.2:  Ensure legacy networks do not exist
+#   - CIS GCP 3.6:  Ensure SSH access is restricted from the internet (0.0.0.0/0)
+#   - CIS GCP 3.9:  Ensure VPC flow logs are enabled on all subnets
+#   Validate via: gcloud compute networks list
+#                 gcloud compute firewall-rules list
+#                 gcloud compute networks subnets list --filter="enableFlowLogs=false"
+#
+# Cloud Audit Logs:
+#   - CIS GCP 2.1:  Ensure Cloud Audit Logs are configured correctly
+#   - CIS GCP 2.2:  Ensure audit log retention is set to at least 400 days
+#   - CIS GCP 2.7:  Ensure log metric filter and alert exist for project ownership changes
+#   Validate via: gcloud logging sinks list
+#                 gcloud projects get-iam-policy PROJECT_ID --flatten="bindings[].members"
+#
+# KMS / CMEK:
+#   - CIS GCP 1.10: Ensure KMS keys are rotated within 90 days
+#   - CIS GCP 4.7:  Ensure VM disks for critical VMs are encrypted with CMEK
+#   Validate via: gcloud kms keys list --location=global --keyring=KEYRING
+#
+# Use Google Cloud Security Command Center (Standard or Premium tier)
+# for continuous posture management and findings correlation.

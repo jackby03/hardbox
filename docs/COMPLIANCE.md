@@ -258,9 +258,13 @@ This table shows which compliance frameworks each **shipped** profile satisfies.
 | `hipaa` | ✓ Full | ✓ Full | Partial | Partial | ✓ Full | Partial | Partial | ✅ Shipped |
 | `nist-800-53` | ✓ Full | ✓ Full | ✓ Full | Partial | Partial | ✓ Full | Partial | 🗓 Roadmap v0.3 |
 | `iso27001` | ✓ Full | ✓ Full | Partial | Partial | Partial | Partial | ✓ Full | ✅ Shipped |
+| `cloud-aws` | ✓ Full | Partial | Partial | Partial | Partial | Partial | Partial | ✅ Shipped |
+| `cloud-gcp` | ✓ Full | Partial | Partial | Partial | Partial | Partial | Partial | ✅ Shipped |
+| `cloud-azure` | ✓ Full | Partial | Partial | Partial | Partial | Partial | Partial | ✅ Shipped |
 
 > **Partial** = significant coverage with some controls requiring manual evidence or configuration beyond OS-level hardening (e.g., application-layer controls, physical security).
-> Roadmap profiles (`hipaa`, `nist-800-53`, `iso27001`, and later) are not yet shipped — running them will return an error until the corresponding `.yaml` file is added to `configs/profiles/`.
+> Cloud profiles (`cloud-aws`, `cloud-gcp`, `cloud-azure`) cover OS-level hardening; cloud-provider-layer controls (IAM, VPC, KMS, monitoring) must be validated separately via AWS Security Hub, Google Cloud SCC, or Microsoft Defender for Cloud.
+> The `nist-800-53` profile is on the roadmap — running it will return an error until the corresponding `.yaml` is added to `configs/profiles/`.
 
 ---
 
@@ -288,11 +292,19 @@ sudo hardbox audit --profile hipaa --format html --output hipaa-audit.html
 # ISO/IEC 27001:2022 audit — ISMS-aligned environments
 sudo hardbox audit --profile iso27001 --format html --output iso27001-audit.html
 
+# AWS EC2 hardening audit — CIS AWS Foundations aligned
+sudo hardbox audit --profile cloud-aws --format html --output cloud-aws-audit.html
+
+# GCP Compute Engine hardening audit — CIS GCP Foundations aligned
+sudo hardbox audit --profile cloud-gcp --format html --output cloud-gcp-audit.html
+
+# Azure VM hardening audit — CIS Azure Foundations aligned
+sudo hardbox audit --profile cloud-azure --format html --output cloud-azure-audit.html
+
 # Fail CI/CD pipeline if critical or high findings exist
 sudo hardbox audit --profile cis-level2 --format json
 # exits 1 if audit.fail_on_critical or audit.fail_on_high = true and findings exist
 ```
 
-> **Note:** The `nist-800-53` and cloud profiles are on the roadmap and will
-> be available in future releases. Track progress in the
-> [v0.3 milestone](https://github.com/jackby03/hardbox/milestone/3).
+> **Note:** The `nist-800-53` profile is on the roadmap and will be available in a future release.
+> Track progress in the [v0.3 milestone](https://github.com/jackby03/hardbox/milestone/3).
