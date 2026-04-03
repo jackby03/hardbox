@@ -1,0 +1,161 @@
+#cloud-config
+# hardbox cloud-init user-data template — Google Cloud Platform (Compute Engine)
+#
+# Usage:
+#   Pass this file as user-data when creating a GCP VM instance:
+#     gcloud compute instances create my-vm \
+#       --metadata-from-file user-data=cloud-init/gcp-user-data.yaml \
+#       ...
+#
+#   Or include inline:
+#     gcloud compute instances create my-vm \
+#       --metadata user-data="$(cat cloud-init/gcp-user-data.yaml)"
+#
+# Variables (customise before use):
+#   HARDBOX_VERSION    : hardbox release tag (default: latest)
+#   HARDBOX_PROFILE    : compliance profile to apply (default: cloud-gcp)
+#   HARDBOX_REPORT_GCS : GCS bucket URI for audit reports (e.g. gs://my-bucket/hardbox/)
+#   HARDBOX_SCHEDULE   : systemd timer interval for re-hardening (default: daily)
+#
+# Requirements:
+#   - VM service account must have storage.objects.create permission on HARDBOX_REPORT_GCS
+#   - Instance must have internet access (or Private Google Access) to download hardbox
+#   - Google Cloud Ops Agent recommended for forwarding hardbox logs to Cloud Logging
+
+write_files:
+  - path: /etc/hardbox/cloud-init.env
+    permissions: "0640"
+    owner: root:root
+    content: |
+      HARDBOX_VERSION=latest
+      HARDBOX_PROFILE=cloud-gcp
+      HARDBOX_REPORT_GCS=gs://CHANGE-ME/hardbox/reports/
+      HARDBOX_SCHEDULE=daily
+      HARDBOX_INSTALL_DIR=/usr/local/bin
+      HARDBOX_REPORT_DIR=/var/lib/hardbox/reports
+      CLOUD_PROVIDER=gcp
+
+  - path: /usr/local/lib/hardbox/install.sh
+    permissions: "0750"
+    owner: root:root
+    content: |
+      #!/bin/bash
+      # hardbox installer with checksum verification
+      set -euo pipefail
+      source /etc/hardbox/cloud-init.env
+
+      ARCH=$(uname -m)
+      case "$ARCH" in
+        x86_64)  GOARCH="amd64" ;;
+        aarch64) GOARCH="arm64" ;;
+        *)        echo "Unsupported architecture: $ARCH"; exit 1 ;;
+      esac
+
+      if [ "$HARDBOX_VERSION" = "latest" ]; then
+        HARDBOX_VERSION=$(curl -fsSL \
+          "https://api.github.com/repos/jackby03/hardbox/releases/latest" \
+          | grep '"tag_name"' | cut -d'"' -f4)
+      fi
+
+      BASE_URL="https://github.com/jackby03/hardbox/releases/download/${HARDBOX_VERSION}"
+      BINARY="hardbox_Linux_${GOARCH}"
+      CHECKSUM_FILE="hardbox_${HARDBOX_VERSION#v}_checksums.txt"
+
+      echo "Installing hardbox ${HARDBOX_VERSION} (${GOARCH})..."
+      curl -fsSL "${BASE_URL}/${BINARY}" -o /tmp/hardbox
+      curl -fsSL "${BASE_URL}/${CHECKSUM_FILE}" -o /tmp/hardbox_checksums.txt
+
+      # Verify checksum
+      EXPECTED=$(grep "${BINARY}" /tmp/hardbox_checksums.txt | awk '{print $1}')
+      ACTUAL=$(sha256sum /tmp/hardbox | awk '{print $1}')
+      if [ "$EXPECTED" != "$ACTUAL" ]; then
+        echo "Checksum mismatch! Expected: $EXPECTED, Got: $ACTUAL" >&2
+        exit 1
+      fi
+
+      install -m 0755 /tmp/hardbox "${HARDBOX_INSTALL_DIR}/hardbox"
+      rm -f /tmp/hardbox /tmp/hardbox_checksums.txt
+      echo "hardbox installed: $(hardbox version)"
+
+  - path: /usr/local/lib/hardbox/harden.sh
+    permissions: "0750"
+    owner: root:root
+    content: |
+      #!/bin/bash
+      # hardbox apply + report upload to GCS
+      set -euo pipefail
+      source /etc/hardbox/cloud-init.env
+
+      mkdir -p "${HARDBOX_REPORT_DIR}"
+      TIMESTAMP=$(date -u +%Y%m%dT%H%M%SZ)
+      # Retrieve GCP instance name from metadata server
+      INSTANCE_NAME=$(curl -fsSL \
+        "http://metadata.google.internal/computeMetadata/v1/instance/name" \
+        -H "Metadata-Flavor: Google" 2>/dev/null || echo "unknown")
+      INSTANCE_ZONE=$(curl -fsSL \
+        "http://metadata.google.internal/computeMetadata/v1/instance/zone" \
+        -H "Metadata-Flavor: Google" 2>/dev/null | awk -F/ '{print $NF}' || echo "unknown")
+      REPORT_FILE="${HARDBOX_REPORT_DIR}/hardbox-${INSTANCE_NAME}-${TIMESTAMP}.html"
+
+      echo "Applying hardbox profile: ${HARDBOX_PROFILE}"
+      hardbox apply \
+        --profile "${HARDBOX_PROFILE}" \
+        --format html \
+        --output "${REPORT_FILE}" \
+        --non-interactive
+
+      # Upload report to GCS if bucket is configured
+      if [ "${HARDBOX_REPORT_GCS}" != "gs://CHANGE-ME/hardbox/reports/" ]; then
+        echo "Uploading report to ${HARDBOX_REPORT_GCS}"
+        gsutil cp "${REPORT_FILE}" \
+          "${HARDBOX_REPORT_GCS}${INSTANCE_ZONE}/${INSTANCE_NAME}/${TIMESTAMP}.html"
+        echo "Report uploaded successfully"
+      fi
+
+      # Emit structured log entry for Cloud Logging
+      logger -t hardbox \
+        "hardbox apply complete — profile=${HARDBOX_PROFILE} instance=${INSTANCE_NAME} zone=${INSTANCE_ZONE}"
+
+  - path: /etc/systemd/system/hardbox-harden.service
+    permissions: "0644"
+    owner: root:root
+    content: |
+      [Unit]
+      Description=hardbox system hardening
+      After=network-online.target google-network-daemon.service
+      Wants=network-online.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/lib/hardbox/harden.sh
+      StandardOutput=journal
+      StandardError=journal
+      SyslogIdentifier=hardbox
+
+  - path: /etc/systemd/system/hardbox-harden.timer
+    permissions: "0644"
+    owner: root:root
+    content: |
+      [Unit]
+      Description=hardbox periodic re-hardening timer
+      Requires=hardbox-harden.service
+
+      [Timer]
+      OnBootSec=2min
+      OnCalendar=daily
+      Persistent=true
+
+      [Install]
+      WantedBy=timers.target
+
+runcmd:
+  # Install hardbox binary with checksum verification
+  - /usr/local/lib/hardbox/install.sh
+
+  # Enable and start systemd timer for periodic re-hardening
+  - systemctl daemon-reload
+  - systemctl enable hardbox-harden.timer
+  - systemctl start hardbox-harden.timer
+
+  # Run initial hardening immediately
+  - systemctl start hardbox-harden.service

@@ -102,6 +102,8 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `cloud-aws` compliance profile — CIS AWS Foundations Benchmark v2.0, OS hardening for Amazon EC2 with AWS-specific annotations (IAM, Security Groups, CloudTrail, EBS encryption, KMS); includes guidance for AWS Security Hub and AWS Config validation ([#106](https://github.com/jackby03/hardbox/issues/106))
 - `cloud-gcp` compliance profile — CIS GCP Foundations Benchmark v2.0, OS hardening for GCP Compute Engine with GCP-specific annotations (OS Login, IAP, Cloud Audit Logs, CMEK, Shielded VM); includes guidance for Security Command Center validation ([#107](https://github.com/jackby03/hardbox/issues/107))
 - `cloud-azure` compliance profile — CIS Azure Foundations Benchmark v2.1, OS hardening for Azure VMs with Azure-specific annotations (NSG, Defender for Cloud, Azure Policy, Disk Encryption, AAD login); includes guidance for Defender for Cloud Secure Score validation ([#108](https://github.com/jackby03/hardbox/issues/108))
+- cloud-init user-data templates for AWS EC2, GCP Compute Engine, and Azure VMs — each template installs hardbox with checksum verification, applies the provider-matched compliance profile on first boot, uploads the HTML audit report to cloud-native object storage (S3 / GCS / Blob), and configures a daily systemd re-hardening timer ([#111](https://github.com/jackby03/hardbox/issues/111))
+- `docs/CLOUD-INIT.md` — usage guide covering quick-start commands, IAM/RBAC requirements, configuration reference, timer management, and troubleshooting for all three cloud-init templates
 
 ### Changed
 - `install.sh` now resolves release assets via GitHub API instead of hardcoded filenames, improving compatibility across release archive naming formats.
@@ -116,7 +118,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Planned for v0.3
 - `nist-800-53` profile
 - Ansible role integration
-- Terraform provisioner
+- Terraform provisioner plugin
 - cloud-init support
 
 ---
