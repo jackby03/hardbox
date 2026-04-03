@@ -287,6 +287,6 @@ sudo hardbox audit --profile cis-level2 --format json
 # exits 1 if audit.fail_on_critical or audit.fail_on_high = true and findings exist
 ```
 
-> **Note:** The `stig` and other compliance-specific profiles are on the roadmap
-> and will be available in future releases. Track progress in the
-> [v0.2 milestone](https://github.com/jackby03/hardbox/milestone/2).
+> **Note:** The `hipaa`, `nist-800-53`, `iso27001`, and other compliance-specific profiles
+> are on the roadmap and will be available in future releases. Track progress in the
+> [v0.3 milestone](https://github.com/jackby03/hardbox/milestone/3).
