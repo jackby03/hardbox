@@ -215,7 +215,7 @@ sudo hardbox rollback apply --last
 - [x] `pci-dss` profile
 - [x] `stig` profile
 - [ ] 14th module — mount hardening
-- [ ] Full RHEL / Rocky Linux parity
+- [x] Full RHEL / Rocky Linux parity
 
 ### v0.3 — Ecosystem
 - [ ] `hipaa`, `nist-800-53`, `iso27001` profiles

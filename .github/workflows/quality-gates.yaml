@@ -198,6 +198,108 @@ jobs:
             fi
           done
 
+  # ── Distro parity — RHEL / Rocky Linux ──────────────────────────────────────
+  # Runs build + unit tests + smoke audit inside RPM-based containers to catch
+  # path assumptions, syscall differences, or package-name drift that only
+  # surface on non-Debian systems.
+  #
+  # Container limitations (documented in docs/DEVSECOPS.md):
+  #   - systemd / systemctl is not available inside GitHub Actions containers.
+  #     Modules that shell out to systemctl will return "inactive" gracefully;
+  #     the audit is expected to complete and produce valid JSON regardless.
+  #   - redhat/ubi9 is the freely available RHEL 9 Universal Base Image.
+  #     It is ABI-compatible with RHEL 9 for our build/test/audit purposes.
+  distro-parity:
+    name: Distro Parity / ${{ matrix.distro }}
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    container:
+      image: ${{ matrix.image }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - distro: Rocky Linux 9
+            image: rockylinux:9
+          - distro: RHEL UBI 9
+            image: redhat/ubi9
+
+    steps:
+      - name: Install system dependencies
+        run: dnf install -y --nodocs git tar gzip ca-certificates
+
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Build
+        run: go build -v ./...
+
+      - name: Test
+        run: go test ./... -count=1 -timeout=120s
+
+      - name: Build hardbox binary
+        run: go build -o hardbox ./cmd/hardbox
+
+      - name: Smoke audit (cis-level1)
+        run: |
+          ./hardbox audit --profile cis-level1 --format json \
+            --output audit-${{ matrix.distro }}.json \
+            --non-interactive || true
+
+      - name: Validate audit report structure
+        run: |
+          jq -e '
+            has("session_id") and
+            has("overall_score") and
+            (.modules | type == "array" and length > 0) and
+            all(.modules[]; has("name") and has("findings"))
+          ' "audit-${{ matrix.distro }}.json" > /dev/null
+          echo "✓ Audit report structure valid on ${{ matrix.distro }}"
+
+      - name: Assert audit produced findings
+        run: |
+          COUNT=$(jq '[.modules[].findings[]] | length' "audit-${{ matrix.distro }}.json")
+          echo "Findings on ${{ matrix.distro }}: ${COUNT}"
+          if [ "${COUNT}" -eq 0 ]; then
+            echo "::error::Audit returned 0 findings on ${{ matrix.distro }} — distro detection may be broken"
+            exit 1
+          fi
+
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-${{ matrix.distro }}
+          path: audit-${{ matrix.distro }}.json
+
+  # Single gate job that requires all matrix legs — add this check name to
+  # branch protection so the merge button blocks until every distro passes.
+  distro-parity-gate:
+    name: Distro Parity Gate
+    runs-on: ubuntu-latest
+    needs: distro-parity
+    if: always()
+
+    steps:
+      - name: Assert all parity legs passed
+        run: |
+          RESULT="${{ needs.distro-parity.result }}"
+          if [ "${RESULT}" != "success" ]; then
+            echo "::error::One or more distro parity checks failed (result: ${RESULT})"
+            exit 1
+          fi
+          echo "✓ All distro parity checks passed"
+
   goreleaser-config:
     name: Release Configuration
     runs-on: ubuntu-latest
