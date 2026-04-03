@@ -227,7 +227,7 @@ jobs:
     steps:
       - name: Install system dependencies
         run: |
-          dnf install -y --nodocs git tar gzip ca-certificates
+          dnf install -y --nodocs git tar gzip ca-certificates jq
           # Mark any directory as safe so Go's VCS stamping doesn't fail when
           # the workspace UID (runner) differs from the container UID (root).
           git config --global --add safe.directory '*'
@@ -258,8 +258,7 @@ jobs:
       - name: Smoke audit (cis-level1)
         run: |
           ./hardbox audit --profile cis-level1 --format json \
-            --output audit-${{ matrix.distro }}.json \
-            --non-interactive || true
+            --output audit-${{ matrix.distro }}.json || true
 
       - name: Validate audit report structure
         run: |
