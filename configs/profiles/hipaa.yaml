@@ -1,0 +1,248 @@
+# HIPAA Security Rule Compliance Profile
+# Designed for systems that store, process, or transmit electronic Protected
+# Health Information (ePHI) — covered entities and business associates.
+#
+# Reference: HIPAA Security Rule — 45 CFR Part 164, Subpart C
+#   Administrative Safeguards: §164.308
+#   Physical Safeguards:       §164.310
+#   Technical Safeguards:      §164.312
+#   Organizational Requirements: §164.314
+#
+# HIPAA is "principles-based" (reasonable and appropriate measures) rather
+# than prescriptive. The control values below follow HHS guidance documents,
+# NIST SP 800-66 Rev. 2 (HIPAA implementation guide), and industry best practice
+# for ePHI environments. Annotate each control with the applicable section.
+#
+# Controls marked (R) = Required; (A) = Addressable (must implement or document
+# why an equivalent alternative was chosen).
+
+version: "1"
+profile: hipaa
+environment: onprem
+
+modules:
+  ssh:
+    enabled: true
+    # §164.312(a)(2)(iii) — Automatic Logoff (A): terminate sessions after inactivity
+    client_alive_interval: 900     # 15-minute idle timeout — industry-standard for ePHI
+    client_alive_count_max: 0      # disconnect immediately on interval expiry
+    login_grace_time: 60           # §164.312(d) — limit unauthenticated connection window
+    # §164.312(a)(2)(i) — Unique User Identification (R): no shared or anonymous accounts
+    disable_root_login: true       # root is a shared account — violates unique user ID
+    disable_empty_passwords: true  # §164.308(a)(5)(ii)(D) — password management
+    # §164.308(a)(5)(ii)(B) — Protection from Malicious Software (A)
+    disable_x11_forwarding: true   # X11 can expose session data; disable on ePHI servers
+    disable_hostbased_auth: true   # §164.312(d) — authenticate using individual credentials
+    disable_ignore_rhosts: true    # §164.312(d) — no trust-file based auth
+    disable_tcp_forwarding: false  # evaluate per environment; set true if not required
+    disable_agent_forwarding: false
+    log_level: VERBOSE             # §164.312(b) — Audit Controls (R): log all access
+    max_auth_tries: 5              # §164.308(a)(5)(ii)(C) — Log-In Monitoring (A)
+    max_sessions: 5
+    # §164.312(e)(2)(ii) — Encryption (A): encrypt ePHI in transit
+    # §164.312(a)(2)(iv) — Encryption and Decryption (A)
+    ciphers:
+      - aes128-ctr
+      - aes192-ctr
+      - aes256-ctr
+      - aes128-gcm@openssh.com
+      - aes256-gcm@openssh.com
+      - chacha20-poly1305@openssh.com
+    macs:
+      - hmac-sha2-256-etm@openssh.com
+      - hmac-sha2-512-etm@openssh.com
+    kex_algorithms:
+      - curve25519-sha256
+      - curve25519-sha256@libssh.org
+      - diffie-hellman-group14-sha256
+      - diffie-hellman-group16-sha512
+      - diffie-hellman-group18-sha512
+
+  firewall:
+    enabled: true
+    # §164.312(e)(1) — Transmission Security (R): protect ePHI during transmission
+    # §164.308(a)(1)(ii)(A) — Risk Analysis (R): control network exposure
+    backend: auto                  # auto-detect: ufw | nftables | firewalld
+    default_inbound: drop          # deny-by-default — only allow documented ePHI flows
+    default_outbound: drop         # restrict egress; prevent unauthorized ePHI exfiltration
+    log_dropped: true              # §164.312(b) — Audit Controls (R): log access attempts
+    # Define only the ports required for your ePHI workflows.
+    # §164.308(a)(1)(ii)(B) — Risk Management (R): reduce risks to reasonable level.
+    # Example:
+    # allowed_ingress:
+    #   - port: 443
+    #     proto: tcp
+    #     comment: "HTTPS — ePHI transmissions (TLS 1.2+)"
+    #   - port: 22
+    #     proto: tcp
+    #     comment: "SSH — restrict to admin hosts; see §164.312(d)"
+
+  kernel:
+    enabled: true
+    # §164.312(c)(1) — Integrity (R): protect ePHI from improper alteration/destruction
+    # §164.308(a)(5)(ii)(B) — Protection from Malicious Software (A)
+    # Kernel module enforces:
+    # - kernel.randomize_va_space = 2   (ASLR — protects process memory integrity)
+    # - kernel.kptr_restrict = 2        (limits kernel pointer exposure)
+    # - kernel.dmesg_restrict = 1       (restricts kernel log to privileged users)
+    # - net.ipv4 source routing disabled (prevents routing attacks on ePHI flows)
+    # - net.ipv4.conf.all.log_martians = 1 (§164.312(b): log suspicious packets)
+    # - fs.suid_dumpable = 0            (prevent SUID core dumps leaking ePHI)
+
+  users:
+    enabled: true
+    # §164.312(a)(1) — Access Control (R): allow access only to authorised persons/software
+    # §164.308(a)(3) — Workforce Authorization (A): minimum necessary access
+    # §164.312(a)(2)(i) — Unique User Identification (R): individual logins; no shared accounts
+    password_max_days: 90          # §164.308(a)(5)(ii)(D) — Password Management (A)
+    password_min_days: 1           # prevent immediate password recycling
+    password_warn_age: 14          # advance warning before expiry
+    password_min_length: 12        # NIST SP 800-66 Rev. 2: min 8; best practice is 12+
+    password_complexity: true      # §164.308(a)(5)(ii)(D): enforce complexity
+    password_history: 6            # §164.308(a)(5)(ii)(D): prevent password reuse
+    # §164.308(a)(5)(ii)(C) — Log-In Monitoring (A): detect brute-force attempts
+    lockout_attempts: 5            # lock account after 5 consecutive failures
+    lockout_duration: 1800         # 30-minute lockout (or until administrator reset)
+    # §164.308(a)(1)(ii)(D) — Information System Activity Review (R)
+    inactive_account_lock_days: 90 # disable accounts not used for 90 days
+    su_restricted: true            # §164.308(a)(3)(ii)(A): only authorised workforce
+    umask: "027"                   # restrict default file creation permissions
+
+  filesystem:
+    enabled: true
+    # §164.312(c)(1) — Integrity (R): protect ePHI from unauthorised modification
+    # §164.308(a)(1)(ii)(B) — Risk Management (R): minimise attack surface
+    tmp_nosuid: true
+    tmp_nodev: true
+    tmp_noexec: true               # prevent code execution in temporary directories
+    devshm_nosuid: true
+    devshm_nodev: true
+    devshm_noexec: true
+    var_nosuid: true
+    var_tmp_nosuid: true
+    var_tmp_nodev: true
+    var_tmp_noexec: true
+    home_nodev: true
+    # Disable unused filesystems — reduce attack surface (§164.308(a)(1)(ii)(A))
+    disable_cramfs: true
+    disable_freevxfs: true
+    disable_jffs2: true
+    disable_hfs: true
+    disable_hfsplus: true
+    disable_udf: true
+
+  auditd:
+    enabled: true
+    # §164.312(b) — Audit Controls (R): record and examine system activity
+    # §164.308(a)(1)(ii)(D) — Information System Activity Review (R)
+    max_log_file_size: 32          # MB per log file
+    num_logs: 10                   # retain 10 rotated log files
+    action_on_space_left: email    # §164.312(b): alert before audit trail is lost
+    space_left_mb: 100             # alert with 100 MB remaining
+    immutable: false               # set true for highest-assurance ePHI environments
+    # Required audit events per §164.312(b) and NIST SP 800-66 Rev. 2
+    audit_privileged_commands: true  # track privilege escalation (e.g., sudo, setuid)
+    audit_file_access: true          # log unauthorised file access to ePHI stores
+    audit_user_events: true          # §164.312(b): all login/logout/session events
+    audit_sudo_commands: true        # log all administrative actions on ePHI systems
+    audit_network_changes: true      # track network configuration changes
+    audit_time_change: true          # detect clock tampering (protects audit trail integrity)
+
+  services:
+    enabled: true
+    # §164.308(a)(5)(ii)(B) — Protection from Malicious Software (A)
+    # §164.308(a)(1)(ii)(A) — Risk Analysis (R): disable unnecessary services
+    disable:
+      - xinetd
+      - inetd
+      - avahi-daemon             # mDNS/zeroconf — unnecessary on ePHI servers
+      - cups                     # printing services — not required
+      - dhcpd
+      - slapd
+      - nfs-server
+      - bind
+      - vsftpd
+      - httpd
+      - apache2
+      - nginx                    # disable unless this is a web-facing ePHI server
+      - dovecot
+      - sendmail
+      - samba
+      - squid
+      - snmpd                    # SNMPv1/v2 transmit community strings in cleartext
+      - nis
+      - telnet                   # §164.312(e)(2)(ii): no cleartext ePHI channels
+      - rsh-server               # §164.312(e)(2)(ii)
+      - tftp-server
+      - rsync
+
+  network:
+    enabled: true
+    # §164.312(e)(1) — Transmission Security (R): guard ePHI in transit
+    # §164.308(a)(1)(ii)(A) — Risk Analysis (R): minimise network exposure
+    disable_ipv6: false            # set true if your ePHI environment does not use IPv6
+    disable_wireless: true         # §164.310(d)(1): media/device controls on ePHI systems
+    disable_dccp: true             # uncommon protocol; no valid ePHI use case
+    disable_sctp: true
+    disable_rds: true
+    disable_tipc: true
+
+  crypto:
+    enabled: true
+    # §164.312(a)(2)(iv) — Encryption and Decryption (A)
+    # §164.312(e)(2)(ii) — Encryption (A): reasonable and appropriate for ePHI in transit
+    # NIST SP 800-66 Rev. 2 recommends NIST-approved algorithms for ePHI
+    min_tls_version: "1.2"         # TLS 1.0 and 1.1 are deprecated; reject for ePHI
+    disable_weak_ciphers: true     # remove RC4, DES, 3DES, NULL — not NIST-approved
+    disable_weak_hashes: true      # reject MD5 and SHA-1 for ePHI integrity checks
+
+  logging:
+    enabled: true
+    # §164.312(b) — Audit Controls (R): retain records for review
+    # §164.316(b)(2)(i) — Documentation Retention (R): 6 years from creation or last use
+    log_retention_days: 2190       # 6 years = HIPAA documentation retention minimum
+    remote_log_host: ""            # recommended: forward to off-system SIEM/log server
+    remote_log_protocol: tcp       # TCP for reliable delivery of ePHI audit events
+
+  mac:
+    enabled: true
+    # §164.312(a)(1) — Access Control (R): restrict access to ePHI
+    # MAC (AppArmor/SELinux) enforces least-privilege process isolation
+    enforce: true
+    deny_unknown: false            # set true for highest-assurance environments
+
+  ntp:
+    enabled: true
+    # §164.312(b) — Audit Controls (R): audit logs must have accurate timestamps
+    # NIST SP 800-66 Rev. 2: time synchronisation is critical for forensic audit trails
+    backend: auto                  # auto: chrony | systemd-timesyncd
+    timezone: UTC
+    # Recommend two or more time sources for accuracy and redundancy.
+    # servers:
+    #   - 0.pool.ntp.org
+    #   - 1.pool.ntp.org
+
+  updates:
+    enabled: true
+    # §164.308(a)(5)(ii)(B) — Protection from Malicious Software (A)
+    # §164.308(a)(1)(ii)(B) — Risk Management (R): apply security patches
+    unattended_security_upgrades: true
+    auto_reboot: false             # schedule reboots during maintenance windows
+
+  containers:
+    enabled: false                 # enable if Docker/Podman handles ePHI workloads
+    # §164.312(a)(1) — Access Control: isolate ePHI containers
+    # §164.312(c)(1) — Integrity: seccomp profiles and namespace isolation
+    # When enabled, container module enforces Docker daemon hardening,
+    # seccomp default profiles, and namespace isolation.
+
+report:
+  format: html
+  output_dir: /var/lib/hardbox/reports
+  include_remediation: true
+  include_evidence: true           # §164.316(b)(1): document security measures and rationale
+
+audit:
+  fail_on_critical: true
+  fail_on_high: true               # ePHI risk: all high-severity findings require remediation
+  fail_on_medium: false            # review medium findings; remediate per risk analysis
