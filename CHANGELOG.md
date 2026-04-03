@@ -106,6 +106,8 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `docs/CLOUD-INIT.md` — usage guide covering quick-start commands, IAM/RBAC requirements, configuration reference, timer management, and troubleshooting for all three cloud-init templates
 - Ansible role (`ansible-role/hardbox/`) — Galaxy-compatible role wrapping the hardbox CLI; supports all profiles, audit-only mode, report fetching, rollback on failure, custom profile upload, and systemd re-hardening timer; includes Molecule integration tests for Ubuntu 22.04, Debian 12, and Rocky Linux 9 ([#109](https://github.com/jackby03/hardbox/issues/109))
 - `docs/ANSIBLE.md` — Ansible role documentation covering installation, variable reference, example playbooks, CI/CD integration, and Molecule test instructions
+- Terraform provider (`terraform-provider/`) — `jackby03/hardbox` provider for the Terraform Registry; exposes `hardbox_apply` resource with SSH-based install, checksum verification, profile selection, findings capture in state, and automatic rollback on destroy; examples for AWS EC2, GCP Compute Engine, and Azure VMs ([#110](https://github.com/jackby03/hardbox/issues/110))
+- `docs/TERRAFORM.md` — provider documentation covering installation, provider/resource schema, per-cloud examples, CI/CD snippets, and build-from-source instructions
 
 ### Changed
 - `install.sh` now resolves release assets via GitHub API instead of hardcoded filenames, improving compatibility across release archive naming formats.
@@ -119,7 +121,6 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Planned for v0.3
 - `nist-800-53` profile
-- Terraform provisioner plugin
 - cloud-init support
 
 ---
