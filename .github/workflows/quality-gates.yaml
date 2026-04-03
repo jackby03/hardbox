@@ -221,8 +221,10 @@ jobs:
         include:
           - distro: Rocky Linux 9
             image: rockylinux:9
+            slug: rocky-linux-9
           - distro: RHEL UBI 9
             image: redhat/ubi9
+            slug: rhel-ubi-9
 
     steps:
       - name: Install system dependencies
@@ -272,7 +274,7 @@ jobs:
       - name: Smoke audit (cis-level1)
         run: |
           ./hardbox audit --profile cis-level1 --format json \
-            --output audit-${{ matrix.distro }}.json || true
+            --output audit-${{ matrix.slug }}.json || true
 
       - name: Validate audit report structure
         run: |
@@ -281,12 +283,12 @@ jobs:
             has("overall_score") and
             (.modules | type == "array" and length > 0) and
             all(.modules[]; has("name") and has("findings"))
-          ' "audit-${{ matrix.distro }}.json" > /dev/null
+          ' "audit-${{ matrix.slug }}.json" > /dev/null
           echo "✓ Audit report structure valid on ${{ matrix.distro }}"
 
       - name: Assert audit produced findings
         run: |
-          COUNT=$(jq '[.modules[].findings[]] | length' "audit-${{ matrix.distro }}.json")
+          COUNT=$(jq '[.modules[].findings[]] | length' "audit-${{ matrix.slug }}.json")
           echo "Findings on ${{ matrix.distro }}: ${COUNT}"
           if [ "${COUNT}" -eq 0 ]; then
             echo "::error::Audit returned 0 findings on ${{ matrix.distro }} — distro detection may be broken"
@@ -296,8 +298,8 @@ jobs:
       - name: Upload audit report
         uses: actions/upload-artifact@v4
         with:
-          name: audit-${{ matrix.distro }}
-          path: audit-${{ matrix.distro }}.json
+          name: audit-${{ matrix.slug }}
+          path: audit-${{ matrix.slug }}.json
 
   # Single gate job that requires all matrix legs — add this check name to
   # branch protection so the merge button blocks until every distro passes.
