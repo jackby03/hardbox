@@ -1,0 +1,31 @@
+---
+# hardbox Ansible role — main task entrypoint
+
+- name: Gather OS facts
+  ansible.builtin.setup:
+    gather_subset:
+      - "!all"
+      - min
+  when: ansible_architecture is not defined
+
+- name: Validate target architecture
+  ansible.builtin.fail:
+    msg: >
+      Unsupported architecture: {{ ansible_architecture }}.
+      hardbox supports x86_64 and aarch64.
+  when: ansible_architecture not in _hardbox_arch_map
+
+- name: Install hardbox
+  ansible.builtin.import_tasks: install.yml
+
+- name: Apply hardbox profile
+  ansible.builtin.import_tasks: apply.yml
+  when: hardbox_apply | bool
+
+- name: Audit only (no changes)
+  ansible.builtin.import_tasks: audit.yml
+  when: not (hardbox_apply | bool)
+
+- name: Configure periodic re-hardening timer
+  ansible.builtin.import_tasks: timer.yml
+  when: hardbox_timer_enabled | bool

@@ -1,0 +1,49 @@
+---
+# hardbox audit — read-only compliance check, no changes applied
+
+- name: Set report file path
+  ansible.builtin.set_fact:
+    _hardbox_report_file: >-
+      {{ hardbox_report_dir }}/hardbox-audit-{{ inventory_hostname }}-{{ ansible_date_time.iso8601_basic_short }}.{{ hardbox_report_format }}
+
+- name: Set profile argument
+  ansible.builtin.set_fact:
+    _hardbox_profile_arg: >-
+      {{
+        (hardbox_custom_profile_src | length > 0)
+        | ternary(_hardbox_custom_profile_dest, hardbox_profile)
+      }}
+
+- name: Run hardbox audit (read-only)
+  ansible.builtin.command:
+    cmd: >-
+      {{ _hardbox_bin }} audit
+      --profile {{ _hardbox_profile_arg }}
+      --format {{ hardbox_report_format }}
+      --output {{ _hardbox_report_file }}
+      {{ '--non-interactive' if hardbox_non_interactive | bool else '' }}
+  register: _hardbox_audit_result
+  changed_when: false
+  failed_when: _hardbox_audit_result.rc not in [0, 1]
+  become: true
+
+- name: Display hardbox audit output
+  ansible.builtin.debug:
+    msg: "{{ _hardbox_audit_result.stdout_lines }}"
+  when: _hardbox_audit_result.stdout_lines is defined
+
+- name: Fail on critical/high findings
+  ansible.builtin.fail:
+    msg: >
+      hardbox audit found issues exceeding configured thresholds.
+      Review the report at {{ _hardbox_report_file }} on {{ inventory_hostname }}.
+  when:
+    - _hardbox_audit_result.rc == 1
+    - hardbox_fail_on_critical | bool or hardbox_fail_on_high | bool
+
+- name: Fetch audit report to Ansible controller
+  ansible.builtin.fetch:
+    src: "{{ _hardbox_report_file }}"
+    dest: "{{ hardbox_fetch_report_dest }}/{{ inventory_hostname }}/"
+    flat: true
+  when: hardbox_fetch_report | bool

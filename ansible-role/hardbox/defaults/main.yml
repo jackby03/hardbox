@@ -1,0 +1,76 @@
+---
+# -------------------------------------------------------------------------
+# hardbox Ansible role — default variables
+# Override any of these in host_vars, group_vars, or the playbook vars block.
+# -------------------------------------------------------------------------
+
+# --- Installation ---
+# hardbox release to install. Use "latest" to always fetch the newest release,
+# or pin to a specific tag (e.g. "v0.3.0") for reproducible deployments.
+hardbox_version: "latest"
+
+# Directory where the hardbox binary is installed.
+hardbox_install_dir: /usr/local/bin
+
+# Temporary directory used during download and checksum verification.
+hardbox_tmp_dir: /tmp
+
+# --- Profile ---
+# Compliance profile to apply. Any profile shipped in configs/profiles/ is valid.
+# Common values: cis-level1, cis-level2, pci-dss, stig, hipaa, iso27001,
+#                nist-800-53, cloud-aws, cloud-gcp, cloud-azure,
+#                production, development
+hardbox_profile: production
+
+# Path to a custom profile YAML to copy to the target host.
+# When set, this file is uploaded and --profile is pointed at it.
+# Leave empty ("") to use one of the built-in profiles.
+hardbox_custom_profile_src: ""
+
+# --- Run mode ---
+# Whether to actually apply hardening (true) or only run an audit (false).
+hardbox_apply: true
+
+# Pass --dry-run to hardbox — show what would change without applying.
+hardbox_dry_run: false
+
+# Pass --non-interactive so hardbox never prompts (required in Ansible).
+hardbox_non_interactive: true
+
+# --- Reporting ---
+# Report output format: html | json | text | markdown
+hardbox_report_format: html
+
+# Directory on the target host where reports are stored.
+hardbox_report_dir: /var/lib/hardbox/reports
+
+# Fetch the generated report back to the Ansible controller.
+hardbox_fetch_report: false
+
+# Local directory on the Ansible controller to store fetched reports.
+hardbox_fetch_report_dest: "{{ playbook_dir }}/hardbox-reports"
+
+# --- Audit thresholds ---
+# Fail the play if hardbox exits with critical/high findings.
+# Mirrors the audit.fail_on_* settings in the profile YAML.
+hardbox_fail_on_critical: true
+hardbox_fail_on_high: true
+hardbox_fail_on_medium: false
+
+# --- Rollback ---
+# Run `hardbox rollback apply --last` on failure (via rescue block).
+hardbox_rollback_on_failure: true
+
+# --- Periodic re-hardening (systemd timer) ---
+# Install a systemd timer that re-runs hardbox apply on a schedule.
+hardbox_timer_enabled: false
+
+# OnCalendar value for the systemd timer (systemd time syntax).
+hardbox_timer_schedule: "daily"
+
+# OnBootSec — delay after boot before the first run.
+hardbox_timer_on_boot_sec: "5min"
+
+# --- Upgrade ---
+# Re-install hardbox even if the binary is already present at the target version.
+hardbox_force_reinstall: false

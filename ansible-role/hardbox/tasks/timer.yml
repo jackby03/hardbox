@@ -1,0 +1,34 @@
+---
+# Configure systemd timer for periodic re-hardening
+
+- name: Deploy hardbox systemd service unit
+  ansible.builtin.template:
+    src: hardbox-harden.service.j2
+    dest: "{{ _hardbox_service_unit }}"
+    mode: "0644"
+    owner: root
+    group: root
+  notify:
+    - Reload systemd daemon
+    - Restart hardbox timer
+
+- name: Deploy hardbox systemd timer unit
+  ansible.builtin.template:
+    src: hardbox-harden.timer.j2
+    dest: "{{ _hardbox_timer_unit }}"
+    mode: "0644"
+    owner: root
+    group: root
+  notify:
+    - Reload systemd daemon
+    - Restart hardbox timer
+
+- name: Flush handlers to activate timer immediately
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable and start hardbox timer
+  ansible.builtin.systemd:
+    name: hardbox-harden.timer
+    enabled: true
+    state: started
+    daemon_reload: true
