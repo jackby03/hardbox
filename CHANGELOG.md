@@ -96,6 +96,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `stig` compliance profile — DISA STIG for Ubuntu 22.04 LTS V1R1, DoD-grade hardening with V-number annotations for every control ([#85](https://github.com/jackby03/hardbox/issues/85))
 - `distro-parity` job matrix in `quality-gates.yaml` — builds, tests, and smoke-audits hardbox inside Rocky Linux 9 and RHEL UBI 9 containers on every PR ([#87](https://github.com/jackby03/hardbox/issues/87))
 - `Distro Parity Gate` required check — blocks merge if any distro leg fails; `docs/DEVSECOPS.md` documents parity scope and how to add distros
+- Filesystem module check `fs-008` — `/var/tmp` must be mounted `nodev,nosuid,noexec` (CIS 1.1.8–1.1.10, STIG V-238149); this control was present in all compliance profiles but absent from the audit check list ([#88](https://github.com/jackby03/hardbox/issues/88))
 
 ### Changed
 - `install.sh` now resolves release assets via GitHub API instead of hardcoded filenames, improving compatibility across release archive naming formats.

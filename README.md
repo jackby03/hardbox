@@ -214,7 +214,7 @@ sudo hardbox rollback apply --last
 - [x] `cis-level2` profile
 - [x] `pci-dss` profile
 - [x] `stig` profile
-- [ ] 14th module — mount hardening
+- [x] Filesystem — `/var/tmp` mount hardening check (fs-008, CIS 1.1.8–1.1.10)
 - [x] Full RHEL / Rocky Linux parity
 
 ### v0.3 — Ecosystem
