@@ -23,36 +23,31 @@ hardbox/
 │
 ├── cmd/
 │   └── hardbox/
-│       └── main.go                  # Entry point — TUI or CLI dispatch
+│       └── main.go                  # Entry point — CLI dispatch and TUI launch
 │
 ├── internal/
 │   │
 │   ├── tui/                         # Terminal UI (Bubble Tea)
 │   │   ├── app.go                   # Root model, screen router
 │   │   ├── dashboard.go             # Main dashboard screen
-│   │   ├── module_list.go           # Module navigator/selector
-│   │   ├── module_detail.go         # Per-module config + preview
-│   │   ├── audit_view.go            # Audit results viewer
-│   │   ├── profile_picker.go        # Profile selection screen
-│   │   ├── confirm.go               # Apply confirmation dialog
-│   │   ├── progress.go              # Apply progress screen
-│   │   └── styles.go                # Centralised Lip Gloss styles
+│   │   ├── modules.go               # Module navigator/selector
+│   │   ├── moduledetail.go          # Per-module finding detail view
+│   │   └── workflow.go              # Apply / audit workflow screens
 │   │
 │   ├── engine/                      # Core hardening engine
 │   │   ├── engine.go                # Plan, Apply, Rollback orchestration
-│   │   ├── plan.go                  # Builds ordered change plan
-│   │   ├── executor.go              # Executes planned changes
-│   │   ├── snapshot.go              # Pre-apply system snapshot
-│   │   └── rollback.go              # Restores from snapshot
+│   │   ├── registry.go              # Module registry — all modules registered here
+│   │   └── snapshot.go              # Pre-apply system snapshot and rollback
 │   │
 │   ├── modules/                     # Individual hardening modules
-│   │   ├── module.go                # Module interface definition
+│   │   ├── module.go                # Module interface, Finding, Change, Check types
+│   │   ├── util/
+│   │   │   └── atomicwrite.go       # Atomic file write helper
 │   │   ├── ssh/
 │   │   ├── firewall/
 │   │   ├── kernel/
-│   │   ├── users/
-│   │   ├── pam/
-│   │   ├── filesystem/
+│   │   ├── users/                   # Users, PAM, password policy, sudo
+│   │   ├── filesystem/              # Mount options, file permissions, kernel modules
 │   │   ├── auditd/
 │   │   ├── services/
 │   │   ├── network/
@@ -63,48 +58,29 @@ hardbox/
 │   │   ├── updates/
 │   │   └── containers/
 │   │
-│   ├── audit/                       # Audit & reporting
-│   │   ├── auditor.go               # Runs checks without applying
-│   │   ├── finding.go               # Finding / result data model
-│   │   ├── report.go                # Report aggregation
-│   │   └── renderers/
-│   │       ├── json.go
-│   │       ├── html.go
-│   │       └── markdown.go
+│   ├── report/                      # Report generation
+│   │   ├── report.go                # Report aggregation and session model
+│   │   ├── render_json.go
+│   │   ├── render_html.go
+│   │   ├── render_markdown.go
+│   │   └── render_text.go
 │   │
-│   ├── distro/                      # Distro detection & abstraction
-│   │   ├── detect.go                # OS/version detection
-│   │   ├── apt.go                   # Debian/Ubuntu package ops
-│   │   ├── dnf.go                   # RHEL/Rocky/Fedora package ops
-│   │   └── service.go               # systemd service management
+│   ├── distro/                      # Distro detection and abstraction
+│   │   └── distro.go                # OS/version detection (Ubuntu, Debian, RHEL, Rocky…)
 │   │
-│   ├── config/                      # Config loading & validation
-│   │   ├── config.go                # Root config struct
-│   │   ├── loader.go                # Viper-based file + env loading
-│   │   └── validator.go             # Config schema validation
-│   │
-│   └── compliance/                  # Compliance framework mapping
-│       ├── frameworks.go            # CIS, NIST, PCI, HIPAA, STIG refs
-│       └── mapper.go                # Maps check IDs to controls
-│
-├── pkg/
-│   └── sysutil/                     # Safe system utilities
-│       ├── file.go                  # Atomic file writes
-│       ├── sysctl.go                # sysctl read/write
-│       ├── exec.go                  # Command execution wrapper
-│       └── privilege.go             # UID/privilege checks
+│   └── config/                      # Config loading
+│       └── config.go                # Root config struct and Viper-based loader
 │
 ├── configs/
-│   ├── hardbox.yaml                 # Default user config
-│   └── profiles/
+│   └── profiles/                    # Hardening profiles
 │       ├── cis-level1.yaml          # CIS Benchmarks Level 1 (shipped)
+│       ├── cis-level2.yaml          # CIS Benchmarks Level 2 (shipped)
+│       ├── pci-dss.yaml             # PCI-DSS v4.0 (shipped)
+│       ├── stig.yaml                # DISA STIG Ubuntu 22.04 V1R1 (shipped)
 │       ├── production.yaml          # hardbox curated — cloud production (shipped)
 │       ├── development.yaml         # hardbox curated — dev/staging (shipped)
 │       │
 │       │   # Roadmap — not yet shipped:
-│       ├── cis-level2.yaml          # (v0.2)
-│       ├── stig.yaml                # (v0.2)
-│       ├── pci-dss.yaml             # (v0.2)
 │       ├── hipaa.yaml               # (v0.3)
 │       ├── nist-800-53.yaml         # (v0.3)
 │       ├── iso27001.yaml            # (v0.3)
@@ -114,20 +90,14 @@ hardbox/
 │
 ├── docs/
 │   ├── ARCHITECTURE.md              # This file
-│   ├── MODULES.md                   # Module reference
 │   ├── COMPLIANCE.md                # Compliance mapping tables
-│   ├── PROFILES.md                  # Profile documentation
-│   ├── CONTRIBUTING.md              # Contribution guide
-│   └── PLUGIN_SDK.md                # Custom module development
-│
-├── scripts/
-│   ├── install.sh                   # One-liner installer
-│   └── test-distros.sh              # Multi-distro test runner
+│   ├── DEVSECOPS.md                 # CI/CD, release process, distro parity
+│   ├── MODULES.md                   # Module reference
+│   └── install.sh                   # One-liner installer (served at hardbox.jackby03.com)
 │
 ├── .github/
 │   └── workflows/
-│       ├── quality-gates.yaml       # Build, lint, audit, repository checks
-│       ├── contribution-governance.yaml # Branch, PR, and policy rules
+│       ├── quality-gates.yaml       # Build, test, lint, distro parity, repo checks
 │       ├── release-publish.yaml     # GoReleaser on version tags
 │       ├── release-smoke.yaml       # Post-release install and runtime smoke
 │       └── docs-publish.yaml        # GitHub Pages deploy
@@ -136,6 +106,11 @@ hardbox/
 ├── go.sum
 ├── Makefile
 ├── README.md
+├── CHANGELOG.md
+├── CONTRIBUTING.md
+├── SECURITY.md
+├── CODE_OF_CONDUCT.md
+├── AGENTS.md
 └── LICENSE
 ```
 

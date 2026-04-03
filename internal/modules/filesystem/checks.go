@@ -132,6 +132,24 @@ func mountChecks() []mountCheckSpec {
 				},
 			},
 		},
+		{
+			mountPoint: "/var/tmp",
+			required:   []string{"nodev", "nosuid", "noexec"},
+			check: modules.Check{
+				ID:          "fs-008",
+				Title:       "Mount /var/tmp with nodev,nosuid,noexec",
+				Description: "/var/tmp is world-writable and persists across reboots; it must be mounted with nodev, nosuid, and noexec to prevent privilege escalation via SUID binaries or device files.",
+				Remediation: "Add nodev,nosuid,noexec to the /var/tmp entry in /etc/fstab and run: mount -o remount /var/tmp",
+				Severity:    modules.SeverityHigh,
+				Compliance: []modules.ComplianceRef{
+					{Framework: "CIS", Control: "1.1.8"},
+					{Framework: "CIS", Control: "1.1.9"},
+					{Framework: "CIS", Control: "1.1.10"},
+					{Framework: "NIST", Control: "CM-7"},
+					{Framework: "STIG", Control: "V-238149"},
+				},
+			},
+		},
 	}
 }
 
