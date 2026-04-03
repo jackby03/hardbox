@@ -94,11 +94,8 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `cis-level2` compliance profile — CIS Benchmarks Level 2, high-security baseline for sensitive-data servers ([#84](https://github.com/jackby03/hardbox/issues/84))
 - `pci-dss` compliance profile — PCI-DSS v4.0, full cardholder data environment hardening with per-control requirement annotations ([#86](https://github.com/jackby03/hardbox/issues/86))
 - `stig` compliance profile — DISA STIG for Ubuntu 22.04 LTS V1R1, DoD-grade hardening with V-number annotations for every control ([#85](https://github.com/jackby03/hardbox/issues/85))
-
-### Added
 - `distro-parity` job matrix in `quality-gates.yaml` — builds, tests, and smoke-audits hardbox inside Rocky Linux 9 and RHEL UBI 9 containers on every PR ([#87](https://github.com/jackby03/hardbox/issues/87))
-- `Distro Parity Gate` summary job — single required check that blocks merge if any distro leg fails
-- `docs/DEVSECOPS.md` updated with distro parity scope, limitations, and instructions for adding new distros
+- `Distro Parity Gate` required check — blocks merge if any distro leg fails; `docs/DEVSECOPS.md` documents parity scope and how to add distros
 
 ### Changed
 - `install.sh` now resolves release assets via GitHub API instead of hardcoded filenames, improving compatibility across release archive naming formats.
@@ -109,7 +106,6 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Planned for v0.2
 - 14th module — mount and partition hardening
-- Full RHEL / Rocky Linux test parity
 
 ### Planned for v0.3
 - `hipaa`, `nist-800-53`, `iso27001` profiles
