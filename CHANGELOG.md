@@ -99,6 +99,9 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Filesystem module check `fs-008` — `/var/tmp` must be mounted `nodev,nosuid,noexec` (CIS 1.1.8–1.1.10, STIG V-238149); this control was present in all compliance profiles but absent from the audit check list ([#88](https://github.com/jackby03/hardbox/issues/88))
 - `hipaa` compliance profile — HIPAA Security Rule (45 CFR Part 164), full ePHI environment hardening with per-section annotations (§164.308/310/312); 6-year log retention per §164.316(b)(2)(i) ([#103](https://github.com/jackby03/hardbox/issues/103))
 - `iso27001` compliance profile — ISO/IEC 27001:2022, ISMS-aligned OS hardening with Annex A control annotations (A.5–A.8) covering access control, cryptography, logging, network security, and vulnerability management ([#105](https://github.com/jackby03/hardbox/issues/105))
+- `cloud-aws` compliance profile — CIS AWS Foundations Benchmark v2.0, OS hardening for Amazon EC2 with AWS-specific annotations (IAM, Security Groups, CloudTrail, EBS encryption, KMS); includes guidance for AWS Security Hub and AWS Config validation ([#106](https://github.com/jackby03/hardbox/issues/106))
+- `cloud-gcp` compliance profile — CIS GCP Foundations Benchmark v2.0, OS hardening for GCP Compute Engine with GCP-specific annotations (OS Login, IAP, Cloud Audit Logs, CMEK, Shielded VM); includes guidance for Security Command Center validation ([#107](https://github.com/jackby03/hardbox/issues/107))
+- `cloud-azure` compliance profile — CIS Azure Foundations Benchmark v2.1, OS hardening for Azure VMs with Azure-specific annotations (NSG, Defender for Cloud, Azure Policy, Disk Encryption, AAD login); includes guidance for Defender for Cloud Secure Score validation ([#108](https://github.com/jackby03/hardbox/issues/108))
 
 ### Changed
 - `install.sh` now resolves release assets via GitHub API instead of hardcoded filenames, improving compatibility across release archive naming formats.
@@ -112,7 +115,6 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Planned for v0.3
 - `nist-800-53` profile
-- `cloud-aws`, `cloud-gcp`, `cloud-azure` profiles
 - Ansible role integration
 - Terraform provisioner
 - cloud-init support

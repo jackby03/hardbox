@@ -1,0 +1,307 @@
+# Azure Cloud Compliance Profile
+# Designed for hardbox on Microsoft Azure Virtual Machines (Linux).
+# Combines OS-level hardening with Azure-specific security control annotations.
+#
+# References:
+#   CIS Microsoft Azure Foundations Benchmark v2.1.0
+#   CIS Ubuntu Linux 22.04 LTS Benchmark (for Azure Ubuntu VMs)
+#   Microsoft Defender for Cloud security recommendations
+#   Azure Security Benchmark (ASB) v3
+#   NIST SP 800-53 Rev. 5 (mapped where applicable)
+#
+# Azure-specific controls (RBAC, NSG, Azure Policy, Defender, Log Analytics)
+# operate at the Azure subscription/resource layer and must be validated via:
+#   - Microsoft Defender for Cloud (security score / recommendations)
+#   - Azure Policy compliance dashboard
+#   - az CLI / Terraform / Azure Resource Graph queries
+#
+# OS hardening controls align with the CIS Azure Foundations Benchmark and
+# CIS Linux benchmarks for Azure VM instances.
+
+version: "1"
+profile: cloud-azure
+environment: cloud-azure
+
+modules:
+  ssh:
+    enabled: true
+    # CIS Azure 7.1 — Ensure an Azure Bastion Host exists for secure access
+    # CIS Azure 7.2 — Ensure VMs utilise managed disks
+    # Azure Note: prefer Azure Bastion or SSH via Azure Arc/Run Command over
+    # direct SSH exposure. If SSH is used, restrict NSG to known source IPs.
+    # Avoid SSH key pairs stored in Azure Key Vault without access policy review.
+    client_alive_interval: 300     # 5-minute idle timeout for Azure VM sessions
+    client_alive_count_max: 0      # disconnect immediately on interval expiry
+    login_grace_time: 60           # limit unauthenticated SSH connection window
+    disable_root_login: true       # prohibit root login; use sudo for privilege escalation
+    disable_empty_passwords: true  # reject empty password authentication
+    disable_x11_forwarding: true   # X11 forwarding not required on Azure VMs
+    disable_hostbased_auth: true   # host-based authentication prohibited
+    disable_ignore_rhosts: true    # .rhosts trust relationships prohibited
+    disable_tcp_forwarding: true   # reduce attack surface; use Azure Bastion for tunnelling
+    disable_agent_forwarding: false
+    log_level: VERBOSE             # forward SSH events to Azure Monitor / Log Analytics
+    max_auth_tries: 4              # limit brute-force attempts; complement Azure Defender alerts
+    max_sessions: 10
+    # Enforce strong cryptographic algorithms for SSH transport
+    ciphers:
+      - aes128-ctr
+      - aes192-ctr
+      - aes256-ctr
+      - aes128-gcm@openssh.com
+      - aes256-gcm@openssh.com
+      - chacha20-poly1305@openssh.com
+    macs:
+      - hmac-sha2-256-etm@openssh.com
+      - hmac-sha2-512-etm@openssh.com
+    kex_algorithms:
+      - curve25519-sha256
+      - curve25519-sha256@libssh.org
+      - diffie-hellman-group14-sha256
+      - diffie-hellman-group16-sha512
+      - diffie-hellman-group18-sha512
+
+  firewall:
+    enabled: true
+    # CIS Azure 6.1 — Ensure RDP access is restricted from the internet
+    # CIS Azure 6.2 — Ensure SSH access is restricted from the internet
+    # CIS Azure 6.3 — Ensure no SQL Databases allow ingress from 0.0.0.0/0
+    # Azure Note: NSGs (Network Security Groups) are the primary network control.
+    # OS-level firewall (iptables/nftables) provides defence-in-depth inside the VM.
+    # Use ASG (Application Security Groups) for role-based NSG rules.
+    backend: auto                  # auto-detect: ufw | nftables | firewalld
+    default_inbound: drop          # defence-in-depth: default-deny at OS level
+    default_outbound: drop         # restrict egress; complement NSG outbound rules
+    log_dropped: true              # forward to Log Analytics for Defender correlation
+    # Mirror your NSG allow rules here for defence-in-depth.
+    # CIS Azure 6.2: NSG must not allow 0.0.0.0/0 source on port 22.
+    # Example:
+    # allowed_ingress:
+    #   - port: 443
+    #     proto: tcp
+    #     comment: "HTTPS — Application Gateway or Azure Front Door IP ranges"
+    #   - port: 22
+    #     proto: tcp
+    #     comment: "SSH — restrict to Azure Bastion subnet (168.63.129.16/32) or VPN"
+
+  kernel:
+    enabled: true
+    # CIS Azure 7.x — Virtual machine configuration
+    # Azure Note: enable Azure Trusted Launch (vTPM + Secure Boot) on Generation 2 VMs
+    # via portal or: az vm update --enable-secure-boot true --enable-vtpm true
+    # Kernel module enforces:
+    # - kernel.randomize_va_space = 2   (ASLR — memory protection)
+    # - kernel.kptr_restrict = 2        (restrict kernel pointer exposure)
+    # - kernel.dmesg_restrict = 1       (restrict dmesg to privileged users)
+    # - net.ipv4 source routing disabled (prevent routing attacks in VNet)
+    # - net.ipv4.conf.all.log_martians = 1 (log suspicious packets)
+    # - fs.suid_dumpable = 0            (prevent SUID core dumps)
+
+  users:
+    enabled: true
+    # CIS Azure 1.x  — Identity and Access Management
+    # Azure Note: Azure AD (Entra ID) SSH authentication via AAD login extension
+    # eliminates local user management for interactive access.
+    # Enable: az vm extension set --name AADSSHLoginForLinux
+    # When AAD login is enabled, local accounts are minimised; these settings
+    # apply to any remaining local service accounts.
+    password_max_days: 90          # CIS Azure: enforce regular password rotation
+    password_min_days: 7           # prevent immediate password recycling
+    password_warn_age: 14          # advance notification before expiry
+    password_min_length: 14        # enforce 14-character minimum password length
+    password_complexity: true      # enforce PAM complexity requirements
+    password_history: 5            # remember last 5 passwords
+    lockout_attempts: 5            # lock after 5 consecutive failed attempts
+    lockout_duration: 900          # 15-minute lockout (900 seconds)
+    inactive_account_lock_days: 30 # disable accounts inactive for 30+ days
+    su_restricted: true            # restrict privilege escalation
+    umask: "027"                   # restrictive default file creation permissions
+
+  filesystem:
+    enabled: true
+    # CIS Azure 7.2  — Ensure Azure VMs utilise managed disks
+    # CIS Azure 7.3  — Ensure OS and data disks are encrypted with CMK
+    # Azure Note: use Azure Disk Encryption (ADE) or Server-Side Encryption (SSE)
+    # with Customer-Managed Keys stored in Azure Key Vault.
+    # Enforce via Azure Policy: "Disk encryption should be applied on virtual machines"
+    tmp_nosuid: true
+    tmp_nodev: true
+    tmp_noexec: true
+    devshm_nosuid: true
+    devshm_nodev: true
+    devshm_noexec: true
+    var_nosuid: true
+    var_tmp_nosuid: true
+    var_tmp_nodev: true
+    var_tmp_noexec: true
+    home_nodev: true
+    disable_cramfs: true
+    disable_freevxfs: true
+    disable_jffs2: true
+    disable_hfs: true
+    disable_hfsplus: true
+    disable_udf: true
+
+  auditd:
+    enabled: true
+    # Azure Note: Azure Monitor Agent (AMA) replaces the legacy Log Analytics MMA agent.
+    # Configure Data Collection Rules (DCR) to forward auditd and syslog events
+    # to a Log Analytics Workspace for Microsoft Defender for Cloud correlation.
+    # CIS Azure 5.x  — Logging and monitoring
+    max_log_file_size: 32
+    num_logs: 10
+    action_on_space_left: email
+    space_left_mb: 100
+    immutable: false               # set true for Trusted Launch / high-assurance VMs
+    audit_privileged_commands: true  # capture privilege escalation for Defender alerts
+    audit_file_access: true          # log unauthorised file access attempts
+    audit_user_events: true          # capture login/logout events for Log Analytics
+    audit_sudo_commands: true        # audit all administrative actions
+    audit_network_changes: true      # capture network config changes
+    audit_time_change: true          # detect clock tampering
+
+  services:
+    enabled: true
+    # Disable unnecessary services on Azure VMs
+    # Azure-managed extensions (Azure Monitor Agent, Walinuxagent) are excluded
+    disable:
+      - xinetd
+      - inetd
+      - avahi-daemon             # mDNS unnecessary in Azure VNet environments
+      - cups
+      - dhcpd
+      - slapd
+      - nfs-server
+      - bind
+      - vsftpd
+      - httpd
+      - apache2
+      - nginx                    # disable unless documented application requirement
+      - dovecot
+      - sendmail
+      - samba
+      - squid
+      - snmpd                    # cleartext community strings not appropriate in cloud
+      - nis
+      - telnet                   # use Azure Bastion or Serial Console instead
+      - rsh-server
+      - tftp-server
+      - rsync
+
+  network:
+    enabled: true
+    # CIS Azure 6.x  — Networking
+    # Azure Note: VNets are IPv4 by default; IPv6 dual-stack requires explicit configuration.
+    # CIS Azure 6.5: ensure NSG flow logs are captured (Network Watcher required).
+    disable_ipv6: false            # set true if your VNet subnet does not use IPv6
+    disable_wireless: true         # no wireless interfaces on Azure VMs
+    disable_dccp: true             # disable uncommon protocols
+    disable_sctp: true
+    disable_rds: true
+    disable_tipc: true
+
+  crypto:
+    enabled: true
+    # CIS Azure 3.x  — Storage account security
+    # Azure Note: Azure Application Gateway and Azure Front Door enforce TLS policy;
+    # configure minimum TLS 1.2 via: az network application-gateway ssl-policy set
+    # CIS Azure 3.1: ensure storage account access requires HTTPS (TLS 1.2 minimum)
+    min_tls_version: "1.2"         # enforce TLS 1.2+ for OS-level connections
+    disable_weak_ciphers: true     # remove weak cipher suites
+    disable_weak_hashes: true      # reject MD5 and SHA-1
+
+  logging:
+    enabled: true
+    # CIS Azure 5.x  — Logging and monitoring
+    # Azure Note: Azure Monitor Activity Log retention is 90 days by default.
+    # Extend via Diagnostic Settings to a Log Analytics Workspace or Storage Account.
+    # CIS Azure 5.1.2: ensure diagnostic settings are configured for all Azure services.
+    log_retention_days: 365        # 1-year OS log retention; align with Azure Policy requirements
+    remote_log_host: ""            # set to Log Analytics Workspace endpoint or SIEM
+    remote_log_protocol: tcp
+
+  mac:
+    enabled: true
+    # Azure Note: AppArmor (Ubuntu) or SELinux (RHEL/CentOS) on Azure VMs.
+    # Defender for Cloud recommends MAC enforcement for Linux VMs.
+    enforce: true
+    deny_unknown: false
+
+  ntp:
+    enabled: true
+    # Azure Note: Azure VMs use the Windows Azure Guest Agent / hypervisor clock
+    # for time synchronisation by default. The host provides accurate time via
+    # the Hyper-V time synchronisation service (PTP clock source /dev/ptp_hyperv).
+    # Supplement with NTP peers for resilience.
+    backend: auto
+    timezone: UTC
+    # servers:
+    #   - time.windows.com         # Microsoft NTP (Azure-hosted)
+    #   - 0.pool.ntp.org
+
+  updates:
+    enabled: true
+    # Azure Note: use Azure Update Manager (formerly Update Management in Automation)
+    # for patch compliance reporting and scheduled maintenance.
+    # Enable Guest OS patching: az vm update --set osProfile.linuxConfiguration.patchSettings.patchMode=AutomaticByPlatform
+    # Defender for Cloud recommendation: "System updates should be installed on machines"
+    unattended_security_upgrades: true
+    auto_reboot: false             # coordinate with Azure maintenance window schedules
+
+  containers:
+    enabled: false                 # enable if running Docker/containerd on Azure VMs
+    # Azure Note: for containerised workloads prefer AKS (Azure Kubernetes Service)
+    # with Azure Policy add-on, Defender for Containers, and ACR image scanning.
+
+report:
+  format: html
+  output_dir: /var/lib/hardbox/reports
+  include_remediation: true
+  include_evidence: true
+
+audit:
+  fail_on_critical: true
+  fail_on_high: true
+  fail_on_medium: false
+
+# Azure-specific controls requiring validation outside OS hardening:
+# ---------------------------------------------------------------
+# Identity (CIS Azure 1.x):
+#   - CIS Azure 1.1:  Ensure security defaults or Conditional Access is enabled
+#   - CIS Azure 1.2:  Ensure MFA is enabled for all users with privileged roles
+#   - CIS Azure 1.3:  Ensure guest users are reviewed monthly
+#   - CIS Azure 1.22: Ensure privileged identity management (PIM) is used for RBAC
+#   Validate via: az ad user list --query "[].{UPN:userPrincipalName,MFA:strongAuthenticationMethods}"
+#                 az role assignment list --all
+#
+# Network Security Groups (CIS Azure 6.x):
+#   - CIS Azure 6.1:  Ensure RDP access (3389) is not allowed from 0.0.0.0/0
+#   - CIS Azure 6.2:  Ensure SSH access (22) is not allowed from 0.0.0.0/0
+#   - CIS Azure 6.5:  Ensure NSG flow logs are collected (Network Watcher)
+#   Validate via: az network nsg list
+#                 az network nsg rule list --nsg-name NSG_NAME
+#                 az network watcher flow-log list
+#
+# Microsoft Defender for Cloud (CIS Azure 2.x):
+#   - CIS Azure 2.1:  Ensure Microsoft Defender for Servers is enabled (Plan 2)
+#   - CIS Azure 2.5:  Ensure Defender for Storage is enabled
+#   - CIS Azure 2.13: Ensure Defender for Key Vault is enabled
+#   Validate via: az security pricing list
+#
+# Key Vault / Disk Encryption (CIS Azure 7.x):
+#   - CIS Azure 7.3:  Ensure OS and data disks are encrypted with CMK
+#   - CIS Azure 7.4:  Ensure only approved VM extensions are installed
+#   - CIS Azure 8.1:  Ensure Key Vault keys have an expiration date
+#   - CIS Azure 8.2:  Ensure Key Vault secrets have an expiration date
+#   Validate via: az disk list --query "[].{Name:name,Encrypted:encryptionSettingsCollection.enabled}"
+#                 az keyvault list
+#
+# Logging & Monitoring (CIS Azure 5.x):
+#   - CIS Azure 5.1.1: Ensure a diagnostic setting exists for the subscription Activity Log
+#   - CIS Azure 5.2.1: Ensure activity log alert exists for Create Policy Assignment
+#   - CIS Azure 5.2.5: Ensure activity log alert for Delete SQL Server Firewall Rule
+#   Validate via: az monitor activity-log alert list
+#                 az monitor diagnostic-settings subscription list
+#
+# Use Microsoft Defender for Cloud Secure Score and Azure Policy
+# for continuous posture management across your subscription.

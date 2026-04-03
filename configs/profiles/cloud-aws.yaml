@@ -1,0 +1,292 @@
+# AWS Cloud Compliance Profile
+# Designed for hardbox on Amazon EC2 instances running in AWS environments.
+# Combines OS-level hardening with AWS-specific security control annotations.
+#
+# References:
+#   CIS Amazon Web Services Foundations Benchmark v2.0.0
+#   CIS Amazon Linux 2 Benchmark v2.0.0
+#   AWS Security Hub — FSBP (Foundational Security Best Practices)
+#   NIST SP 800-53 Rev. 5 (mapped where applicable)
+#
+# AWS-specific controls (IAM, VPC, CloudTrail, KMS, S3, EBS) operate at the
+# AWS account/API layer and cannot be enforced by OS hardening alone. This
+# profile documents those controls and where they must be validated via:
+#   - AWS Config rules
+#   - AWS Security Hub findings
+#   - AWS CLI / Terraform policy checks
+#
+# OS hardening controls below align with CIS AWS Foundations Benchmark and
+# are annotated with the relevant CIS control identifier.
+
+version: "1"
+profile: cloud-aws
+environment: cloud-aws
+
+modules:
+  ssh:
+    enabled: true
+    # CIS AWS 3.3  — Ensure VPC flow logging is enabled (network monitoring)
+    # CIS AL2 5.2  — SSH server configuration hardening
+    # FSBP EC2.8   — EC2 instances should use IMDSv2; use SSH keys, not passwords
+    client_alive_interval: 300     # CIS AL2 5.2.16: 5-minute idle timeout for cloud VMs
+    client_alive_count_max: 0      # disconnect immediately on interval expiry
+    login_grace_time: 60           # limit unauthenticated SSH connection window
+    # Cloud best practice: never use root or password auth on EC2 instances
+    # Access should be via IAM-controlled SSH key pairs or AWS Systems Manager Session Manager
+    disable_root_login: true       # CIS AL2 5.2.8: root login over SSH must be disabled
+    disable_empty_passwords: true  # CIS AL2 5.2.11: empty passwords forbidden
+    disable_x11_forwarding: true   # CIS AL2 5.2.6: X11 forwarding unnecessary on cloud VMs
+    disable_hostbased_auth: true   # CIS AL2 5.2.9: host-based authentication disabled
+    disable_ignore_rhosts: true    # CIS AL2 5.2.10: .rhosts files prohibited
+    disable_tcp_forwarding: true   # reduce attack surface on EC2 instances
+    disable_agent_forwarding: false
+    log_level: VERBOSE             # CIS AL2 5.2.5: log SSH events for CloudWatch integration
+    max_auth_tries: 4              # CIS AL2 5.2.7: lockout after 4 failed attempts
+    max_sessions: 10
+    # CIS AL2 5.2.13/14/15 — enforce strong ciphers, MACs, and key exchange
+    ciphers:
+      - aes128-ctr
+      - aes192-ctr
+      - aes256-ctr
+      - aes128-gcm@openssh.com
+      - aes256-gcm@openssh.com
+      - chacha20-poly1305@openssh.com
+    macs:
+      - hmac-sha2-256-etm@openssh.com
+      - hmac-sha2-512-etm@openssh.com
+    kex_algorithms:
+      - curve25519-sha256
+      - curve25519-sha256@libssh.org
+      - diffie-hellman-group14-sha256
+      - diffie-hellman-group16-sha512
+      - diffie-hellman-group18-sha512
+
+  firewall:
+    enabled: true
+    # AWS Note: EC2 Security Groups are the primary network control for AWS workloads.
+    # OS-level firewall provides defence-in-depth (iptables / nftables / ufw).
+    # CIS AWS 5.2  — Ensure no security groups allow unrestricted inbound access
+    # CIS AWS 5.4  — Ensure the default security group restricts all traffic
+    # FSBP EC2.2   — VPC default security group should prohibit inbound/outbound traffic
+    backend: auto                  # auto-detect: ufw | nftables | firewalld
+    default_inbound: drop          # defence-in-depth: OS-level default-deny inbound
+    default_outbound: drop         # restrict egress; complement Security Group egress rules
+    log_dropped: true              # forward to CloudWatch Logs for Security Hub correlation
+    # Define ports that mirror your EC2 Security Group inbound rules.
+    # CIS AWS 5.3: no unrestricted inbound access on administrative ports.
+    # Example (adjust to your workload):
+    # allowed_ingress:
+    #   - port: 443
+    #     proto: tcp
+    #     comment: "HTTPS — restrict source to ALB or known CIDR"
+    #   - port: 22
+    #     proto: tcp
+    #     comment: "SSH — restrict to bastion/jump host CIDR only"
+
+  kernel:
+    enabled: true
+    # CIS AL2 3.x  — Network parameter hardening
+    # FSBP EC2.10  — Amazon EC2 should be configured to use VPC endpoints where applicable
+    # Kernel module enforces:
+    # - kernel.randomize_va_space = 2   (ASLR — memory protection)
+    # - kernel.kptr_restrict = 2        (restrict kernel pointer exposure)
+    # - kernel.dmesg_restrict = 1       (restrict dmesg to privileged users)
+    # - net.ipv4 source routing disabled (CIS AL2 3.1.1: IP source routing disabled)
+    # - net.ipv4.conf.all.log_martians = 1 (CIS AL2 3.2.4: log martian packets)
+    # - fs.suid_dumpable = 0            (prevent SUID core dumps)
+    # AWS-specific: disable EC2 IMDS v1 at OS level if not patched via instance metadata option
+    # Prefer enforcing IMDSv2 via: aws ec2 modify-instance-metadata-options --http-tokens required
+
+  users:
+    enabled: true
+    # CIS AL2 5.4  — User accounts and environment
+    # FSBP IAM.3   — IAM users' access keys should be rotated every 90 days or less
+    # AWS Note: EC2 OS users should be minimised; prefer AWS Systems Manager Session Manager
+    # for interactive access (eliminates SSH key management and reduces attack surface)
+    password_max_days: 90          # CIS AL2 5.4.1.1: maximum password age 90 days
+    password_min_days: 7           # CIS AL2 5.4.1.2: minimum password age 7 days
+    password_warn_age: 14          # advance notification before expiry
+    password_min_length: 14        # CIS AL2 5.4.1.4: minimum 14 characters
+    password_complexity: true      # CIS AL2 5.3: enforce PAM password complexity
+    password_history: 5            # CIS AL2 5.4.3: remember last 5 passwords
+    lockout_attempts: 5            # CIS AL2 5.3.2: lock after 5 failed attempts
+    lockout_duration: 900          # 15-minute lockout (900 seconds)
+    inactive_account_lock_days: 30 # CIS AL2 5.4.1.5: disable inactive accounts after 30 days
+    su_restricted: true            # CIS AL2 5.6: restrict su to wheel group
+    umask: "027"                   # CIS AL2 5.4.4: restrictive default umask
+
+  filesystem:
+    enabled: true
+    # CIS AL2 1.1  — Filesystem configuration
+    # AWS Note: use EBS encryption for data-at-rest (enforced via AWS Config rule
+    # ec2-ebs-encryption-by-default and KMS CMKs per CIS AWS 2.2.1)
+    tmp_nosuid: true               # CIS AL2 1.1.3: /tmp mounted nodev,nosuid,noexec
+    tmp_nodev: true
+    tmp_noexec: true
+    devshm_nosuid: true            # CIS AL2 1.1.15: /dev/shm hardened
+    devshm_nodev: true
+    devshm_noexec: true
+    var_nosuid: true
+    var_tmp_nosuid: true
+    var_tmp_nodev: true
+    var_tmp_noexec: true
+    home_nodev: true
+    # CIS AL2 1.1.x — Disable unused filesystem kernel modules
+    disable_cramfs: true
+    disable_freevxfs: true
+    disable_jffs2: true
+    disable_hfs: true
+    disable_hfsplus: true
+    disable_udf: true
+
+  auditd:
+    enabled: true
+    # CIS AL2 4.x  — Logging and auditing
+    # CIS AWS 3.x  — Monitoring — supplement with CloudTrail and CloudWatch
+    # AWS Note: CloudTrail captures API-level events; auditd captures OS-level syscall events.
+    # Forward auditd logs to CloudWatch Logs for centralised monitoring.
+    max_log_file_size: 32          # MB per log file
+    num_logs: 10                   # retain 10 rotated log files
+    action_on_space_left: email    # alert before audit trail is lost
+    space_left_mb: 100
+    immutable: false               # set true for high-assurance workloads
+    audit_privileged_commands: true  # CIS AL2 4.1.11: audit privileged commands
+    audit_file_access: true          # CIS AL2 4.1.5: audit unsuccessful file access
+    audit_user_events: true          # CIS AL2 4.1.8: audit login/logout events
+    audit_sudo_commands: true        # CIS AL2 4.1.11: audit sudo invocations
+    audit_network_changes: true      # CIS AL2 4.1.16: audit network configuration changes
+    audit_time_change: true          # CIS AL2 4.1.4: audit time change events
+
+  services:
+    enabled: true
+    # CIS AL2 2.x  — Services — disable unnecessary network services
+    # FSBP EC2.28  — Running EC2 instances should use IMDSv2 (handled at AWS layer)
+    disable:
+      - xinetd
+      - inetd
+      - avahi-daemon             # mDNS unnecessary in VPC environments
+      - cups
+      - dhcpd
+      - slapd
+      - nfs-server
+      - bind
+      - vsftpd
+      - httpd
+      - apache2
+      - nginx                    # disable unless documented application requirement
+      - dovecot
+      - sendmail
+      - samba
+      - squid
+      - snmpd                    # SNMPv1/v2c not appropriate in cloud environments
+      - nis
+      - telnet                   # cleartext protocol — use Systems Manager Session Manager
+      - rsh-server
+      - tftp-server
+      - rsync
+
+  network:
+    enabled: true
+    # CIS AL2 3.x  — Network configuration
+    # AWS Note: EC2 instances in a VPC should not need IPv6 unless explicitly required
+    disable_ipv6: false            # set true if your VPC does not use IPv6 addressing
+    disable_wireless: true         # no wireless interfaces on EC2 instances
+    disable_dccp: true             # CIS AL2 3.4.1: disable uncommon protocols
+    disable_sctp: true
+    disable_rds: true
+    disable_tipc: true
+
+  crypto:
+    enabled: true
+    # CIS AWS 2.x  — Storage encryption — supplement with EBS/RDS/S3 encryption
+    # FSBP KMS.4   — AWS KMS key rotation should be enabled
+    # AWS Note: TLS termination typically occurs at ALB/CloudFront; enforce TLS policy there.
+    min_tls_version: "1.2"         # enforce TLS 1.2+ for any OS-level TLS connections
+    disable_weak_ciphers: true     # remove weak cipher suites
+    disable_weak_hashes: true      # reject MD5 and SHA-1
+
+  logging:
+    enabled: true
+    # CIS AWS 3.x  — Monitoring — CloudTrail, CloudWatch, and VPC Flow Logs
+    # AWS Note: forward OS logs to CloudWatch Logs using the CloudWatch agent.
+    # CIS AWS 3.1: CloudTrail enabled and log file validation active
+    # CIS AWS 3.2: CloudTrail logs encrypted with KMS CMK
+    # CIS AWS 3.4: CloudTrail trails integrated with CloudWatch Logs
+    log_retention_days: 365        # 1-year OS log retention; CloudTrail default is 90 days
+    remote_log_host: ""            # set to CloudWatch Logs endpoint or your SIEM
+    remote_log_protocol: tcp
+
+  mac:
+    enabled: true
+    # CIS AL2 1.6  — Mandatory Access Control (SELinux on Amazon Linux 2)
+    enforce: true                  # CIS AL2 1.6.1.1: SELinux in enforcing mode
+    deny_unknown: false
+
+  ntp:
+    enabled: true
+    # CIS AL2 2.2  — Time synchronisation
+    # AWS Note: EC2 instances can use the Amazon Time Sync Service (169.254.169.123)
+    # which is a highly available NTP endpoint within the VPC.
+    backend: auto
+    timezone: UTC
+    # servers:
+    #   - 169.254.169.123          # Amazon Time Sync Service (preferred for EC2)
+    #   - 0.amazon.pool.ntp.org
+
+  updates:
+    enabled: true
+    # CIS AL2 1.9  — Ensure updates and patches are applied
+    # AWS Note: use AWS Systems Manager Patch Manager to manage patching at scale
+    # and track compliance via AWS Config rule ec2-managedinstance-patch-compliance-status-check
+    unattended_security_upgrades: true
+    auto_reboot: false             # coordinate reboots with AWS maintenance windows
+
+  containers:
+    enabled: false                 # enable if running Docker/containerd on EC2
+    # AWS Note: for containerised workloads prefer ECS/EKS with Fargate for serverless isolation
+    # or EC2 with hardened AMIs and ECR image scanning enabled (FSBP ECR.1)
+
+report:
+  format: html
+  output_dir: /var/lib/hardbox/reports
+  include_remediation: true
+  include_evidence: true
+
+audit:
+  fail_on_critical: true
+  fail_on_high: true
+  fail_on_medium: false
+
+# AWS-specific controls requiring validation outside OS hardening:
+# ---------------------------------------------------------------
+# IAM:
+#   - CIS AWS 1.1:  Avoid use of root account
+#   - CIS AWS 1.4:  Ensure IAM password policy requires uppercase letters
+#   - CIS AWS 1.8:  Ensure IAM password policy requires minimum length of 14+
+#   - CIS AWS 1.14: Ensure hardware MFA is enabled for the root account
+#   - CIS AWS 1.16: Ensure IAM policies are attached only to groups or roles
+#   Validate via: aws iam get-account-password-policy
+#                 aws iam generate-credential-report
+#
+# VPC/Network:
+#   - CIS AWS 5.1:  Ensure no network ACLs allow ingress from 0.0.0.0/0 on ports 22/3389
+#   - CIS AWS 5.2:  Ensure no security groups allow unrestricted inbound access on SSH
+#   - CIS AWS 5.3:  Ensure the default security group restricts all traffic
+#   Validate via: aws ec2 describe-security-groups
+#                 aws ec2 describe-network-acls
+#
+# CloudTrail & Monitoring:
+#   - CIS AWS 3.1:  CloudTrail enabled in all regions with log file validation
+#   - CIS AWS 3.2:  CloudTrail logs encrypted with KMS CMK
+#   - CIS AWS 3.7:  CloudWatch alarm for root account usage
+#   - CIS AWS 3.14: CloudWatch alarm for VPC changes
+#   Validate via: aws cloudtrail describe-trails
+#                 aws cloudwatch describe-alarms
+#
+# EBS / KMS:
+#   - CIS AWS 2.2.1: EBS volume encryption enabled by default
+#   - CIS AWS 3.8:   KMS CMK rotation enabled
+#   Validate via: aws ec2 get-ebs-encryption-by-default
+#                 aws kms list-keys + get-key-rotation-status
+#
+# Use AWS Security Hub (FSBP standard) and AWS Config for continuous validation.
