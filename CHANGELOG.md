@@ -95,6 +95,11 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `pci-dss` compliance profile — PCI-DSS v4.0, full cardholder data environment hardening with per-control requirement annotations ([#86](https://github.com/jackby03/hardbox/issues/86))
 - `stig` compliance profile — DISA STIG for Ubuntu 22.04 LTS V1R1, DoD-grade hardening with V-number annotations for every control ([#85](https://github.com/jackby03/hardbox/issues/85))
 
+### Added
+- `distro-parity` job matrix in `quality-gates.yaml` — builds, tests, and smoke-audits hardbox inside Rocky Linux 9 and RHEL UBI 9 containers on every PR ([#87](https://github.com/jackby03/hardbox/issues/87))
+- `Distro Parity Gate` summary job — single required check that blocks merge if any distro leg fails
+- `docs/DEVSECOPS.md` updated with distro parity scope, limitations, and instructions for adding new distros
+
 ### Changed
 - `install.sh` now resolves release assets via GitHub API instead of hardcoded filenames, improving compatibility across release archive naming formats.
 - `install.sh` now returns explicit errors when a tag exists without a published GitHub Release or missing linux/checksum artifacts.
