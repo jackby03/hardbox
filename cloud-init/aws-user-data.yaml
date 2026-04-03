@@ -1,0 +1,153 @@
+#cloud-config
+# hardbox cloud-init user-data template — Amazon Web Services (EC2)
+#
+# Usage:
+#   Pass this file as user-data when launching an EC2 instance:
+#     aws ec2 run-instances \
+#       --user-data file://cloud-init/aws-user-data.yaml \
+#       ...
+#
+# Variables (customise before use):
+#   HARDBOX_VERSION   : hardbox release tag (default: latest)
+#   HARDBOX_PROFILE   : compliance profile to apply (default: cloud-aws)
+#   HARDBOX_REPORT_S3 : S3 bucket for audit reports (e.g. s3://my-bucket/hardbox/)
+#   HARDBOX_SCHEDULE  : systemd timer interval for re-hardening (default: daily)
+#
+# Requirements:
+#   - EC2 instance role must have s3:PutObject permission on HARDBOX_REPORT_S3
+#   - Instance must have internet access (or VPC endpoint) to download hardbox
+
+write_files:
+  - path: /etc/hardbox/cloud-init.env
+    permissions: "0640"
+    owner: root:root
+    content: |
+      HARDBOX_VERSION=latest
+      HARDBOX_PROFILE=cloud-aws
+      HARDBOX_REPORT_S3=s3://CHANGE-ME/hardbox/reports/
+      HARDBOX_SCHEDULE=daily
+      HARDBOX_INSTALL_DIR=/usr/local/bin
+      HARDBOX_REPORT_DIR=/var/lib/hardbox/reports
+      CLOUD_PROVIDER=aws
+
+  - path: /usr/local/lib/hardbox/install.sh
+    permissions: "0750"
+    owner: root:root
+    content: |
+      #!/bin/bash
+      # hardbox installer with checksum verification
+      set -euo pipefail
+      source /etc/hardbox/cloud-init.env
+
+      ARCH=$(uname -m)
+      case "$ARCH" in
+        x86_64)  GOARCH="amd64" ;;
+        aarch64) GOARCH="arm64" ;;
+        *)        echo "Unsupported architecture: $ARCH"; exit 1 ;;
+      esac
+
+      if [ "$HARDBOX_VERSION" = "latest" ]; then
+        HARDBOX_VERSION=$(curl -fsSL \
+          "https://api.github.com/repos/jackby03/hardbox/releases/latest" \
+          | grep '"tag_name"' | cut -d'"' -f4)
+      fi
+
+      BASE_URL="https://github.com/jackby03/hardbox/releases/download/${HARDBOX_VERSION}"
+      BINARY="hardbox_Linux_${GOARCH}"
+      CHECKSUM_FILE="hardbox_${HARDBOX_VERSION#v}_checksums.txt"
+
+      echo "Installing hardbox ${HARDBOX_VERSION} (${GOARCH})..."
+      curl -fsSL "${BASE_URL}/${BINARY}" -o /tmp/hardbox
+      curl -fsSL "${BASE_URL}/${CHECKSUM_FILE}" -o /tmp/hardbox_checksums.txt
+
+      # Verify checksum
+      EXPECTED=$(grep "${BINARY}" /tmp/hardbox_checksums.txt | awk '{print $1}')
+      ACTUAL=$(sha256sum /tmp/hardbox | awk '{print $1}')
+      if [ "$EXPECTED" != "$ACTUAL" ]; then
+        echo "Checksum mismatch! Expected: $EXPECTED, Got: $ACTUAL" >&2
+        exit 1
+      fi
+
+      install -m 0755 /tmp/hardbox "${HARDBOX_INSTALL_DIR}/hardbox"
+      rm -f /tmp/hardbox /tmp/hardbox_checksums.txt
+      echo "hardbox installed: $(hardbox version)"
+
+  - path: /usr/local/lib/hardbox/harden.sh
+    permissions: "0750"
+    owner: root:root
+    content: |
+      #!/bin/bash
+      # hardbox apply + report upload to S3
+      set -euo pipefail
+      source /etc/hardbox/cloud-init.env
+
+      mkdir -p "${HARDBOX_REPORT_DIR}"
+      TIMESTAMP=$(date -u +%Y%m%dT%H%M%SZ)
+      INSTANCE_ID=$(curl -fsSL http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null || echo "unknown")
+      REPORT_FILE="${HARDBOX_REPORT_DIR}/hardbox-${INSTANCE_ID}-${TIMESTAMP}.html"
+
+      echo "Applying hardbox profile: ${HARDBOX_PROFILE}"
+      hardbox apply \
+        --profile "${HARDBOX_PROFILE}" \
+        --format html \
+        --output "${REPORT_FILE}" \
+        --non-interactive
+
+      # Upload report to S3 if bucket is configured
+      if [ "${HARDBOX_REPORT_S3}" != "s3://CHANGE-ME/hardbox/reports/" ]; then
+        echo "Uploading report to ${HARDBOX_REPORT_S3}"
+        aws s3 cp "${REPORT_FILE}" \
+          "${HARDBOX_REPORT_S3}${INSTANCE_ID}/${TIMESTAMP}.html" \
+          --sse aws:kms \
+          --no-progress
+        echo "Report uploaded successfully"
+      fi
+
+  - path: /etc/systemd/system/hardbox-harden.service
+    permissions: "0644"
+    owner: root:root
+    content: |
+      [Unit]
+      Description=hardbox system hardening
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/lib/hardbox/harden.sh
+      StandardOutput=journal
+      StandardError=journal
+      SyslogIdentifier=hardbox
+
+  - path: /etc/systemd/system/hardbox-harden.timer
+    permissions: "0644"
+    owner: root:root
+    content: |
+      [Unit]
+      Description=hardbox periodic re-hardening timer
+      Requires=hardbox-harden.service
+
+      [Timer]
+      OnBootSec=2min
+      OnCalendar=daily
+      Persistent=true
+
+      [Install]
+      WantedBy=timers.target
+
+runcmd:
+  # Install hardbox binary with checksum verification
+  - /usr/local/lib/hardbox/install.sh
+
+  # Enable and start systemd timer for periodic re-hardening
+  - systemctl daemon-reload
+  - systemctl enable hardbox-harden.timer
+  - systemctl start hardbox-harden.timer
+
+  # Run initial hardening immediately
+  - systemctl start hardbox-harden.service
+
+  # Log completion to CloudWatch (if aws cli available)
+  - |
+    INSTANCE_ID=$(curl -fsSL http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null || echo "unknown")
+    logger -t hardbox "cloud-init hardening complete — instance: ${INSTANCE_ID}"
