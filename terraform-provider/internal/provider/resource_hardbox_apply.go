@@ -36,6 +36,7 @@ type hardboxApplyModel struct {
 	User        types.String `tfsdk:"user"`
 	PrivateKey  types.String `tfsdk:"private_key"`
 	AgentSocket types.String `tfsdk:"agent_socket"`
+	HostKey     types.String `tfsdk:"host_key"`
 
 	// --- hardbox configuration ---
 	Profile            types.String `tfsdk:"profile"`
@@ -114,6 +115,14 @@ resource "hardbox_apply" "web" {
 			"agent_socket": schema.StringAttribute{
 				Optional:            true,
 				MarkdownDescription: "Path to SSH agent socket (e.g. `$SSH_AUTH_SOCK`). Mutually exclusive with `private_key`.",
+			},
+			"host_key": schema.StringAttribute{
+				Optional:  true,
+				Sensitive: false,
+				MarkdownDescription: `Base64-encoded SSH public host key of the target server.
+Used to verify the server identity and prevent MITM attacks.
+Obtain with: ` + "`ssh-keyscan -t ed25519 <host> | awk '{print $3}'`" + `
+When omitted, the system ` + "`~/.ssh/known_hosts`" + ` file is used for verification.`,
 			},
 
 			// hardbox options
@@ -254,6 +263,7 @@ func (r *hardboxApplyResource) Delete(ctx context.Context, req resource.DeleteRe
 		User:        state.User.ValueString(),
 		PrivateKey:  state.PrivateKey.ValueString(),
 		AgentSocket: state.AgentSocket.ValueString(),
+		HostKey:     state.HostKey.ValueString(),
 	})
 	if err != nil {
 		resp.Diagnostics.AddWarning(
@@ -305,6 +315,7 @@ func (r *hardboxApplyResource) applyHardening(
 		User:        m.User.ValueString(),
 		PrivateKey:  m.PrivateKey.ValueString(),
 		AgentSocket: m.AgentSocket.ValueString(),
+		HostKey:     m.HostKey.ValueString(),
 	})
 	if err != nil {
 		addError("SSH connection failed", fmt.Sprintf("Cannot connect to %s: %s", m.Host.ValueString(), err))

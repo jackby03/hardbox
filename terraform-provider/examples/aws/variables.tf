@@ -35,3 +35,8 @@ variable "private_key_path" {
   type        = string
   default     = "~/.ssh/id_rsa"
 }
+
+variable "host_public_key" {
+  description = "Base64-encoded SSH public host key (from ssh-keyscan -t ed25519 <host> | awk '{print $3}')."
+  type        = string
+}

@@ -60,12 +60,14 @@ resource "hardbox_apply" "web" {
   host        = aws_instance.web.public_ip
   user        = "ubuntu"
   private_key = file(var.private_key_path)
+  # Obtain with: ssh-keyscan -t ed25519 <ip> | awk '{print $3}'
+  host_key    = var.host_public_key
 
   profile       = "cloud-aws"
   report_format = "json"
 
-  fail_on_critical   = true
-  fail_on_high       = true
+  fail_on_critical    = true
+  fail_on_high        = true
   rollback_on_failure = true
 
   depends_on = [aws_instance.web]
