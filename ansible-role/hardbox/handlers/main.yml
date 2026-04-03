@@ -1,0 +1,17 @@
+---
+# hardbox Ansible role — handlers
+
+- name: Verify hardbox installation
+  ansible.builtin.command: "{{ _hardbox_bin }} version"
+  changed_when: false
+  become: true
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Restart hardbox timer
+  ansible.builtin.systemd:
+    name: hardbox-harden.timer
+    state: restarted
+    enabled: true

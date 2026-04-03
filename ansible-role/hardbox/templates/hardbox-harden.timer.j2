@@ -1,0 +1,11 @@
+[Unit]
+Description=hardbox periodic re-hardening ({{ hardbox_timer_schedule }})
+Requires=hardbox-harden.service
+
+[Timer]
+OnBootSec={{ hardbox_timer_on_boot_sec }}
+OnCalendar={{ hardbox_timer_schedule }}
+Persistent=true
+
+[Install]
+WantedBy=timers.target

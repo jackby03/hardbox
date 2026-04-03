@@ -1,0 +1,15 @@
+[Unit]
+Description=hardbox system hardening (profile: {{ hardbox_profile }})
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart={{ _hardbox_bin }} apply \
+  --profile {{ hardbox_profile }} \
+  --format {{ hardbox_report_format }} \
+  --output {{ hardbox_report_dir }}/hardbox-periodic-$(date +%%Y%%m%%dT%%H%%M%%SZ).{{ hardbox_report_format }} \
+  --non-interactive
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=hardbox

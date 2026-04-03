@@ -1,0 +1,139 @@
+---
+# hardbox installation with checksum verification
+
+- name: Check if hardbox is already installed
+  ansible.builtin.stat:
+    path: "{{ _hardbox_bin }}"
+  register: _hardbox_stat
+
+- name: Get installed hardbox version
+  ansible.builtin.command: "{{ _hardbox_bin }} version --short"
+  register: _hardbox_installed_version
+  changed_when: false
+  failed_when: false
+  when: _hardbox_stat.stat.exists
+
+- name: Resolve latest release tag from GitHub API
+  ansible.builtin.uri:
+    url: "{{ _hardbox_releases_api }}"
+    return_content: true
+    headers:
+      Accept: application/vnd.github+json
+  register: _hardbox_release_response
+  when: hardbox_version == "latest"
+  delegate_to: localhost
+  run_once: true
+
+- name: Set resolved version fact
+  ansible.builtin.set_fact:
+    _hardbox_resolved_version: >-
+      {{
+        (hardbox_version == 'latest')
+        | ternary(
+            _hardbox_release_response.json.tag_name,
+            hardbox_version
+          )
+      }}
+
+- name: Skip install if version already matches
+  ansible.builtin.debug:
+    msg: >
+      hardbox {{ _hardbox_resolved_version }} already installed — skipping.
+      Set hardbox_force_reinstall=true to override.
+  when:
+    - _hardbox_stat.stat.exists
+    - not hardbox_force_reinstall | bool
+    - _hardbox_installed_version.stdout is defined
+    - _hardbox_resolved_version in _hardbox_installed_version.stdout
+
+- name: Download hardbox binary
+  ansible.builtin.get_url:
+    url: >-
+      {{ _hardbox_release_base_url }}/{{ _hardbox_resolved_version }}/{{ _hardbox_binary_name }}
+    dest: "{{ hardbox_tmp_dir }}/hardbox"
+    mode: "0755"
+    force: true
+  when: >
+    not _hardbox_stat.stat.exists
+    or hardbox_force_reinstall | bool
+    or (_hardbox_installed_version.stdout is defined
+        and _hardbox_resolved_version not in _hardbox_installed_version.stdout)
+
+- name: Download hardbox checksum file
+  ansible.builtin.get_url:
+    url: >-
+      {{ _hardbox_release_base_url }}/{{ _hardbox_resolved_version }}/hardbox_{{ _hardbox_resolved_version | regex_replace('^v', '') }}_checksums.txt
+    dest: "{{ hardbox_tmp_dir }}/hardbox_checksums.txt"
+    mode: "0644"
+    force: true
+  when: >
+    not _hardbox_stat.stat.exists
+    or hardbox_force_reinstall | bool
+    or (_hardbox_installed_version.stdout is defined
+        and _hardbox_resolved_version not in _hardbox_installed_version.stdout)
+
+- name: Compute SHA-256 of downloaded binary
+  ansible.builtin.stat:
+    path: "{{ hardbox_tmp_dir }}/hardbox"
+    checksum_algorithm: sha256
+  register: _hardbox_download_stat
+  when: >
+    not _hardbox_stat.stat.exists
+    or hardbox_force_reinstall | bool
+    or (_hardbox_installed_version.stdout is defined
+        and _hardbox_resolved_version not in _hardbox_installed_version.stdout)
+
+- name: Read expected checksum from file
+  ansible.builtin.shell: >
+    grep "{{ _hardbox_binary_name }}" {{ hardbox_tmp_dir }}/hardbox_checksums.txt | awk '{print $1}'
+  register: _hardbox_expected_checksum
+  changed_when: false
+  when: _hardbox_download_stat is not skipped
+
+- name: Verify checksum integrity
+  ansible.builtin.fail:
+    msg: >
+      Checksum mismatch for hardbox binary!
+      Expected: {{ _hardbox_expected_checksum.stdout }}
+      Got:      {{ _hardbox_download_stat.stat.checksum }}
+      Aborting installation.
+  when:
+    - _hardbox_download_stat is not skipped
+    - _hardbox_expected_checksum.stdout != _hardbox_download_stat.stat.checksum
+
+- name: Install hardbox binary
+  ansible.builtin.copy:
+    src: "{{ hardbox_tmp_dir }}/hardbox"
+    dest: "{{ _hardbox_bin }}"
+    mode: "0755"
+    owner: root
+    group: root
+    remote_src: true
+  notify: Verify hardbox installation
+  when: _hardbox_download_stat is not skipped
+
+- name: Upload custom profile to target host
+  ansible.builtin.copy:
+    src: "{{ hardbox_custom_profile_src }}"
+    dest: "{{ _hardbox_custom_profile_dest }}"
+    mode: "0640"
+    owner: root
+    group: root
+  when: hardbox_custom_profile_src | length > 0
+
+- name: Ensure report directory exists
+  ansible.builtin.file:
+    path: "{{ hardbox_report_dir }}"
+    state: directory
+    mode: "0750"
+    owner: root
+    group: root
+
+- name: Clean up temporary files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ hardbox_tmp_dir }}/hardbox"
+    - "{{ hardbox_tmp_dir }}/hardbox_checksums.txt"
+  when: _hardbox_download_stat is not skipped

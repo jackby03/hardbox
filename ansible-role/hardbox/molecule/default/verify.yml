@@ -1,0 +1,53 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Check hardbox binary is installed
+      ansible.builtin.stat:
+        path: /usr/local/bin/hardbox
+      register: _hardbox_bin_stat
+
+    - name: Assert hardbox binary exists and is executable
+      ansible.builtin.assert:
+        that:
+          - _hardbox_bin_stat.stat.exists
+          - _hardbox_bin_stat.stat.executable
+        fail_msg: "hardbox binary not found or not executable at /usr/local/bin/hardbox"
+
+    - name: Run hardbox version
+      ansible.builtin.command: /usr/local/bin/hardbox version
+      register: _hardbox_version_output
+      changed_when: false
+
+    - name: Assert hardbox version output is non-empty
+      ansible.builtin.assert:
+        that:
+          - _hardbox_version_output.rc == 0
+          - _hardbox_version_output.stdout | length > 0
+        fail_msg: "hardbox version command failed: {{ _hardbox_version_output.stderr }}"
+
+    - name: Check report directory exists
+      ansible.builtin.stat:
+        path: /var/lib/hardbox/reports
+      register: _hardbox_report_dir
+
+    - name: Assert report directory exists with correct permissions
+      ansible.builtin.assert:
+        that:
+          - _hardbox_report_dir.stat.exists
+          - _hardbox_report_dir.stat.isdir
+          - _hardbox_report_dir.stat.mode == "0750"
+        fail_msg: "Report directory /var/lib/hardbox/reports missing or has wrong permissions"
+
+    - name: Find generated report files
+      ansible.builtin.find:
+        paths: /var/lib/hardbox/reports
+        patterns: "hardbox-*.html"
+      register: _hardbox_reports
+
+    - name: Assert at least one report was generated
+      ansible.builtin.assert:
+        that: _hardbox_reports.matched >= 1
+        fail_msg: "No hardbox report files found in /var/lib/hardbox/reports"

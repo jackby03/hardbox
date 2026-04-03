@@ -1,0 +1,70 @@
+---
+# hardbox apply — apply hardening profile with optional rollback on failure
+
+- name: Set profile argument
+  ansible.builtin.set_fact:
+    _hardbox_profile_arg: >-
+      {{
+        (hardbox_custom_profile_src | length > 0)
+        | ternary(_hardbox_custom_profile_dest, hardbox_profile)
+      }}
+
+- name: Set report file path
+  ansible.builtin.set_fact:
+    _hardbox_report_file: >-
+      {{ hardbox_report_dir }}/hardbox-{{ inventory_hostname }}-{{ ansible_date_time.iso8601_basic_short }}.{{ hardbox_report_format }}
+
+- name: Apply hardbox hardening profile
+  ansible.builtin.command:
+    cmd: >-
+      {{ _hardbox_bin }} apply
+      --profile {{ _hardbox_profile_arg }}
+      --format {{ hardbox_report_format }}
+      --output {{ _hardbox_report_file }}
+      {{ '--dry-run' if hardbox_dry_run | bool else '' }}
+      {{ '--non-interactive' if hardbox_non_interactive | bool else '' }}
+  register: _hardbox_apply_result
+  changed_when: "'Applied' in _hardbox_apply_result.stdout or _hardbox_apply_result.rc == 0"
+  failed_when: _hardbox_apply_result.rc not in [0, 1]
+  become: true
+  block: []
+  rescue:
+    - name: Run rollback on apply failure
+      ansible.builtin.command:
+        cmd: "{{ _hardbox_bin }} rollback apply --last"
+      when: hardbox_rollback_on_failure | bool
+      become: true
+      register: _hardbox_rollback_result
+
+    - name: Log rollback result
+      ansible.builtin.debug:
+        msg: "Rollback completed: {{ _hardbox_rollback_result.stdout }}"
+      when: hardbox_rollback_on_failure | bool
+
+    - name: Fail after rollback
+      ansible.builtin.fail:
+        msg: >
+          hardbox apply failed (rc={{ _hardbox_apply_result.rc }}).
+          Rollback has been applied. Review the output:
+          {{ _hardbox_apply_result.stderr }}
+
+- name: Display hardbox apply output
+  ansible.builtin.debug:
+    msg: "{{ _hardbox_apply_result.stdout_lines }}"
+  when: _hardbox_apply_result.stdout_lines is defined
+
+- name: Check for critical/high findings
+  ansible.builtin.fail:
+    msg: >
+      hardbox apply reported findings that exceed configured thresholds.
+      Review the report at {{ _hardbox_report_file }} on {{ inventory_hostname }}.
+  when:
+    - _hardbox_apply_result.rc == 1
+    - hardbox_fail_on_critical | bool or hardbox_fail_on_high | bool
+
+- name: Fetch report to Ansible controller
+  ansible.builtin.fetch:
+    src: "{{ _hardbox_report_file }}"
+    dest: "{{ hardbox_fetch_report_dest }}/{{ inventory_hostname }}/"
+    flat: true
+  when: hardbox_fetch_report | bool

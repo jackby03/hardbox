@@ -1,0 +1,27 @@
+---
+# Internal variables — not intended for end-user override.
+
+# GitHub releases API endpoint
+_hardbox_releases_api: "https://api.github.com/repos/jackby03/hardbox/releases/latest"
+
+# Base URL for release asset downloads
+_hardbox_release_base_url: "https://github.com/jackby03/hardbox/releases/download"
+
+# Mapping of Ansible ansible_architecture to GoRelease GOARCH
+_hardbox_arch_map:
+  x86_64: amd64
+  aarch64: arm64
+  armv7l: arm
+
+# Binary name template (filled at runtime)
+_hardbox_binary_name: "hardbox_Linux_{{ _hardbox_arch_map[ansible_architecture] | default('amd64') }}"
+
+# Path to the installed binary
+_hardbox_bin: "{{ hardbox_install_dir }}/hardbox"
+
+# Custom profile destination path on the target host
+_hardbox_custom_profile_dest: /etc/hardbox/custom-profile.yaml
+
+# Systemd unit paths
+_hardbox_service_unit: /etc/systemd/system/hardbox-harden.service
+_hardbox_timer_unit: /etc/systemd/system/hardbox-harden.timer
