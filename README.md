@@ -209,7 +209,7 @@ sudo hardbox rollback apply --last
 - [x] Filesystem — `/var/tmp` mount hardening check (fs-008, CIS 1.1.8–1.1.10)
 - [x] Full RHEL / Rocky Linux parity
 
-### v0.3 — Ecosystem
+### v0.3 — Ecosystem ✅
 - [x] `hipaa` profile
 - [x] `iso27001` profile
 - [x] `cloud-aws`, `cloud-gcp`, `cloud-azure` profiles
@@ -218,12 +218,19 @@ sudo hardbox rollback apply --last
 - [x] Terraform provisioner
 - [x] cloud-init support
 
+### v0.4 — Architecture & Scale
+- [ ] CLI refactor — extract commands to `internal/cli/` package ([#120](https://github.com/jackby03/hardbox/issues/120))
+- [ ] `hardbox fleet` — remote multi-host hardening via SSH ([#121](https://github.com/jackby03/hardbox/issues/121))
+- [ ] Mount & partition hardening module (14th module) ([#122](https://github.com/jackby03/hardbox/issues/122))
+- [ ] Plugin SDK — custom hardening module interface ([#123](https://github.com/jackby03/hardbox/issues/123))
+- [ ] `hardbox diff` — audit comparison reports ([#124](https://github.com/jackby03/hardbox/issues/124))
+- [ ] `hardbox serve` — lightweight web dashboard ([#125](https://github.com/jackby03/hardbox/issues/125))
+
 ### v1.0 — Production Ready
 - [ ] Full compliance framework coverage
-- [ ] Plugin SDK for custom modules
-- [ ] Remote fleet hardening (SSH agent)
-- [ ] Web dashboard (optional)
+- [ ] Remote fleet management UI
 - [ ] Enterprise profile management
+- [ ] SaaS / hosted dashboard (optional)
 
 ---
 

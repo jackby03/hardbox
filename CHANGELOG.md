@@ -117,6 +117,24 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Workflow files were renamed for clearer operational intent: `quality-gates.yaml`, `release-publish.yaml`, `release-smoke.yaml`, and `docs-publish.yaml`.
 - Removed `contribution-governance.yaml` — branch/PR enforcement rules are unnecessary overhead for a solo-maintainer project.
 
+---
+
+## [0.4.0] — Unreleased — Architecture & Scale
+
+### Planned
+
+#### P0 — Must Ship
+- CLI refactor — extract all cobra command definitions to `internal/cli/`; `cmd/hardbox/main.go` becomes a ≤15-line entry point ([#120](https://github.com/jackby03/hardbox/issues/120))
+- `hardbox fleet` — concurrent remote multi-host hardening via SSH; `fleet apply` and `fleet audit` with unified multi-host HTML report ([#121](https://github.com/jackby03/hardbox/issues/121))
+- Mount & partition hardening module (14th module) — 15 checks covering `/tmp`, `/var`, `/var/log`, `/home`, `/dev/shm`, sticky bits, and kernel filesystem modules ([#122](https://github.com/jackby03/hardbox/issues/122))
+
+#### P1 — Should Ship
+- Plugin SDK — stable `sdk.Module` interface for third-party custom modules; `.so` plugin loading; `hardbox plugin list/install` ([#123](https://github.com/jackby03/hardbox/issues/123))
+- `hardbox diff` — compare two JSON audit reports; highlights regressions and improvements; CI-safe exit code 1 on regressions ([#124](https://github.com/jackby03/hardbox/issues/124))
+
+#### P2 — Nice to Have
+- `hardbox serve` — local HTTP dashboard for browsing audit reports; embedded assets; `127.0.0.1`-only by default ([#125](https://github.com/jackby03/hardbox/issues/125))
+
 ### Planned for v0.2
 - 14th module — mount and partition hardening
 
