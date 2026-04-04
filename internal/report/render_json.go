@@ -5,8 +5,8 @@ import (
 	"io"
 )
 
-func renderJSON(r *Report, w io.Writer) error {
+func renderJSON(v any, w io.Writer) error {
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
-	return enc.Encode(r)
+	return enc.Encode(v)
 }

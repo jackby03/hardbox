@@ -131,7 +131,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 #### P1 — Should Ship
 - Plugin SDK — stable `sdk.Module` interface for third-party custom modules; `.so` plugin loading; `hardbox plugin list/install` ([#123](https://github.com/jackby03/hardbox/issues/123))
-- `hardbox diff` — compare two JSON audit reports; highlights regressions and improvements; CI-safe exit code 1 on regressions ([#124](https://github.com/jackby03/hardbox/issues/124))
+- `hardbox diff` — compare two JSON audit reports; highlights regressions, improvements and unchanged failures; text/HTML/JSON output; exit code 1 on regressions for CI/CD ([#124](https://github.com/jackby03/hardbox/issues/124)) ✅
 
 #### P2 — Nice to Have
 - `hardbox serve` — local HTTP dashboard for browsing audit reports; embedded assets; `127.0.0.1`-only by default ([#125](https://github.com/jackby03/hardbox/issues/125))

@@ -44,6 +44,7 @@ func newRootCmd(version string) *cobra.Command {
 		newApplyCmd(gf),
 		newAuditCmd(gf),
 		newRollbackCmd(),
+		newDiffCmd(),
 	)
 
 	return root
