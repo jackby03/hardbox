@@ -199,6 +199,8 @@ hardbox serve --reports-dir ./reports
 
 - Contributor workflow and development setup: [CONTRIBUTING.md](CONTRIBUTING.md)
 - DevSecOps, branch protection, and release automation: [docs/DEVSECOPS.md](docs/DEVSECOPS.md)
+- Continuous audit daemon (`hardbox watch`): [docs/WATCH.md](docs/WATCH.md)
+- Full roadmap v0.5 → v1.0, module plan, SaaS model: [docs/ROADMAP.md](docs/ROADMAP.md)
 
 ---
 

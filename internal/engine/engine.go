@@ -147,6 +147,18 @@ func (e *Engine) Apply(ctx context.Context) error {
 	return nil
 }
 
+// RunAudit executes all module checks and returns the structured Report.
+// It does not write anything to disk; the caller is responsible for
+// persistence and diff comparison. This is the building block for hardbox watch.
+func (e *Engine) RunAudit(ctx context.Context) (*report.Report, error) {
+	sessionID := time.Now().UTC().Format("2006-01-02T150405Z")
+	findings, err := e.runAudit(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return report.Build(sessionID, e.cfg.Profile, findings), nil
+}
+
 // GetModules returns the list of registered modules (built-in + plugins).
 func (e *Engine) GetModules() []modules.Module {
 	return e.modules
