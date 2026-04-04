@@ -46,7 +46,7 @@ It covers every layer of the security stack: kernel parameters, SSH, firewall, P
 |:---|:---|
 | **Modern TUI** | Interactive terminal UI (Bubble Tea). Navigate, configure, and apply hardening without memorizing commands |
 | **Modular Architecture** | Enable or disable any module independently. Mix and match profiles at will |
-| **11 Built-in Profiles** | `cis-level1`, `cis-level2`, `pci-dss`, `stig`, `hipaa`, `iso27001`, `cloud-aws`, `cloud-gcp`, `cloud-azure`, `production`, `development` — more on roadmap |
+| **12 Built-in Profiles** | `cis-level1`, `cis-level2`, `pci-dss`, `stig`, `hipaa`, `nist-800-53`, `iso27001`, `cloud-aws`, `cloud-gcp`, `cloud-azure`, `production`, `development` |
 | **Dry Run Mode** | Preview every exact change before it's applied. Safe to run on live servers |
 | **One-command Rollback** | Every change is snapshotted. Revert any module or an entire session instantly |
 | **Audit Reports** | JSON, HTML, and Markdown output — machine-readable and CI/CD-friendly |
@@ -144,6 +144,7 @@ sudo hardbox rollback apply --last
 | `pci-dss` | PCI-DSS v4.0 | Cardholder data environments (CDE) |
 | `stig` | DISA STIG (Ubuntu 22.04 V1R1) | DoD and high-assurance systems |
 | `hipaa` | HIPAA Security Rule (45 CFR Part 164) | Healthcare — ePHI environments |
+| `nist-800-53` | NIST SP 800-53 Rev. 5 High | Federal / high-assurance environments |
 | `iso27001` | ISO/IEC 27001:2022 | ISMS-certified and compliant organisations |
 | `cloud-aws` | CIS AWS Foundations Benchmark v2.0 | AWS EC2 instances |
 | `cloud-gcp` | CIS GCP Foundations Benchmark v2.0 | GCP Compute Engine VMs |
@@ -153,15 +154,6 @@ sudo hardbox rollback apply --last
 
 </div>
 
-### Roadmap — coming in future releases
-
-<div align="center">
-
-| Profile | Framework | Target Release |
-|:---:|:---|:---:|
-| `nist-800-53` | NIST SP 800-53 Rev. 5 | v0.3 |
-
-</div>
 
 ---
 
@@ -221,10 +213,10 @@ sudo hardbox rollback apply --last
 - [x] `hipaa` profile
 - [x] `iso27001` profile
 - [x] `cloud-aws`, `cloud-gcp`, `cloud-azure` profiles
-- [ ] `nist-800-53` profile
-- [ ] Ansible role integration
-- [ ] Terraform provisioner
-- [ ] cloud-init support
+- [x] `nist-800-53` profile
+- [x] Ansible role integration
+- [x] Terraform provisioner
+- [x] cloud-init support
 
 ### v1.0 — Production Ready
 - [ ] Full compliance framework coverage

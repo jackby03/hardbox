@@ -108,6 +108,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `docs/ANSIBLE.md` — Ansible role documentation covering installation, variable reference, example playbooks, CI/CD integration, and Molecule test instructions
 - Terraform provider (`terraform-provider/`) — `jackby03/hardbox` provider for the Terraform Registry; exposes `hardbox_apply` resource with SSH-based install, checksum verification, profile selection, findings capture in state, and automatic rollback on destroy; examples for AWS EC2, GCP Compute Engine, and Azure VMs ([#110](https://github.com/jackby03/hardbox/issues/110))
 - `docs/TERRAFORM.md` — provider documentation covering installation, provider/resource schema, per-cloud examples, CI/CD snippets, and build-from-source instructions
+- `nist-800-53` compliance profile — NIST SP 800-53 Rev 5 High baseline; 15-char minimum password, 24-password history, 3-attempt lockout with 1-hour duration, immutable auditd logs, 3-year log retention, `deny_unknown: true` MAC policy, `fail_on_medium: true` threshold; per-control annotations for AC-2, AC-7, AU-8, AU-9(3), AU-11, CM-6, CM-7, IA-5(1), SC-8(1), SC-13, SI-2, SI-16 ([#104](https://github.com/jackby03/hardbox/issues/104))
 
 ### Changed
 - `install.sh` now resolves release assets via GitHub API instead of hardcoded filenames, improving compatibility across release archive naming formats.
@@ -119,9 +120,6 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Planned for v0.2
 - 14th module — mount and partition hardening
 
-### Planned for v0.3
-- `nist-800-53` profile
-- cloud-init support
 
 ---
 

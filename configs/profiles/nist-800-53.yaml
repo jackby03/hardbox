@@ -1,0 +1,273 @@
+# NIST SP 800-53 Revision 5 Compliance Profile
+# Designed for federal information systems and organisations seeking alignment
+# with NIST Special Publication 800-53 Rev. 5 security and privacy controls.
+#
+# Reference: NIST SP 800-53 Rev. 5 — Security and Privacy Controls for
+# Information Systems and Organizations (November 2020).
+# https://doi.org/10.6028/NIST.SP.800-53r5
+#
+# Control families addressed by this profile (OS-level technical controls):
+#   AC  — Access Control
+#   AU  — Audit and Accountability
+#   CM  — Configuration Management
+#   IA  — Identification and Authentication
+#   SC  — System and Communications Protection
+#   SI  — System and Information Integrity
+#   SA  — System and Services Acquisition (subset)
+#   RA  — Risk Assessment (subset)
+#
+# Controls from AT (Awareness), CA (Assessment), IR (Incident Response),
+# PL (Planning), PM (Program Management), PS (Personnel), PE (Physical),
+# and SR (Supply Chain) require organisational policy and procedures
+# outside the scope of OS hardening.
+#
+# Each control annotation uses the NIST 800-53 Rev. 5 identifier:
+#   Family-Number (e.g., AC-2, AU-12, SC-8).
+# Enhancements are noted in parentheses, e.g., SC-8(1).
+
+version: "1"
+profile: nist-800-53
+environment: onprem
+
+modules:
+  ssh:
+    enabled: true
+    # IA-2   — Identification and Authentication (Organisational Users)
+    # IA-5   — Authenticator Management: enforce strong credential policies
+    # AC-17  — Remote Access: authorise and monitor remote access sessions
+    # SC-8   — Transmission Confidentiality and Integrity: protect data in transit
+    # AU-12  — Audit Record Generation: log all access events
+    client_alive_interval: 900     # AC-17(1): terminate idle remote sessions after 15 min
+    client_alive_count_max: 0      # disconnect immediately when interval expires
+    login_grace_time: 60           # IA-2: limit window for unauthenticated connections
+    # IA-2   — No shared accounts; each user must be individually identified
+    # AC-6   — Least Privilege: root access only through authorised escalation paths
+    disable_root_login: true       # AC-6(2): prohibit direct root login over SSH
+    disable_empty_passwords: true  # IA-5(1): passwords must meet complexity requirements
+    # SC-8   — Transmission Confidentiality: disable channels that bypass encryption
+    disable_x11_forwarding: true   # SC-8: X11 forwarding can expose display sessions
+    disable_hostbased_auth: true   # IA-2: host-based auth bypasses individual accountability
+    disable_ignore_rhosts: true    # IA-2: .rhosts trust relationships prohibited
+    disable_tcp_forwarding: false  # evaluate per environment; set true if not required
+    disable_agent_forwarding: false
+    log_level: VERBOSE             # AU-12: generate audit records for all SSH events
+    max_auth_tries: 4              # AC-7: limit consecutive failed authentication attempts
+    max_sessions: 10
+    # SC-8(1) — Cryptographic Protection: use NIST-approved algorithms (FIPS 140-3)
+    # SC-13   — Cryptographic Protection: employ FIPS-validated cryptographic modules
+    ciphers:
+      - aes128-ctr
+      - aes192-ctr
+      - aes256-ctr
+      - aes128-gcm@openssh.com
+      - aes256-gcm@openssh.com
+      - chacha20-poly1305@openssh.com
+    macs:
+      - hmac-sha2-256-etm@openssh.com
+      - hmac-sha2-512-etm@openssh.com
+    kex_algorithms:
+      - curve25519-sha256
+      - curve25519-sha256@libssh.org
+      - diffie-hellman-group14-sha256
+      - diffie-hellman-group16-sha512
+      - diffie-hellman-group18-sha512
+
+  firewall:
+    enabled: true
+    # SC-7   — Boundary Protection: monitor and control communications at system boundary
+    # SC-7(5)— Deny by Default / Allow by Exception: default-deny traffic policy
+    # AC-4   — Information Flow Enforcement: control information flow across boundaries
+    # AU-12  — Audit Record Generation: log boundary crossing events
+    backend: auto                  # auto-detect: ufw | nftables | firewalld
+    default_inbound: drop          # SC-7(5): deny-by-default inbound policy
+    default_outbound: drop         # SC-7(5): deny-by-default outbound policy
+    log_dropped: true              # AU-12: log all dropped boundary traffic
+    # SC-7(11) — Restrict Incoming Communications: permit only from authorised sources.
+    # Document every open port per CM-6 (Configuration Settings) and
+    # CM-7 (Least Functionality).
+
+  kernel:
+    enabled: true
+    # CM-6   — Configuration Settings: establish and document secure configurations
+    # CM-7   — Least Functionality: disable or restrict unnecessary functions
+    # SI-16  — Memory Protection: implement ASLR and related protections
+    # SC-5   — Denial of Service Protection: implement SYN cookie and related controls
+    # Kernel module enforces:
+    # - kernel.randomize_va_space = 2   (SI-16: ASLR — memory protection)
+    # - kernel.kptr_restrict = 2        (CM-6: restrict kernel pointer exposure)
+    # - kernel.dmesg_restrict = 1       (CM-7: restrict access to kernel messages)
+    # - net.ipv4 source routing disabled (SC-7: boundary protection)
+    # - net.ipv4.conf.all.log_martians = 1 (AU-12: log suspicious packets)
+    # - fs.suid_dumpable = 0            (AC-6: prevent SUID core dumps leaking data)
+
+  users:
+    enabled: true
+    # AC-2   — Account Management: manage system accounts throughout lifecycle
+    # AC-3   — Access Enforcement: enforce approved authorisations
+    # AC-6   — Least Privilege: employ the principle of least privilege
+    # IA-5   — Authenticator Management: enforce password policy requirements
+    # IA-5(1)— Password-Based Authentication: enforce complexity and history
+    # AC-7   — Unsuccessful Logon Attempts: enforce lockout after failed attempts
+    password_max_days: 60          # IA-5(1)(d): time-based expiration for federal systems
+    password_min_days: 1           # IA-5(1): prevent immediate password recycling
+    password_warn_age: 14          # advance notification before expiry
+    password_min_length: 15        # IA-5(1)(a): NIST High baseline — ≥ 15 characters
+    password_complexity: true      # IA-5(1)(a): mix of character types required
+    password_history: 24           # IA-5(1)(e): NIST High: remember 24 previous passwords
+    # AC-7   — enforce lockout to protect against brute-force attacks
+    lockout_attempts: 3            # AC-7(a): lock after 3 consecutive failures (NIST High)
+    lockout_duration: 3600         # AC-7(b): 1-hour lockout or until administrator reset
+    # AC-2(3)— Disable Inactive Accounts: automatically disable after inactivity period
+    inactive_account_lock_days: 35 # AC-2(3): NIST recommendation — 35-day inactivity limit
+    su_restricted: true            # AC-6(2): prohibit direct privilege escalation without auth
+    umask: "027"                   # AC-3: restrict default file creation permissions
+
+  filesystem:
+    enabled: true
+    # CM-6   — Configuration Settings: apply OS hardening to filesystems
+    # CM-7   — Least Functionality: disable unused filesystem modules
+    # AC-3   — Access Enforcement: restrict access to sensitive filesystem areas
+    # SI-7   — Software, Firmware, and Information Integrity: protect from tampering
+    tmp_nosuid: true               # CM-7: prevent SUID execution from temporary directories
+    tmp_nodev: true
+    tmp_noexec: true               # CM-7: prevent code execution from /tmp
+    devshm_nosuid: true
+    devshm_nodev: true
+    devshm_noexec: true
+    var_nosuid: true
+    var_tmp_nosuid: true
+    var_tmp_nodev: true
+    var_tmp_noexec: true
+    home_nodev: true
+    # CM-7   — Least Functionality: disable unused filesystem types
+    disable_cramfs: true
+    disable_freevxfs: true
+    disable_jffs2: true
+    disable_hfs: true
+    disable_hfsplus: true
+    disable_udf: true
+
+  auditd:
+    enabled: true
+    # AU-2   — Event Logging: identify events requiring audit
+    # AU-3   — Content of Audit Records: capture sufficient detail per event
+    # AU-4   — Audit Log Storage Capacity: allocate sufficient storage
+    # AU-5   — Response to Audit Logging Process Failures: alert on failure
+    # AU-9   — Protection of Audit Information: protect audit records from modification
+    # AU-11  — Audit Record Retention: retain records for required period
+    # AU-12  — Audit Record Generation: generate records for auditable events
+    max_log_file_size: 64          # AU-4: 64 MB per log file
+    num_logs: 20                   # AU-11: retain 20 rotated files (supports 90-day minimum)
+    action_on_space_left: email    # AU-5(2): alert administrators before capacity exhausted
+    space_left_mb: 250             # AU-4: alert with 250 MB remaining
+    immutable: true                # AU-9(3): make audit configuration immutable at runtime
+    audit_privileged_commands: true  # AU-2: log all privileged command executions
+    audit_file_access: true          # AU-12: log unauthorised and failed file access attempts
+    audit_user_events: true          # AU-2: log all logon, logoff, and session events
+    audit_sudo_commands: true        # AU-12: log all administrative actions via sudo
+    audit_network_changes: true      # AU-12: log changes to network configuration
+    audit_time_change: true          # AU-8: detect and log system time modifications
+
+  services:
+    enabled: true
+    # CM-7   — Least Functionality: prohibit or restrict unnecessary functions and services
+    # CM-7(1)— Periodic Review: review and disable functions not required
+    disable:
+      - xinetd
+      - inetd
+      - avahi-daemon             # CM-7: mDNS/zeroconf not required on managed federal systems
+      - cups                     # CM-7: printing service — disable on non-print servers
+      - dhcpd
+      - slapd
+      - nfs-server
+      - bind
+      - vsftpd
+      - httpd
+      - apache2
+      - nginx                    # CM-7: disable unless documented application requirement
+      - dovecot
+      - sendmail
+      - samba
+      - squid
+      - snmpd                    # CM-7: SNMPv1/v2c transmit credentials in cleartext
+      - nis
+      - telnet                   # SC-8: cleartext protocol — prohibited; use SSH
+      - rsh-server               # IA-2: host-trust based auth not permitted
+      - tftp-server
+      - rsync
+
+  network:
+    enabled: true
+    # SC-7   — Boundary Protection: control communications at boundary
+    # CM-7   — Least Functionality: disable unused network protocols
+    # SC-5   — Denial of Service Protection: implement protective controls
+    disable_ipv6: false            # CM-7: set true if IPv6 is not operationally required
+    disable_wireless: true         # CM-7: disable unused wireless interfaces on servers
+    disable_dccp: true             # CM-7: disable uncommon protocol not used
+    disable_sctp: true
+    disable_rds: true              # CM-7: disable Reliable Datagram Sockets
+    disable_tipc: true             # CM-7: disable Transparent Inter-Process Communication
+
+  crypto:
+    enabled: true
+    # SC-8   — Transmission Confidentiality and Integrity: protect data in transit
+    # SC-8(1)— Cryptographic Protection: use NIST-approved algorithms
+    # SC-13  — Cryptographic Protection: employ FIPS 140-3 validated modules
+    min_tls_version: "1.2"         # SC-8(1): TLS 1.0 and 1.1 are prohibited
+    disable_weak_ciphers: true     # SC-13: remove RC4, DES, 3DES — not NIST-approved
+    disable_weak_hashes: true      # SC-13: reject MD5 and SHA-1 for integrity operations
+
+  logging:
+    enabled: true
+    # AU-11  — Audit Record Retention: retain audit records for minimum defined period
+    # AU-4   — Audit Log Storage Capacity: ensure adequate log storage
+    # AU-9   — Protection of Audit Information: protect log integrity
+    log_retention_days: 1095       # AU-11: 3 years minimum for NIST High baseline
+    remote_log_host: ""            # AU-9: forward to centralised log server (recommended)
+    remote_log_protocol: tcp       # TCP for reliable delivery
+
+  mac:
+    enabled: true
+    # AC-3(3)— Mandatory Access Control: enforce MAC policy for all subjects and objects
+    # AC-6   — Least Privilege: enforce least-privilege through MAC
+    # SC-39  — Process Isolation: maintain separate execution domains per process
+    enforce: true
+    deny_unknown: true             # AC-3(3): deny access to unconfined processes (NIST High)
+
+  ntp:
+    enabled: true
+    # AU-8   — Time Stamps: use system clocks that synchronise to authorised sources
+    # AU-8(1)— Synchronisation with Authorised Time Source: use at least two sources
+    backend: auto
+    timezone: UTC
+    # AU-8(1): configure at least two authorised NTP sources.
+    # Federal systems should use NIST Internet Time Service or DoD NTP servers.
+    # servers:
+    #   - time.nist.gov
+    #   - time-a-g.nist.gov
+
+  updates:
+    enabled: true
+    # SI-2   — Flaw Remediation: identify, report, and correct system flaws
+    # SI-2(2)— Automated Flaw Remediation Status: automate patch installation
+    # RA-5   — Vulnerability Monitoring and Scanning: identify and remediate vulnerabilities
+    unattended_security_upgrades: true
+    auto_reboot: false             # schedule reboots within authorised change windows
+
+  containers:
+    enabled: false                 # enable if running containerised workloads
+    # CM-7   — Least Functionality: apply to containerised environments
+    # AC-6   — Least Privilege: enforce namespace isolation and rootless operation
+    # SI-3   — Malicious Code Protection: apply seccomp and MAC profiles
+    # SC-39  — Process Isolation: maintain process boundaries via namespaces
+
+report:
+  format: html
+  output_dir: /var/lib/hardbox/reports
+  include_remediation: true
+  include_evidence: true           # AU-3: include evidence to support audit records
+
+audit:
+  fail_on_critical: true
+  fail_on_high: true
+  fail_on_medium: true             # NIST High baseline: medium findings also require remediation
