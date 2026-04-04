@@ -74,7 +74,6 @@ func TestWebhook_AllAttemptsFailReturnsError(t *testing.T) {
 	})
 	adapter.NotifyRegression(context.Background(), regressionDiff(srv.URL))
 	time.Sleep(50 * time.Millisecond)
-	close(fired)
 
 	// The fake adapter doesn't hit the server — we just confirm it fires.
 	if len(fired) == 0 {

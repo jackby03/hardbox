@@ -107,11 +107,16 @@ func TestNotifyNewFindings_OnlyNonCompliantCriticalHigh(t *testing.T) {
 
 	a.NotifyNewFindings(context.Background(), r)
 	time.Sleep(50 * time.Millisecond)
-	close(fired)
 
 	var payloads []notify.AlertPayload
-	for p := range fired {
-		payloads = append(payloads, p)
+drain:
+	for {
+		select {
+		case p := <-fired:
+			payloads = append(payloads, p)
+		default:
+			break drain
+		}
 	}
 
 	if len(payloads) != 2 {
@@ -149,7 +154,6 @@ func TestNotifyNewFindings_SkippedManualIgnored(t *testing.T) {
 	})
 	a.NotifyNewFindings(context.Background(), r)
 	time.Sleep(50 * time.Millisecond)
-	close(fired)
 
 	if count := len(fired); count != 0 {
 		t.Errorf("expected 0 payloads for skipped/manual, got %d", count)
@@ -179,11 +183,16 @@ func TestNotifyRegression_OncePerRegression(t *testing.T) {
 
 	a.NotifyRegression(context.Background(), d)
 	time.Sleep(50 * time.Millisecond)
-	close(fired)
 
 	var payloads []notify.AlertPayload
-	for p := range fired {
-		payloads = append(payloads, p)
+drain:
+	for {
+		select {
+		case p := <-fired:
+			payloads = append(payloads, p)
+		default:
+			break drain
+		}
 	}
 
 	if len(payloads) != 2 {
@@ -218,7 +227,6 @@ func TestNotifyRegression_NoRegressions_NoFire(t *testing.T) {
 	})
 	a.NotifyRegression(context.Background(), d)
 	time.Sleep(50 * time.Millisecond)
-	close(fired)
 
 	if count := len(fired); count != 0 {
 		t.Errorf("expected 0 payloads when no regressions, got %d", count)
