@@ -52,7 +52,7 @@ func renderDiffHTML(d *DiffReport, w io.Writer) error {
   .badge.blue{border-color:var(--blue);color:var(--blue)}
   .section{margin-bottom:2rem}
   .section-title{font-size:1rem;font-weight:600;margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem}
-  table{width:100%;border-collapse:collapse;background:var(--card);border-radius:.5rem;overflow:hidden;border:1px solid var(--border)}
+  table{width:100%%;border-collapse:collapse;background:var(--card);border-radius:.5rem;overflow:hidden;border:1px solid var(--border)}
   th{background:#0f172a;padding:.6rem 1rem;text-align:left;font-size:.75rem;text-transform:uppercase;color:var(--muted);letter-spacing:.05em}
   td{padding:.6rem 1rem;border-top:1px solid var(--border);vertical-align:top}
   .sev-critical{color:#f87171}.sev-high{color:#fb923c}.sev-medium{color:var(--yellow)}.sev-low{color:var(--blue)}.sev-info{color:var(--muted)}
