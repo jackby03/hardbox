@@ -74,6 +74,16 @@ modules:
     devshm_nodev: true             # CIS 1.1.17
     devshm_noexec: true            # CIS 1.1.18
 
+  mount:
+    enabled: true
+    # Partition existence checks (mnt-001..mnt-007)
+    check_dedicated_partitions: true
+    # Kernel module blacklisting (mnt-011..mnt-015)
+    disable_cramfs: true
+    disable_squashfs: true
+    disable_udf: true
+    disable_usb_storage: true
+
   auditd:
     enabled: true
     # CIS 4.1.x — auditing

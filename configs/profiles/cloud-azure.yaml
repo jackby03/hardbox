@@ -142,6 +142,16 @@ modules:
     disable_hfsplus: true
     disable_udf: true
 
+  mount:
+    enabled: true
+    # Cloud VMs typically use a single root volume — partition checks are informational
+    check_dedicated_partitions: false
+    # Kernel module blacklisting
+    disable_cramfs: true
+    disable_squashfs: false
+    disable_udf: true
+    disable_usb_storage: true
+
   auditd:
     enabled: true
     # Azure Note: Azure Monitor Agent (AMA) replaces the legacy Log Analytics MMA agent.

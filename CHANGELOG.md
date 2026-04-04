@@ -124,7 +124,8 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Planned
 
 #### P0 — Must Ship
-- CLI refactor — extract all cobra command definitions to `internal/cli/`; `cmd/hardbox/main.go` becomes a ≤15-line entry point ([#120](https://github.com/jackby03/hardbox/issues/120))
+- CLI refactor — extract all cobra command definitions to `internal/cli/`; `cmd/hardbox/main.go` becomes a ≤15-line entry point ([#120](https://github.com/jackby03/hardbox/issues/120)) ✅
+- Mount & partition hardening module (14th module) — 10 checks: dedicated partition existence for `/tmp`, `/var`, `/var/tmp`, `/var/log`, `/var/log/audit`, `/home`; kernel module blacklisting for `cramfs`, `squashfs`, `udf`, `usb-storage`; auto-remediates via `/etc/modprobe.d/hardbox.conf` ([#122](https://github.com/jackby03/hardbox/issues/122)) ✅
 - `hardbox fleet` — concurrent remote multi-host hardening via SSH; `fleet apply` and `fleet audit` with unified multi-host HTML report ([#121](https://github.com/jackby03/hardbox/issues/121))
 - Mount & partition hardening module (14th module) — 15 checks covering `/tmp`, `/var`, `/var/log`, `/home`, `/dev/shm`, sticky bits, and kernel filesystem modules ([#122](https://github.com/jackby03/hardbox/issues/122))
 

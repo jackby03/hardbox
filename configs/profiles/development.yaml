@@ -68,6 +68,16 @@ modules:
     # noexec relaxed for dev tooling that may use /tmp for scripts
     tmp_noexec: false
 
+  mount:
+    enabled: true
+    # Partition existence checks — informational only in dev
+    check_dedicated_partitions: false
+    # Kernel module blacklisting
+    disable_cramfs: true
+    disable_squashfs: false
+    disable_udf: true
+    disable_usb_storage: false
+
   auditd:
     enabled: true
     max_log_file_size: 8
