@@ -1,0 +1,129 @@
+{{template "base.html" .}}
+{{define "title"}}hardbox — diff{{end}}
+{{define "content"}}
+<div class="breadcrumb"><a href="/">reports</a> / diff</div>
+
+<div class="grid-2" style="margin-bottom:24px">
+  <div class="stat-card">
+    <div class="label">Before — {{.Diff.Before.Timestamp.Format "2006-01-02 15:04"}}</div>
+    <div class="value">{{.Diff.Before.Score}}</div>
+    <div class="meta" style="margin-top:4px"><code>{{.Diff.Before.SessionID}}</code> · {{.Diff.Before.Profile}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">After — {{.Diff.After.Timestamp.Format "2006-01-02 15:04"}}</div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="value">{{.Diff.After.Score}}</div>
+      {{$d := .Diff.ScoreDelta}}
+      {{if gt $d 0}}<span style="color:#4ade80;font-weight:700">+{{$d}}</span>
+      {{else if lt $d 0}}<span style="color:#f87171;font-weight:700">{{$d}}</span>
+      {{else}}<span class="meta">±0</span>{{end}}
+    </div>
+    <div class="meta" style="margin-top:4px"><code>{{.Diff.After.SessionID}}</code> · {{.Diff.After.Profile}}</div>
+  </div>
+</div>
+
+<div class="grid-4" style="margin-bottom:24px">
+  <div class="stat-card">
+    <div class="label">Regressions</div>
+    <div class="value" style="color:{{if .Diff.Regressions}}#f87171{{else}}#4ade80{{end}}">{{len .Diff.Regressions}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Improvements</div>
+    <div class="value" style="color:#4ade80">{{len .Diff.Improvements}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Unchanged</div>
+    <div class="value" style="color:#64748b">{{len .Diff.Unchanged}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">New Checks</div>
+    <div class="value" style="color:#94a3b8">{{len .Diff.NewChecks}}</div>
+  </div>
+</div>
+
+{{if .Diff.Regressions}}
+<div class="section">
+  <h3 style="color:#f87171">Regressions</h3>
+  <div class="card" style="padding:0">
+  <table>
+    <thead><tr><th>Check</th><th>Title</th><th>Severity</th><th>Before</th><th>After</th></tr></thead>
+    <tbody>
+    {{range .Diff.Regressions}}
+    <tr class="regression">
+      <td><code>{{.CheckID}}</code></td>
+      <td>{{.Title}}{{if .Detail}}<br><span class="meta">{{.Detail}}</span>{{end}}</td>
+      <td><span class="pill {{.Severity}}">{{.Severity}}</span></td>
+      <td><span class="pill {{.StatusBefore}}">{{.StatusBefore}}</span></td>
+      <td><span class="pill {{.StatusAfter}}">{{.StatusAfter}}</span></td>
+    </tr>
+    {{end}}
+    </tbody>
+  </table>
+  </div>
+</div>
+{{end}}
+
+{{if .Diff.Improvements}}
+<div class="section">
+  <h3 style="color:#4ade80">Improvements</h3>
+  <div class="card" style="padding:0">
+  <table>
+    <thead><tr><th>Check</th><th>Title</th><th>Severity</th><th>Before</th><th>After</th></tr></thead>
+    <tbody>
+    {{range .Diff.Improvements}}
+    <tr class="improvement">
+      <td><code>{{.CheckID}}</code></td>
+      <td>{{.Title}}{{if .Detail}}<br><span class="meta">{{.Detail}}</span>{{end}}</td>
+      <td><span class="pill {{.Severity}}">{{.Severity}}</span></td>
+      <td><span class="pill {{.StatusBefore}}">{{.StatusBefore}}</span></td>
+      <td><span class="pill {{.StatusAfter}}">{{.StatusAfter}}</span></td>
+    </tr>
+    {{end}}
+    </tbody>
+  </table>
+  </div>
+</div>
+{{end}}
+
+{{if .Diff.Unchanged}}
+<div class="section">
+  <h3>Unchanged failures</h3>
+  <div class="card" style="padding:0">
+  <table>
+    <thead><tr><th>Check</th><th>Title</th><th>Severity</th><th>Status</th></tr></thead>
+    <tbody>
+    {{range .Diff.Unchanged}}
+    <tr>
+      <td><code>{{.CheckID}}</code></td>
+      <td>{{.Title}}</td>
+      <td><span class="pill {{.Severity}}">{{.Severity}}</span></td>
+      <td><span class="pill {{.StatusAfter}}">{{.StatusAfter}}</span></td>
+    </tr>
+    {{end}}
+    </tbody>
+  </table>
+  </div>
+</div>
+{{end}}
+
+{{if .Diff.NewChecks}}
+<div class="section">
+  <h3>New checks (failing)</h3>
+  <div class="card" style="padding:0">
+  <table>
+    <thead><tr><th>Check</th><th>Title</th><th>Severity</th><th>Status</th></tr></thead>
+    <tbody>
+    {{range .Diff.NewChecks}}
+    <tr>
+      <td><code>{{.CheckID}}</code></td>
+      <td>{{.Title}}</td>
+      <td><span class="pill {{.Severity}}">{{.Severity}}</span></td>
+      <td><span class="pill {{.StatusAfter}}">{{.StatusAfter}}</span></td>
+    </tr>
+    {{end}}
+    </tbody>
+  </table>
+  </div>
+</div>
+{{end}}
+{{end}}

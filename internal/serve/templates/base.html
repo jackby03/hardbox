@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{block "title" .}}hardbox{{end}}</title>
+<style>
+*,*::before,*::after{box-sizing:border-box}
+body{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:14px;background:#0f1117;color:#e2e8f0;margin:0;padding:0}
+a{color:#60a5fa;text-decoration:none}
+a:hover{text-decoration:underline}
+header{background:#1e2230;border-bottom:1px solid #2d3148;padding:12px 24px;display:flex;align-items:center;gap:16px}
+header h1{margin:0;font-size:16px;font-weight:600;color:#f1f5f9}
+header .badge{background:#312e81;color:#a5b4fc;padding:2px 8px;border-radius:4px;font-size:11px}
+nav a{color:#94a3b8;font-size:13px}
+nav a:hover{color:#e2e8f0}
+main{padding:24px;max-width:1200px;margin:0 auto}
+h2{font-size:15px;font-weight:600;color:#f1f5f9;margin:0 0 16px}
+h3{font-size:13px;font-weight:600;color:#94a3b8;margin:0 0 8px;text-transform:uppercase;letter-spacing:.05em}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 12px;background:#1e2230;color:#64748b;font-weight:500;border-bottom:1px solid #2d3148;white-space:nowrap}
+td{padding:8px 12px;border-bottom:1px solid #1e2230;vertical-align:top}
+tr:hover td{background:#1a1f2e}
+.card{background:#1e2230;border:1px solid #2d3148;border-radius:8px;padding:20px;margin-bottom:16px}
+.score{font-size:24px;font-weight:700}
+.score.hi{color:#4ade80}
+.score.mid{color:#facc15}
+.score.lo{color:#f87171}
+.pill{display:inline-block;padding:2px 8px;border-radius:9999px;font-size:11px;font-weight:600;text-transform:uppercase}
+.pill.critical{background:#450a0a;color:#f87171}
+.pill.high{background:#431407;color:#fb923c}
+.pill.medium{background:#422006;color:#fbbf24}
+.pill.low{background:#1a2e05;color:#86efac}
+.pill.info{background:#0c1a2e;color:#7dd3fc}
+.pill.compliant{background:#052e16;color:#4ade80}
+.pill.non-compliant{background:#450a0a;color:#f87171}
+.pill.manual{background:#1e1b4b;color:#a5b4fc}
+.pill.skipped{background:#1c1917;color:#a8a29e}
+.pill.error{background:#2d0a0a;color:#fca5a5}
+.meta{color:#64748b;font-size:12px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.stat-card{background:#1e2230;border:1px solid #2d3148;border-radius:8px;padding:16px}
+.stat-card .label{color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.stat-card .value{font-size:20px;font-weight:700;color:#f1f5f9}
+.regression{background:#1f0a0a}
+.improvement{background:#071a0f}
+.empty{color:#475569;font-style:italic;padding:16px 12px}
+code{background:#0f1117;padding:1px 6px;border-radius:3px;font-size:12px}
+.breadcrumb{color:#64748b;font-size:12px;margin-bottom:16px}
+.breadcrumb a{color:#94a3b8}
+.section{margin-bottom:32px}
+.diff-badge.reg{background:#450a0a;color:#f87171;padding:2px 8px;border-radius:4px;font-size:11px}
+.diff-badge.imp{background:#052e16;color:#4ade80;padding:2px 8px;border-radius:4px;font-size:11px}
+.diff-badge.neu{background:#1c1917;color:#a8a29e;padding:2px 8px;border-radius:4px;font-size:11px}
+</style>
+</head>
+<body>
+<header>
+  <h1>hardbox</h1>
+  <span class="badge">dashboard</span>
+  <nav style="margin-left:auto"><a href="/">← all reports</a></nav>
+</header>
+<main>
+{{block "content" .}}{{end}}
+</main>
+</body>
+</html>

@@ -1,0 +1,65 @@
+{{template "base.html" .}}
+{{define "title"}}hardbox — {{.Report.SessionID}}{{end}}
+{{define "content"}}
+<div class="breadcrumb"><a href="/">reports</a> / {{.Report.SessionID}}</div>
+
+<div class="grid-4" style="margin-bottom:24px">
+  <div class="stat-card">
+    <div class="label">Overall Score</div>
+    {{$s := .Report.OverallScore}}
+    {{if ge $s 80}}<div class="value" style="color:#4ade80">{{$s}}</div>
+    {{else if ge $s 50}}<div class="value" style="color:#facc15">{{$s}}</div>
+    {{else}}<div class="value" style="color:#f87171">{{$s}}</div>{{end}}
+  </div>
+  <div class="stat-card">
+    <div class="label">Profile</div>
+    <div class="value" style="font-size:15px">{{.Report.Profile}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Modules</div>
+    <div class="value">{{len .Report.Modules}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Timestamp</div>
+    <div class="value" style="font-size:13px;margin-top:4px">{{.Report.Timestamp.Format "2006-01-02 15:04:05"}}</div>
+  </div>
+</div>
+
+{{range .Report.Modules}}
+<div class="section">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+    <h3 style="margin:0">{{.Name}}</h3>
+    {{$ms := .Score}}
+    {{if ge $ms 80}}<span style="color:#4ade80;font-size:12px;font-weight:700">{{$ms}}%</span>
+    {{else if ge $ms 50}}<span style="color:#facc15;font-size:12px;font-weight:700">{{$ms}}%</span>
+    {{else}}<span style="color:#f87171;font-size:12px;font-weight:700">{{$ms}}%</span>{{end}}
+  </div>
+  <div class="card" style="padding:0">
+  <table>
+    <thead>
+      <tr>
+        <th>Check</th>
+        <th>Title</th>
+        <th>Status</th>
+        <th>Severity</th>
+        <th>Current</th>
+        <th>Target</th>
+      </tr>
+    </thead>
+    <tbody>
+    {{range .Findings}}
+      <tr>
+        <td><code>{{.CheckID}}</code></td>
+        <td>{{.Title}}{{if .Detail}}<br><span class="meta">{{.Detail}}</span>{{end}}</td>
+        <td><span class="pill {{.Status}}">{{.Status}}</span></td>
+        <td><span class="pill {{.Severity}}">{{.Severity}}</span></td>
+        <td class="meta">{{if .Current}}{{.Current}}{{else}}—{{end}}</td>
+        <td class="meta">{{if .Target}}{{.Target}}{{else}}—{{end}}</td>
+      </tr>
+    {{end}}
+    </tbody>
+  </table>
+  </div>
+</div>
+{{end}}
+{{end}}
