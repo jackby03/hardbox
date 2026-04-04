@@ -137,6 +137,16 @@ modules:
     disable_hfsplus: true
     disable_udf: true
 
+  mount:
+    enabled: true
+    # Cloud VMs typically use a single root volume — partition checks are informational
+    check_dedicated_partitions: false
+    # Kernel module blacklisting
+    disable_cramfs: true
+    disable_squashfs: false
+    disable_udf: true
+    disable_usb_storage: true
+
   auditd:
     enabled: true
     # GCP Note: Cloud Audit Logs capture API-level events (Admin Activity, Data Access).

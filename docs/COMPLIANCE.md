@@ -131,6 +131,23 @@ This document is the authoritative cross-reference index.
 
 ---
 
+## Mount & Partition Module
+
+| Check ID | Title | CIS | NIST | STIG | PCI | HIPAA | ISO |
+|---|---|---|---|---|---|---|---|
+| mnt-001 | /tmp on dedicated partition | 1.1.2 | CM-7 | V-238149 | 2.2.1 | — | A.14.2.5 |
+| mnt-003 | /var on dedicated partition | 1.1.6 | CM-6 | V-238151 | 2.2.1 | — | A.14.2.5 |
+| mnt-004 | /var/tmp on dedicated partition | 1.1.8 | CM-7 | — | 2.2.1 | — | A.14.2.5 |
+| mnt-005 | /var/log on dedicated partition | 1.1.11 | AU-9 | V-238152 | 10.5.1 | 164.312(b) | A.12.4.2 |
+| mnt-006 | /var/log/audit on dedicated partition | 1.1.12 | AU-9 | V-238153 | 10.5.2 | 164.312(b) | A.12.4.2 |
+| mnt-007 | /home on dedicated partition | 1.1.13 | CM-6 | — | — | — | — |
+| mnt-011 | cramfs kernel module disabled | 1.1.1.1 | CM-7 | — | 2.2.4 | — | A.14.2.5 |
+| mnt-012 | squashfs kernel module disabled | 1.1.1.2 | CM-7 | — | 2.2.4 | — | A.14.2.5 |
+| mnt-013 | udf kernel module disabled | 1.1.1.3 | CM-7 | — | 2.2.4 | — | A.14.2.5 |
+| mnt-015 | usb-storage kernel module disabled | 1.1.24 | CM-7 | V-238322 | 2.2.4 | — | A.14.2.5 |
+
+---
+
 ## Filesystem Module
 
 | Check ID | Title | CIS | NIST | STIG | PCI | HIPAA | ISO |

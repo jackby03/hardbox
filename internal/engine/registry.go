@@ -11,6 +11,7 @@ import (
 	"github.com/hardbox-io/hardbox/internal/modules/kernel"
 	"github.com/hardbox-io/hardbox/internal/modules/logging"
 	"github.com/hardbox-io/hardbox/internal/modules/mac"
+	"github.com/hardbox-io/hardbox/internal/modules/mount"
 	"github.com/hardbox-io/hardbox/internal/modules/network"
 	"github.com/hardbox-io/hardbox/internal/modules/ntp"
 	"github.com/hardbox-io/hardbox/internal/modules/services"
@@ -26,6 +27,7 @@ func registeredModules() []modules.Module {
 	return []modules.Module{
 		&kernel.Module{},
 		&filesystem.Module{},
+		&mount.Module{},
 		&mac.Module{},
 		&network.Module{},
 		&ntp.Module{},

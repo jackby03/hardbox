@@ -131,6 +131,16 @@ modules:
     disable_hfsplus: true
     disable_udf: true
 
+  mount:
+    enabled: true
+    # Partition existence checks (mnt-001..mnt-007)
+    check_dedicated_partitions: true
+    # Kernel module blacklisting (mnt-011..mnt-015)
+    disable_cramfs: true
+    disable_squashfs: true
+    disable_udf: true
+    disable_usb_storage: true
+
   auditd:
     enabled: true
     # §164.312(b) — Audit Controls (R): record and examine system activity
