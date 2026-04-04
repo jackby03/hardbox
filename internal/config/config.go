@@ -25,10 +25,11 @@ type Config struct {
 	// Defaults to /etc/hardbox/plugins. Set to "" to disable plugin loading.
 	PluginDir string `mapstructure:"plugin_dir"`
 
-	Modules map[string]ModuleConfig `mapstructure:"modules"`
-	Report  ReportConfig            `mapstructure:"report"`
-	Audit   AuditConfig             `mapstructure:"audit"`
-	Watch   WatchConfig             `mapstructure:"watch"`
+	Modules       map[string]ModuleConfig `mapstructure:"modules"`
+	Report        ReportConfig            `mapstructure:"report"`
+	Audit         AuditConfig             `mapstructure:"audit"`
+	Watch         WatchConfig             `mapstructure:"watch"`
+	Notifications NotificationsConfig     `mapstructure:"notifications"`
 }
 
 // ModuleConfig holds per-module settings.
@@ -54,6 +55,43 @@ type WatchConfig struct {
 	Interval string `mapstructure:"interval"`
 	// MaxRuns is the maximum number of audit iterations. 0 means unlimited.
 	MaxRuns int `mapstructure:"max_runs"`
+}
+
+// NotificationsConfig controls webhook alerting from the watch daemon.
+type NotificationsConfig struct {
+	// Webhooks is a list of generic HTTP webhook endpoints.
+	Webhooks []WebhookConfig `mapstructure:"webhooks"`
+	// Slack is a list of Slack Incoming Webhook integrations.
+	Slack []SlackConfig `mapstructure:"slack"`
+}
+
+// WebhookConfig defines a generic HTTP webhook destination.
+type WebhookConfig struct {
+	// URL is the HTTP(S) endpoint to POST the JSON payload to.
+	URL string `mapstructure:"url"`
+	// Events lists which event types trigger this webhook.
+	// Valid values: "regression", "critical_finding", "high_finding".
+	// An empty list means all events.
+	Events []string `mapstructure:"events"`
+	// Modules filters alerts to findings from the named modules only.
+	// An empty list means all modules.
+	Modules []string `mapstructure:"modules"`
+	// Headers are optional extra HTTP headers (e.g. Authorization).
+	Headers map[string]string `mapstructure:"headers"`
+	// TimeoutSeconds is the per-attempt HTTP timeout. Defaults to 10.
+	TimeoutSeconds int `mapstructure:"timeout_seconds"`
+}
+
+// SlackConfig defines a Slack Incoming Webhook destination.
+type SlackConfig struct {
+	// URL is the Slack Incoming Webhook URL.
+	URL string `mapstructure:"url"`
+	// Events and Modules follow the same semantics as WebhookConfig.
+	Events []string `mapstructure:"events"`
+	// Modules filters alerts to findings from the named modules only.
+	Modules []string `mapstructure:"modules"`
+	// Channel overrides the default channel configured on the webhook (optional).
+	Channel string `mapstructure:"channel"`
 }
 
 // Load reads configuration from the provided file path (or defaults) and

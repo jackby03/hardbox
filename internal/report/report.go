@@ -44,7 +44,7 @@ type FindingRecord struct {
 func Build(sessionID, profile string, findings []modules.Finding) *Report {
 	grouped := make(map[string][]modules.Finding)
 	for _, f := range findings {
-		mod := modulePrefix(f.Check.ID)
+		mod := ModulePrefix(f.Check.ID)
 		grouped[mod] = append(grouped[mod], f)
 	}
 
@@ -130,10 +130,10 @@ func Write(r *Report, format string, w io.Writer) error {
 	}
 }
 
-// modulePrefix extracts the module name from a check ID.
+// ModulePrefix extracts the module name from a check ID.
 // "ssh-001" → "ssh",  "kern-003" → "kern",  "pkg-manager-001" → "pkg-manager".
 // It splits on the LAST hyphen so the three-digit suffix is always removed.
-func modulePrefix(checkID string) string {
+func ModulePrefix(checkID string) string {
 	if idx := strings.LastIndex(checkID, "-"); idx > 0 {
 		return checkID[:idx]
 	}
