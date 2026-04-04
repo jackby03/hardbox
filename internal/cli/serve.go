@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"context"
 	"fmt"
 	"net"
 	"os/exec"
@@ -109,10 +108,3 @@ func openBrowser(url string) {
 	}
 }
 
-// contextKey is unexported to avoid collisions.
-type contextKey struct{ name string }
-
-// WithContext attaches a context to the cobra command (used in tests).
-func withCancelContext(ctx context.Context, cmd *cobra.Command) {
-	cmd.SetContext(ctx)
-}
