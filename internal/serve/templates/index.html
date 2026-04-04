@@ -1,0 +1,67 @@
+{{template "base.html" .}}
+{{define "title"}}hardbox — reports{{end}}
+{{define "content"}}
+<h2>Audit Reports</h2>
+<p class="meta">{{len .Reports}} report(s) in <code>{{.ReportsDir}}</code></p>
+
+{{if not .Reports}}
+<div class="card">
+  <p class="empty">No reports found. Run <code>hardbox audit --format json --output report.json</code> to generate one.</p>
+</div>
+{{else}}
+<div class="card" style="padding:0">
+<table>
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>Session ID</th>
+      <th>Profile</th>
+      <th>Score</th>
+      <th>Modules</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+  {{range .Reports}}
+    <tr>
+      <td class="meta">{{.Timestamp.Format "2006-01-02 15:04:05"}}</td>
+      <td><code>{{.SessionID}}</code></td>
+      <td>{{.Profile}}</td>
+      <td>
+        {{$s := .OverallScore}}
+        {{if ge $s 80}}<span class="score hi" style="font-size:14px">{{$s}}</span>
+        {{else if ge $s 50}}<span class="score mid" style="font-size:14px">{{$s}}</span>
+        {{else}}<span class="score lo" style="font-size:14px">{{$s}}</span>{{end}}
+      </td>
+      <td class="meta">{{len .Modules}}</td>
+      <td><a href="/report/{{.SessionID}}">view →</a></td>
+    </tr>
+  {{end}}
+  </tbody>
+</table>
+</div>
+
+{{if gt (len .Reports) 1}}
+<div class="card" style="margin-top:16px">
+  <h3>Compare two reports</h3>
+  <form action="" method="get" id="diff-form" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <select name="before" style="background:#0f1117;color:#e2e8f0;border:1px solid #2d3148;padding:6px 10px;border-radius:4px;font-family:inherit;font-size:13px">
+      {{range .Reports}}<option value="{{.SessionID}}">{{.Timestamp.Format "2006-01-02 15:04"}} — {{.SessionID}}</option>{{end}}
+    </select>
+    <span class="meta">vs</span>
+    <select name="after" style="background:#0f1117;color:#e2e8f0;border:1px solid #2d3148;padding:6px 10px;border-radius:4px;font-family:inherit;font-size:13px">
+      {{range .Reports}}<option value="{{.SessionID}}">{{.Timestamp.Format "2006-01-02 15:04"}} — {{.SessionID}}</option>{{end}}
+    </select>
+    <button type="submit" style="background:#312e81;color:#a5b4fc;border:none;padding:6px 16px;border-radius:4px;cursor:pointer;font-family:inherit;font-size:13px">diff →</button>
+  </form>
+</div>
+<script>
+document.getElementById('diff-form').addEventListener('submit',function(e){
+  e.preventDefault();
+  var f=new FormData(this);
+  window.location='/diff/'+f.get('before')+'/'+f.get('after');
+});
+</script>
+{{end}}
+{{end}}
+{{end}}

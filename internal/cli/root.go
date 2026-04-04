@@ -47,6 +47,7 @@ func newRootCmd(version string) *cobra.Command {
 		newDiffCmd(),
 		newFleetCmd(gf),
 		newPluginCmd(gf),
+		newServeCmd(),
 	)
 
 	return root
