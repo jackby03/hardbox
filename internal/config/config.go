@@ -21,6 +21,10 @@ type Config struct {
 	DryRun         bool
 	NonInteractive bool
 
+	// PluginDir is the directory scanned for .so plugin files at startup.
+	// Defaults to /etc/hardbox/plugins. Set to "" to disable plugin loading.
+	PluginDir string `mapstructure:"plugin_dir"`
+
 	Modules map[string]ModuleConfig `mapstructure:"modules"`
 	Report  ReportConfig            `mapstructure:"report"`
 	Audit   AuditConfig             `mapstructure:"audit"`
@@ -120,4 +124,5 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("report.include_evidence", true)
 	v.SetDefault("audit.fail_on_critical", true)
 	v.SetDefault("audit.fail_on_high", false)
+	v.SetDefault("plugin_dir", "/etc/hardbox/plugins")
 }

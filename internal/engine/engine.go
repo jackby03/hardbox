@@ -13,18 +13,29 @@ import (
 	"github.com/hardbox-io/hardbox/internal/distro"
 	"github.com/hardbox-io/hardbox/internal/modules"
 	"github.com/hardbox-io/hardbox/internal/report"
+	"github.com/hardbox-io/hardbox/internal/sdk"
 )
 
 // Engine orchestrates the plan → snapshot → execute → verify → report lifecycle.
 type Engine struct {
 	cfg        *config.Config
 	modules    []modules.Module
+	plugins    []sdk.PluginEntry
 	DistroInfo *distro.Info
+}
+
+// PluginInfo describes a plugin module loaded from a .so file.
+type PluginInfo struct {
+	Name    string
+	Version string
+	Path    string
 }
 
 // New creates an Engine with all built-in modules registered.
 // It calls distro.Detect() at startup and logs the result; a detection failure
 // is non-fatal — the engine continues without distro information.
+// Plugins are loaded from cfg.PluginDir; plugin load errors are logged as
+// warnings and do not prevent the engine from starting.
 func New(cfg *config.Config) *Engine {
 	e := &Engine{
 		cfg:     cfg,
@@ -41,6 +52,22 @@ func New(cfg *config.Config) *Engine {
 			Str("family", string(info.Family)).
 			Str("pretty_name", info.PrettyName).
 			Msg("distro detected")
+	}
+
+	if cfg.PluginDir != "" {
+		plugins, err := sdk.LoadPlugins(cfg.PluginDir)
+		if err != nil {
+			log.Warn().Err(err).Str("plugin_dir", cfg.PluginDir).Msg("plugin load warning")
+		}
+		for _, p := range plugins {
+			e.modules = append(e.modules, p.Module)
+			e.plugins = append(e.plugins, p)
+			log.Info().
+				Str("plugin", p.Module.Name()).
+				Str("version", p.Module.Version()).
+				Str("path", p.Path).
+				Msg("plugin loaded")
+		}
 	}
 
 	return e
@@ -120,9 +147,22 @@ func (e *Engine) Apply(ctx context.Context) error {
 	return nil
 }
 
-// GetModules returns the list of registered modules.
+// GetModules returns the list of registered modules (built-in + plugins).
 func (e *Engine) GetModules() []modules.Module {
 	return e.modules
+}
+
+// ListPlugins returns metadata for every plugin loaded from the plugin directory.
+func (e *Engine) ListPlugins() []PluginInfo {
+	infos := make([]PluginInfo, 0, len(e.plugins))
+	for _, p := range e.plugins {
+		infos = append(infos, PluginInfo{
+			Name:    p.Module.Name(),
+			Version: p.Module.Version(),
+			Path:    p.Path,
+		})
+	}
+	return infos
 }
 
 // AuditModule runs the audit for the named module and returns its findings.
