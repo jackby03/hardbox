@@ -146,7 +146,9 @@ func TestAuditKernelModules_AllBlacklisted(t *testing.T) {
 		"blacklist squashfs\ninstall squashfs /bin/false\n" +
 		"blacklist udf\ninstall udf /bin/false\n" +
 		"blacklist usb-storage\ninstall usb-storage /bin/false\n"
-	os.WriteFile(filepath.Join(dir, "hardbox.conf"), []byte(conf), 0o644)
+	if err := os.WriteFile(filepath.Join(dir, "hardbox.conf"), []byte(conf), 0o644); err != nil {
+		t.Fatalf("write conf: %v", err)
+	}
 
 	m := mount.NewModuleWithModprobe(dir, "" /* no modules loaded */)
 	findings, err := m.Audit(context.Background(), nil)
@@ -187,7 +189,9 @@ func TestAuditKernelModules_NoneBlacklisted(t *testing.T) {
 func TestAuditKernelModules_ModuleLoaded(t *testing.T) {
 	dir := t.TempDir()
 	// blacklisted in conf but currently loaded
-	os.WriteFile(filepath.Join(dir, "hardbox.conf"), []byte("blacklist cramfs\ninstall cramfs /bin/false\n"), 0o644)
+	if err := os.WriteFile(filepath.Join(dir, "hardbox.conf"), []byte("blacklist cramfs\ninstall cramfs /bin/false\n"), 0o644); err != nil {
+		t.Fatalf("write conf: %v", err)
+	}
 	lsmod := "Module                  Size  Used by\ncramfs                 12345  0\n"
 
 	m := mount.NewModuleWithModprobe(dir, lsmod)
