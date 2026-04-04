@@ -256,7 +256,7 @@ This table shows which compliance frameworks each **shipped** profile satisfies.
 | `stig` | ✓ Full | ✓ Full | ✓ Full | Partial | Partial | ✓ Full | Partial | ✅ Shipped |
 | `pci-dss` | ✓ Full | ✓ Full | Partial | ✓ Full | Partial | Partial | Partial | ✅ Shipped |
 | `hipaa` | ✓ Full | ✓ Full | Partial | Partial | ✓ Full | Partial | Partial | ✅ Shipped |
-| `nist-800-53` | ✓ Full | ✓ Full | ✓ Full | Partial | Partial | ✓ Full | Partial | 🗓 Roadmap v0.3 |
+| `nist-800-53` | ✓ Full | ✓ Full | ✓ Full | Partial | Partial | ✓ Full | Partial | ✅ Shipped |
 | `iso27001` | ✓ Full | ✓ Full | Partial | Partial | Partial | Partial | ✓ Full | ✅ Shipped |
 | `cloud-aws` | ✓ Full | Partial | Partial | Partial | Partial | Partial | Partial | ✅ Shipped |
 | `cloud-gcp` | ✓ Full | Partial | Partial | Partial | Partial | Partial | Partial | ✅ Shipped |
@@ -264,7 +264,6 @@ This table shows which compliance frameworks each **shipped** profile satisfies.
 
 > **Partial** = significant coverage with some controls requiring manual evidence or configuration beyond OS-level hardening (e.g., application-layer controls, physical security).
 > Cloud profiles (`cloud-aws`, `cloud-gcp`, `cloud-azure`) cover OS-level hardening; cloud-provider-layer controls (IAM, VPC, KMS, monitoring) must be validated separately via AWS Security Hub, Google Cloud SCC, or Microsoft Defender for Cloud.
-> The `nist-800-53` profile is on the roadmap — running it will return an error until the corresponding `.yaml` is added to `configs/profiles/`.
 
 ---
 
@@ -301,10 +300,10 @@ sudo hardbox audit --profile cloud-gcp --format html --output cloud-gcp-audit.ht
 # Azure VM hardening audit — CIS Azure Foundations aligned
 sudo hardbox audit --profile cloud-azure --format html --output cloud-azure-audit.html
 
+# NIST SP 800-53 Rev 5 High baseline audit
+sudo hardbox audit --profile nist-800-53 --format html --output nist-800-53-audit.html
+
 # Fail CI/CD pipeline if critical or high findings exist
 sudo hardbox audit --profile cis-level2 --format json
 # exits 1 if audit.fail_on_critical or audit.fail_on_high = true and findings exist
 ```
-
-> **Note:** The `nist-800-53` profile is on the roadmap and will be available in a future release.
-> Track progress in the [v0.3 milestone](https://github.com/jackby03/hardbox/milestone/3).
