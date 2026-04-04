@@ -43,6 +43,7 @@ func newRootCmd(version string) *cobra.Command {
 	root.AddCommand(
 		newApplyCmd(gf),
 		newAuditCmd(gf),
+		newWatchCmd(gf),
 		newRollbackCmd(),
 		newDiffCmd(),
 		newFleetCmd(gf),

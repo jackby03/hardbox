@@ -28,6 +28,7 @@ type Config struct {
 	Modules map[string]ModuleConfig `mapstructure:"modules"`
 	Report  ReportConfig            `mapstructure:"report"`
 	Audit   AuditConfig             `mapstructure:"audit"`
+	Watch   WatchConfig             `mapstructure:"watch"`
 }
 
 // ModuleConfig holds per-module settings.
@@ -45,6 +46,14 @@ type ReportConfig struct {
 type AuditConfig struct {
 	FailOnCritical bool `mapstructure:"fail_on_critical"`
 	FailOnHigh     bool `mapstructure:"fail_on_high"`
+}
+
+// WatchConfig controls the continuous audit daemon.
+type WatchConfig struct {
+	// Interval is the duration between audit runs (e.g. "5m", "6h", "24h").
+	Interval string `mapstructure:"interval"`
+	// MaxRuns is the maximum number of audit iterations. 0 means unlimited.
+	MaxRuns int `mapstructure:"max_runs"`
 }
 
 // Load reads configuration from the provided file path (or defaults) and
@@ -124,5 +133,7 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("report.include_evidence", true)
 	v.SetDefault("audit.fail_on_critical", true)
 	v.SetDefault("audit.fail_on_high", false)
+	v.SetDefault("watch.interval", "5m")
+	v.SetDefault("watch.max_runs", 0)
 	v.SetDefault("plugin_dir", "/etc/hardbox/plugins")
 }

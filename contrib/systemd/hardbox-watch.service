@@ -1,0 +1,33 @@
+[Unit]
+Description=hardbox continuous audit daemon
+Documentation=https://hardbox.jackby03.com/WATCH
+After=network.target
+ConditionFileIsExecutable=/usr/local/bin/hardbox
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/hardbox watch \
+    --profile production \
+    --interval 6h \
+    --report-dir /var/lib/hardbox/reports \
+    --quiet
+Restart=on-failure
+RestartSec=60
+
+# Run as root — required for reading system files audited by hardbox.
+User=root
+
+# Report directory
+RuntimeDirectory=hardbox
+StateDirectory=hardbox
+StateDirectoryMode=0750
+
+# Harden the service itself.
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/lib/hardbox/reports
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target
