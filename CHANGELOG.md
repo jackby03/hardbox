@@ -135,6 +135,98 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.5.0] — Unreleased — Observability & Continuous Compliance
+
+### Planned
+
+#### P0 — Must Ship
+- `hardbox watch` — daemon mode; runs audit on a configurable interval, writes JSON results to disk, detects regressions, exits non-zero when score drops
+- Webhook / alerting — generic HTTP webhooks and built-in Slack adapter; fires on regression or new `critical` / `high` finding; configurable per-severity rules in `config.yaml`
+- Fleet overview in `hardbox serve` — when fleet audit JSON reports are present, the dashboard aggregates scores per host, highlights regressions across runs, and shows a per-host compliance timeline
+
+#### P1 — Should Ship
+- Profile inheritance — `extends: <profile>` key in YAML profiles; inherits all settings from the base profile and overrides only declared keys; eliminates duplication across similar profiles
+- Trend history — `hardbox serve` renders a compliance score sparkline over time using all JSON reports found in the reports directory
+
+#### P2 — Nice to Have
+- SARIF export — `--format sarif` output for integration with GitHub Advanced Security code scanning and third-party SIEMs; findings map to SARIF `result` objects with rule metadata
+
+---
+
+## [0.6.0] — Unreleased — Deep Coverage I
+
+### Planned
+
+#### New modules
+- `boot` — GRUB2 password protection, Secure Boot state, `/boot` directory permissions, bootloader config integrity
+- `storage` — LUKS/dm-crypt encryption on sensitive partitions, encrypted swap, `/etc/crypttab` validation, plain-text swap detection
+- `integrity` — AIDE or Tripwire installed and initialised, integrity database present, cron/systemd verification job configured, last run result
+- `malware` — rkhunter and/or chkrootkit installed and clean, suspicious process detection, world-writable paths in `PATH`, `/tmp` noexec enforcement
+- `shells` — `TMOUT` set in `/etc/profile.d/`, `HISTSIZE`/`HISTFILESIZE` limited, shell timeout in `/etc/bash.bashrc`, `.bashrc`/`.profile` audit for unexpected entries
+- `processes` — process accounting (`acct`/`psacct`) enabled, `ulimits` configured in `/etc/security/limits.conf`, core dumps disabled system-wide
+
+**Target after v0.6:** ~240 checks across 21 modules — basic parity with Lynis category coverage.
+
+---
+
+## [0.7.0] — Unreleased — Deep Coverage II & Agent
+
+### Planned
+
+#### New modules
+- `hardware` — USB mass storage lockdown via `usbguard`, Bluetooth disabled, FireWire/Thunderbolt DMA protection, kernel module blacklist for unused bus protocols
+- `nameservices` — `/etc/hosts` integrity, `nsswitch.conf` review, DNSSEC validation enabled, stub resolver configuration, no plaintext DNS on port 53 outbound
+- `webserver` — Apache/nginx hardening: server tokens hidden, directory listing disabled, TLS 1.2+ enforced, security headers present (`X-Frame-Options`, `HSTS`, `CSP`)
+- `databases` — MySQL/MariaDB and PostgreSQL: remote root login disabled, test databases removed, anonymous users removed, password authentication enforced
+
+#### Agent
+- `hardbox agent` — lightweight daemon wrapping `hardbox watch`; ships audit results as signed JSON to a configurable HTTPS endpoint; basis for the hosted SaaS platform; OSS and self-hosteable
+
+#### Coverage
+- Package integrity — `debsums` (Debian/Ubuntu) and `rpm -Va` (RHEL/Rocky) verification of installed binaries against package manager checksums
+
+**Target after v0.7:** ~300 checks across 25 modules — full Lynis category parity.
+
+---
+
+## [0.8.0] — Unreleased — SaaS Foundation
+
+### Planned
+
+- Backend API — multi-tenant report ingest service; Go + PostgreSQL; receives signed JSON from `hardbox agent`; per-organisation data isolation
+- Auth — OAuth2/OIDC login (GitHub, Google); JWT session tokens; account and organisation management
+- Cloud dashboard — hosted version of `hardbox serve` backed by the API; fleet overview, per-host drill-down, trend graphs, alert feed
+- Multi-host management — group hosts by tags, apply profiles per group, bulk audit triggers from the dashboard
+
+---
+
+## [0.9.0] — Unreleased — Enterprise & Polish
+
+### Planned
+
+- SSO / SAML 2.0 — Okta, Azure AD, Google Workspace integration
+- RBAC — Admin, Analyst, Read-only roles scoped per organisation and per host group
+- Audit log — immutable append-only record of every change: who applied what, when, on which host, with before/after values
+- Billing — Starter / Pro / Business subscription plans; Stripe integration; usage metering by host count
+- Compliance PDF reports — auto-generated executive report per framework (CIS, PCI-DSS, HIPAA, NIST SP 800-53) with evidence from real audit data
+- Custom checks — define and ship new checks via YAML without writing Go; loaded by the engine at startup alongside built-in modules
+
+---
+
+## [1.0.0] — Unreleased — Production Ready GA
+
+### Planned
+
+- 300+ checks across 25+ modules — full Lynis parity and beyond
+- 12+ compliance profiles covering CIS, NIST, STIG, PCI-DSS, HIPAA, ISO 27001, and all three major clouds
+- SaaS platform GA with active billing and SLA
+- Enterprise tier: SSO, RBAC, audit log, contractual support
+- Plugin SDK v1 — stable public API, frozen until v2.0
+- Native packages — `.deb` and `.rpm` via GoReleaser in addition to tarballs
+- Full documentation, migration guides, and operator runbooks
+
+---
+
 [0.4.0]: https://github.com/jackby03/hardbox/compare/v0.1.0...v0.4.0
 [0.1.0]: https://github.com/jackby03/hardbox/releases/tag/v0.1.0
 [Unreleased]: https://github.com/jackby03/hardbox/compare/v0.4.0...HEAD

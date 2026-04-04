@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="docs/hero.png" alt="hardbox hero banner" width="100%" />
-
 **The definitive Linux hardening toolkit for IT, Cloud, Infrastructure, and Security teams.**
 
 [![Pre-release](https://img.shields.io/github/v/release/jackby03/hardbox?display_name=tag&include_prereleases&sort=semver&style=flat-square&label=pre-release&color=3b82f6)](https://github.com/jackby03/hardbox/releases)
@@ -240,11 +238,51 @@ hardbox serve --reports-dir ./reports
 - [x] `hardbox diff` — audit comparison reports ([#124](https://github.com/jackby03/hardbox/issues/124))
 - [x] `hardbox serve` — lightweight web dashboard ([#125](https://github.com/jackby03/hardbox/issues/125))
 
-### v1.0 — Production Ready
-- [ ] Full compliance framework coverage
-- [ ] Remote fleet management UI
-- [ ] Enterprise profile management
-- [ ] SaaS / hosted dashboard (optional)
+### v0.5 — Observability & Continuous Compliance
+- [ ] `hardbox watch` — daemon mode, audit on schedule, detect regressions automatically
+- [ ] Webhook / alerting — Slack and HTTP webhooks on regression or critical finding
+- [ ] Fleet overview in `hardbox serve` — aggregate multi-host scores, trends, regressions
+- [ ] Profile inheritance — `extends: cis-level1` in YAML, override only what differs
+- [ ] Trend history — compliance score over time using historical JSON reports
+- [ ] SARIF export — `--format sarif` for GitHub Advanced Security and SIEM integration
+
+### v0.6 — Deep Coverage I
+- [ ] `boot` module — GRUB password, Secure Boot, `/boot` permissions
+- [ ] `storage` module — LUKS/dm-crypt, encrypted swap, `/etc/crypttab`
+- [ ] `integrity` module — AIDE/Tripwire install, baseline generation, cron verification
+- [ ] `malware` module — rkhunter/chkrootkit, suspicious processes, `/tmp` noexec
+- [ ] `shells` module — `TMOUT`, `HISTSIZE`, shell timeout, `.bashrc`/`.profile` audit
+- [ ] `processes` module — process accounting, `ulimits`, `/etc/security/limits.conf`
+
+### v0.7 — Deep Coverage II & Agent
+- [ ] `hardware` module — USB lockdown (usbguard), Bluetooth/FireWire/Thunderbolt DMA
+- [ ] `nameservices` module — `/etc/hosts`, `nsswitch.conf`, DNSSEC, resolver validation
+- [ ] `webserver` module — Apache/nginx hardening: tokens, headers, TLS, directory listing
+- [ ] `databases` module — MySQL/PostgreSQL: remote root, test DBs, anonymous users
+- [ ] `hardbox agent` — lightweight telemetry agent reporting JSON to configurable URL
+- [ ] Package integrity — `debsums` / `rpm -Va` binary verification
+
+### v0.8 — SaaS Foundation
+- [ ] Backend API — multi-tenant report ingest, PostgreSQL, Go service
+- [ ] Auth — OAuth2/OIDC (GitHub, Google), JWT sessions
+- [ ] Cloud dashboard — hosted fleet view, trends, alerts powered by agent reports
+- [ ] Multi-host management — group hosts by tag, apply profiles per group
+
+### v0.9 — Enterprise & Polish
+- [ ] SSO / SAML 2.0 — Okta, Azure AD, Google Workspace
+- [ ] RBAC — Admin, Analyst, Read-only roles per org and host group
+- [ ] Audit log — immutable record of who applied what, when, on which host
+- [ ] Billing — Starter / Pro / Business plans, Stripe integration
+- [ ] Compliance PDF reports — executive reports per framework with evidence
+- [ ] Custom checks — define checks via YAML without writing Go
+
+### v1.0 — Production Ready GA
+- [ ] 300+ checks across 21+ modules — full Lynis parity and beyond
+- [ ] SaaS GA with active billing
+- [ ] Enterprise: SSO, RBAC, audit log, SLA
+- [ ] Plugin SDK v1 API frozen
+- [ ] `.deb` / `.rpm` native packages via GoReleaser
+- [ ] Full documentation and migration guides
 
 ---
 
