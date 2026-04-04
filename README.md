@@ -50,6 +50,10 @@ It covers every layer of the security stack: kernel parameters, SSH, firewall, P
 | **Dry Run Mode** | Preview every exact change before it's applied. Safe to run on live servers |
 | **One-command Rollback** | Every change is snapshotted. Revert any module or an entire session instantly |
 | **Audit Reports** | JSON, HTML, and Markdown output — machine-readable and CI/CD-friendly |
+| **Audit Diff** | `hardbox diff` — compare two audit reports, detect regressions, gate CI/CD with exit code 1 |
+| **Fleet Management** | `hardbox fleet` — concurrent remote multi-host hardening via SSH with unified HTML report |
+| **Web Dashboard** | `hardbox serve` — local read-only HTTP dashboard for browsing and comparing reports |
+| **Plugin SDK** | Custom hardening modules via Go plugin interface — no fork or recompile required |
 | **Compliance Mapping** | 100+ checks mapped to CIS, NIST 800-53, STIG, PCI-DSS, HIPAA, and ISO 27001 |
 | **Headless / CI Mode** | Unattended runs via config file — Ansible, Terraform, cloud-init, GitHub Actions |
 | **Distro-aware** | Ubuntu, Debian, RHEL, Rocky Linux, AlmaLinux, Amazon Linux, Fedora |
@@ -98,6 +102,15 @@ sudo hardbox apply --config /etc/hardbox/config.yaml --non-interactive
 
 # Rollback the last session
 sudo hardbox rollback apply --last
+
+# Compare two audit reports and fail on regressions
+hardbox diff audit-before.json audit-after.json --format html --output diff.html
+
+# Harden a fleet of hosts concurrently via SSH
+hardbox fleet apply --hosts hosts.txt --profile production --concurrency 10
+
+# Browse audit reports in a local web dashboard
+hardbox serve --reports-dir ./reports
 ```
 
 ---
@@ -128,6 +141,7 @@ sudo hardbox rollback apply --last
 | **Time (NTP/chrony)** | Time synchronization and integrity for audit trails | CIS 2.2.1, PCI 10.6 |
 | **Updates** | Unattended upgrades, security repos, version pinning | CIS 1.9, NIST SI-2 |
 | **Containers** | Docker/Podman daemon hardening, seccomp, namespace isolation | CIS Docker Benchmark |
+| **Mount & Partitions** | Dedicated partitions for `/tmp`, `/var`, `/home`; kernel module blacklisting | CIS 1.1, STIG V-238149 |
 
 ---
 
@@ -202,7 +216,7 @@ sudo hardbox rollback apply --last
 - [x] `install.sh` one-liner installer
 - [x] Midnight Shield landing page — [hardbox.jackby03.com](https://hardbox.jackby03.com)
 
-### v0.2 — Coverage
+### v0.2 — Coverage ✅
 - [x] `cis-level2` profile
 - [x] `pci-dss` profile
 - [x] `stig` profile
@@ -218,13 +232,13 @@ sudo hardbox rollback apply --last
 - [x] Terraform provisioner
 - [x] cloud-init support
 
-### v0.4 — Architecture & Scale
-- [ ] CLI refactor — extract commands to `internal/cli/` package ([#120](https://github.com/jackby03/hardbox/issues/120))
-- [ ] `hardbox fleet` — remote multi-host hardening via SSH ([#121](https://github.com/jackby03/hardbox/issues/121))
-- [ ] Mount & partition hardening module (14th module) ([#122](https://github.com/jackby03/hardbox/issues/122))
-- [ ] Plugin SDK — custom hardening module interface ([#123](https://github.com/jackby03/hardbox/issues/123))
-- [ ] `hardbox diff` — audit comparison reports ([#124](https://github.com/jackby03/hardbox/issues/124))
-- [ ] `hardbox serve` — lightweight web dashboard ([#125](https://github.com/jackby03/hardbox/issues/125))
+### v0.4 — Architecture & Scale ✅
+- [x] CLI refactor — extract commands to `internal/cli/` package ([#120](https://github.com/jackby03/hardbox/issues/120))
+- [x] `hardbox fleet` — remote multi-host hardening via SSH ([#121](https://github.com/jackby03/hardbox/issues/121))
+- [x] Mount & partition hardening module (15th module) ([#122](https://github.com/jackby03/hardbox/issues/122))
+- [x] Plugin SDK — custom hardening module interface ([#123](https://github.com/jackby03/hardbox/issues/123))
+- [x] `hardbox diff` — audit comparison reports ([#124](https://github.com/jackby03/hardbox/issues/124))
+- [x] `hardbox serve` — lightweight web dashboard ([#125](https://github.com/jackby03/hardbox/issues/125))
 
 ### v1.0 — Production Ready
 - [ ] Full compliance framework coverage

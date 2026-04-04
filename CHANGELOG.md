@@ -119,28 +119,22 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [0.4.0] — Unreleased — Architecture & Scale
+## [0.4.0] — 2026-04-04 — Architecture & Scale
 
-### Planned
+### Added
 
-#### P0 — Must Ship
-- CLI refactor — extract all cobra command definitions to `internal/cli/`; `cmd/hardbox/main.go` becomes a ≤15-line entry point ([#120](https://github.com/jackby03/hardbox/issues/120)) ✅
-- Mount & partition hardening module (14th module) — 10 checks: dedicated partition existence for `/tmp`, `/var`, `/var/tmp`, `/var/log`, `/var/log/audit`, `/home`; kernel module blacklisting for `cramfs`, `squashfs`, `udf`, `usb-storage`; auto-remediates via `/etc/modprobe.d/hardbox.conf` ([#122](https://github.com/jackby03/hardbox/issues/122)) ✅
-- `hardbox fleet` — concurrent remote multi-host hardening via SSH; `fleet apply` and `fleet audit` with unified multi-host HTML report ([#121](https://github.com/jackby03/hardbox/issues/121))
-- Mount & partition hardening module (14th module) — 15 checks covering `/tmp`, `/var`, `/var/log`, `/home`, `/dev/shm`, sticky bits, and kernel filesystem modules ([#122](https://github.com/jackby03/hardbox/issues/122))
-
-#### P1 — Should Ship
-- Plugin SDK — stable `sdk.Module` interface for third-party custom modules; `.so` plugin loading; `hardbox plugin list/install` ([#123](https://github.com/jackby03/hardbox/issues/123))
-- `hardbox diff` — compare two JSON audit reports; highlights regressions, improvements and unchanged failures; text/HTML/JSON output; exit code 1 on regressions for CI/CD ([#124](https://github.com/jackby03/hardbox/issues/124)) ✅
-
-#### P2 — Nice to Have
-- `hardbox serve` — local HTTP dashboard for browsing audit reports; embedded assets; `127.0.0.1`-only by default ([#125](https://github.com/jackby03/hardbox/issues/125))
-
-### Planned for v0.2
-- 14th module — mount and partition hardening
-
+- CLI refactor — extract all cobra command definitions to `internal/cli/`; `cmd/hardbox/main.go` becomes a ≤15-line entry point ([#120](https://github.com/jackby03/hardbox/issues/120))
+- `hardbox fleet` — concurrent remote multi-host hardening via SSH; `fleet apply` and `fleet audit` with unified multi-host HTML report; per-host results stream as they complete ([#121](https://github.com/jackby03/hardbox/issues/121))
+- Mount & partition hardening module (15th module) — 15 checks covering partition existence for `/tmp`, `/var`, `/var/tmp`, `/var/log`, `/var/log/audit`, `/home`; kernel module blacklisting for `cramfs`, `squashfs`, `udf`, `usb-storage`; auto-remediates via `/etc/modprobe.d/hardbox.conf` ([#122](https://github.com/jackby03/hardbox/issues/122))
+- Plugin SDK — stable `sdk.Module` interface for third-party custom hardening modules; `.so` plugin loading; `hardbox plugin list/install` commands ([#123](https://github.com/jackby03/hardbox/issues/123))
+- `hardbox diff` — compare two JSON audit reports; highlights regressions, improvements, and unchanged failures; text/HTML/JSON output; exit code 1 on regressions for CI/CD gating ([#124](https://github.com/jackby03/hardbox/issues/124))
+- `hardbox serve` — local read-only HTTP dashboard for browsing audit reports; embedded assets; `127.0.0.1`-only by default; optional Basic Auth ([#125](https://github.com/jackby03/hardbox/issues/125))
+- `docs/FLEET.md` — fleet command documentation covering quick start, host file format, SSH auth, concurrency, and report options
+- `docs/PLUGIN-SDK.md` — Plugin SDK documentation covering module interface, build instructions, and loading plugins
+- `docs/SERVE.md` — serve command documentation covering flags, Basic Auth, and usage examples
 
 ---
 
+[0.4.0]: https://github.com/jackby03/hardbox/compare/v0.1.0...v0.4.0
 [0.1.0]: https://github.com/jackby03/hardbox/releases/tag/v0.1.0
-[Unreleased]: https://github.com/jackby03/hardbox/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/jackby03/hardbox/compare/v0.4.0...HEAD

@@ -15,6 +15,7 @@ The Plugin SDK lets you write custom hardening modules and load them into hardbo
 
 Create a directory for your plugin and write a Go file with `package main`:
 
+{% raw %}
 ```go
 package main
 
@@ -67,6 +68,7 @@ func New() sdk.Module { return &myModule{} }
 // main is required so the file compiles normally. It is ignored at plugin load time.
 func main() {}
 ```
+{% endraw %}
 
 ### 2. Build the plugin
 

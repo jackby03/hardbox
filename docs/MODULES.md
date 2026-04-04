@@ -333,3 +333,37 @@ Each module is self-contained, independently enabled/disabled, and maps every ch
 | cnt-008 | Docker socket not mounted in containers | Critical | 5.31 |
 | cnt-009 | Container images scanned (advisory) | High | — |
 | cnt-010 | Audit rules for Docker daemon socket | Medium | 1.2.1 |
+
+---
+
+## Module: Mount & Partition Hardening
+
+**ID:** `mount`
+**Method:** `/proc/mounts`, `/etc/modprobe.d/hardbox.conf`
+
+### Partition Checks
+
+| ID | Check | Required | Severity | CIS | STIG |
+|---|---|---|---|---|---|
+| mnt-001 | `/tmp` on a dedicated partition | separate partition | High | 1.1.2 | V-238149 |
+| mnt-002 | `/var` on a dedicated partition | separate partition | Medium | 1.1.6 | — |
+| mnt-003 | `/var/tmp` on a dedicated partition | separate partition | Medium | 1.1.7 | V-238149 |
+| mnt-004 | `/var/log` on a dedicated partition | separate partition | Medium | 1.1.11 | — |
+| mnt-005 | `/var/log/audit` on a dedicated partition | separate partition | Medium | 1.1.12 | — |
+| mnt-006 | `/home` on a dedicated partition | separate partition | Medium | 1.1.14 | — |
+| mnt-007 | `/dev/shm` mounted with `nodev,nosuid,noexec` | required options | High | 1.1.8 | — |
+| mnt-008 | `/tmp` mounted with `nodev,nosuid,noexec` | required options | High | 1.1.3 | — |
+| mnt-009 | Sticky bit set on all world-writable directories | mode 1xxx | High | 1.1.18 | — |
+
+### Kernel Module Blacklist
+
+| ID | Module | Reason | Severity | CIS |
+|---|---|---|---|---|
+| mnt-010 | `cramfs` | Obsolete filesystem — no legitimate use on servers | Medium | 1.1.1.1 |
+| mnt-011 | `squashfs` | Unneeded compressed filesystem | Medium | 1.1.1.2 |
+| mnt-012 | `udf` | Uncommon optical filesystem | Medium | 1.1.1.3 |
+| mnt-013 | `usb-storage` | Prevent unauthorized USB mass storage | High | 1.1.1.4 |
+| mnt-014 | `freevxfs` | Obsolete filesystem | Low | 1.1.1.5 |
+| mnt-015 | `jffs2` | Flash filesystem — no use on servers | Low | 1.1.1.6 |
+
+**Remediation:** Blacklist entries are written to `/etc/modprobe.d/hardbox.conf`.

@@ -135,7 +135,7 @@ ansible-playbook harden.yml -i inventory/hosts --extra-vars hardbox_apply=false
 | `hardbox_report_format` | `"html"` | `html`, `json`, `text`, `markdown` |
 | `hardbox_report_dir` | `/var/lib/hardbox/reports` | Report dir on target |
 | `hardbox_fetch_report` | `false` | Copy report to controller |
-| `hardbox_fetch_report_dest` | `"{{ playbook_dir }}/hardbox-reports"` | Controller destination |
+| `hardbox_fetch_report_dest` | `"{% raw %}{{ playbook_dir }}{% endraw %}/hardbox-reports"` | Controller destination |
 
 ### Audit thresholds
 

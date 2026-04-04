@@ -185,12 +185,14 @@ resource "hardbox_apply" "audit" {
 
 ### GitHub Actions
 
+{% raw %}
 ```yaml
 - name: Terraform apply (with hardbox hardening)
   run: terraform apply -auto-approve
   env:
     TF_VAR_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
 ```
+{% endraw %}
 
 ### GitLab CI
 
