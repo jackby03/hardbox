@@ -12,6 +12,7 @@ import (
 
 	"github.com/hardbox-io/hardbox/internal/config"
 	"github.com/hardbox-io/hardbox/internal/engine"
+	"github.com/hardbox-io/hardbox/internal/notify"
 	"github.com/hardbox-io/hardbox/internal/report"
 )
 
@@ -56,6 +57,7 @@ Examples:
 			}
 			cfg.LogLevel = gf.logLevel
 			e := engine.New(cfg)
+			alerter := notify.New(cfg.Notifications)
 
 			dir := reportDir
 			if dir == "" {
@@ -98,6 +100,8 @@ Examples:
 							Msg("watch: report written")
 					}
 
+					alerter.NotifyNewFindings(cmd.Context(), r)
+
 					if prev != nil {
 						d := report.Diff(prev, r)
 						if !quiet {
@@ -110,6 +114,7 @@ Examples:
 								Str("session_before", d.Before.SessionID).
 								Str("session_after", d.After.SessionID).
 								Msg("watch: regressions detected")
+							alerter.NotifyRegression(cmd.Context(), d)
 							if failOnRegression {
 								return fmt.Errorf("regressions detected: %d check(s) regressed", len(d.Regressions))
 							}
