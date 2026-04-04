@@ -4,142 +4,14 @@ import (
 	"fmt"
 	"os"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
-	"github.com/spf13/cobra"
-
-	"github.com/hardbox-io/hardbox/internal/config"
-	"github.com/hardbox-io/hardbox/internal/engine"
-	"github.com/hardbox-io/hardbox/internal/tui"
+	"github.com/hardbox-io/hardbox/internal/cli"
 )
 
 var version = "dev"
 
 func main() {
-	if err := rootCmd().Execute(); err != nil {
+	if err := cli.Execute(version); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-}
-
-func rootCmd() *cobra.Command {
-	var (
-		cfgFile     string
-		profile     string
-		logLevel    string
-		dryRun      bool
-		nonInteract bool
-		reportFmt   string
-		reportOut   string
-	)
-
-	root := &cobra.Command{
-		Use:     "hardbox",
-		Short:   "Production-grade Linux hardening toolkit",
-		Version: version,
-		// Configure the global zerolog logger before any subcommand runs.
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			return applyLogLevel(logLevel)
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			// Default: launch TUI
-			cfg, err := config.Load(cfgFile, profile)
-			if err != nil {
-				return fmt.Errorf("loading config: %w", err)
-			}
-			cfg.LogLevel = logLevel
-			p := tea.NewProgram(tui.NewApp(cfg), tea.WithAltScreen())
-			_, err = p.Run()
-			return err
-		},
-	}
-
-	root.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default: /etc/hardbox/config.yaml)")
-	root.PersistentFlags().StringVarP(&profile, "profile", "p", "production", "hardening profile to use")
-	root.PersistentFlags().StringVar(&logLevel, "log-level", "info", "log verbosity: debug|info|warn|error")
-
-	// apply subcommand
-	apply := &cobra.Command{
-		Use:   "apply",
-		Short: "Apply hardening changes to this system",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Load(cfgFile, profile)
-			if err != nil {
-				return fmt.Errorf("loading config: %w", err)
-			}
-			cfg.DryRun = dryRun
-			cfg.NonInteractive = nonInteract
-			cfg.LogLevel = logLevel
-			e := engine.New(cfg)
-			return e.Apply(cmd.Context())
-		},
-	}
-	apply.Flags().BoolVarP(&dryRun, "dry-run", "n", false, "preview changes without applying them")
-	apply.Flags().BoolVar(&nonInteract, "non-interactive", false, "run without prompts (CI/CD mode)")
-	apply.Flags().StringVar(&reportFmt, "report-format", "text", "report format: json|text|markdown|all")
-	apply.Flags().StringVar(&reportOut, "report", "", "write report to this file path")
-
-	// audit subcommand
-	audit := &cobra.Command{
-		Use:   "audit",
-		Short: "Audit system state without making changes",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Load(cfgFile, profile)
-			if err != nil {
-				return fmt.Errorf("loading config: %w", err)
-			}
-			cfg.LogLevel = logLevel
-			e := engine.New(cfg)
-			return e.Audit(cmd.Context(), reportFmt, reportOut)
-		},
-	}
-	audit.Flags().StringVar(&reportFmt, "format", "text", "output format: json|text|markdown|html")
-	audit.Flags().StringVarP(&reportOut, "output", "o", "", "write report to this file")
-
-	// rollback subcommand
-	rollback := &cobra.Command{
-		Use:   "rollback",
-		Short: "Restore system to state before last hardbox apply",
-	}
-	rollbackList := &cobra.Command{
-		Use:   "list",
-		Short: "List available rollback snapshots",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			e := engine.New(nil)
-			return e.ListSnapshots(cmd.Context())
-		},
-	}
-	var sessionID string
-	var rollbackLast bool
-	rollbackApply := &cobra.Command{
-		Use:   "apply",
-		Short: "Restore from a snapshot",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			e := engine.New(nil)
-			return e.Rollback(cmd.Context(), sessionID, rollbackLast)
-		},
-	}
-	rollbackApply.Flags().StringVar(&sessionID, "session", "", "snapshot session ID to restore")
-	rollbackApply.Flags().BoolVar(&rollbackLast, "last", false, "restore the most recent snapshot")
-	rollback.AddCommand(rollbackList, rollbackApply)
-
-	root.AddCommand(apply, audit, rollback)
-	return root
-}
-
-// applyLogLevel configures the zerolog global logger with the requested level
-// and a human-readable console writer on stderr.
-// Accepted values (case-insensitive): debug, info, warn, error.
-// Unknown values return an error so the user gets clear feedback.
-func applyLogLevel(level string) error {
-	// Human-readable output on stderr.
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
-
-	lvl, err := zerolog.ParseLevel(level)
-	if err != nil {
-		return fmt.Errorf("unknown log level %q — valid values: debug, info, warn, error", level)
-	}
-	zerolog.SetGlobalLevel(lvl)
-	return nil
 }
