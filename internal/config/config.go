@@ -145,7 +145,11 @@ func Load(cfgFile, profile string) (*Config, error) {
 	}
 
 	if baseToLoad != "" {
-		merged, err := resolveInheritance(baseToLoad, 1, []string{v.GetString("profile")}, filepath.Dir(v.ConfigFileUsed()))
+		visited := []string{}
+		if v.GetString("profile") != baseToLoad {
+			visited = append(visited, v.GetString("profile"))
+		}
+		merged, err := resolveInheritance(baseToLoad, 1, visited, filepath.Dir(v.ConfigFileUsed()))
 		if err != nil {
 			return nil, fmt.Errorf("resolving profile inheritance: %w", err)
 		}

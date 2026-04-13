@@ -281,9 +281,13 @@ modules:
   ssh:
     max_auth_tries: 2
 `
-	os.WriteFile(filepath.Join(tmpDir, "profile-b.yaml"), []byte(bYaml), 0o600)
+	if err := os.WriteFile(filepath.Join(tmpDir, "profile-b.yaml"), []byte(bYaml), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	aFile := filepath.Join(tmpDir, "profile-a.yaml")
-	os.WriteFile(aFile, []byte(aYaml), 0o600)
+	if err := os.WriteFile(aFile, []byte(aYaml), 0o600); err != nil {
+		t.Fatal(err)
+	}
 
 	cfg, err := Load(aFile, "")
 	if err != nil {
@@ -318,9 +322,13 @@ extends: profile-a
 profile: profile-a
 extends: profile-b
 `
-	os.WriteFile(filepath.Join(tmpDir, "profile-b.yaml"), []byte(bYaml), 0o600)
+	if err := os.WriteFile(filepath.Join(tmpDir, "profile-b.yaml"), []byte(bYaml), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	aFile := filepath.Join(tmpDir, "profile-a.yaml")
-	os.WriteFile(aFile, []byte(aYaml), 0o600)
+	if err := os.WriteFile(aFile, []byte(aYaml), 0o600); err != nil {
+		t.Fatal(err)
+	}
 
 	_, err := Load(aFile, "")
 	if err == nil {
@@ -340,7 +348,9 @@ func TestLoad_InheritanceDepthLimit(t *testing.T) {
 		if i < 7 {
 			content += fmt.Sprintf("extends: profile-%d\n", i+1)
 		}
-		os.WriteFile(filepath.Join(tmpDir, fmt.Sprintf("profile-%d.yaml", i)), []byte(content), 0o600)
+		if err := os.WriteFile(filepath.Join(tmpDir, fmt.Sprintf("profile-%d.yaml", i)), []byte(content), 0o600); err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	aFile := filepath.Join(tmpDir, "profile-1.yaml")
