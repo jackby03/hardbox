@@ -16,6 +16,7 @@ package auditd_test
 
 import (
 	"context"
+	"github.com/hardbox-io/hardbox/internal/modules/util/testutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -73,10 +74,6 @@ func assertStatus(t *testing.T, findings []modules.Finding, id string, want modu
 	t.Errorf("check %s: not found in findings", id)
 }
 
-func testdataPath(elem ...string) string {
-	return filepath.Join(append([]string{"testdata"}, elem...)...)
-}
-
 // ── interface ─────────────────────────────────────────────────────────────────
 
 func TestModule_ImplementsInterface(t *testing.T) {
@@ -98,8 +95,8 @@ func TestModule_NameAndVersion(t *testing.T) {
 func TestAudit_AllCompliant(t *testing.T) {
 	m := auditd.NewModuleForTest(
 		fakeRunner(serviceEnabled()),
-		testdataPath("rules_hardened"),
-		testdataPath("auditd_conf_hardened"),
+		testutil.TestdataPath("rules_hardened"),
+		testutil.TestdataPath("auditd_conf_hardened"),
 	)
 
 	findings, err := m.Audit(context.Background(), nil)
@@ -121,8 +118,8 @@ func TestAudit_AllCompliant(t *testing.T) {
 func TestAudit_DefaultRules_RuleChecksNonCompliant(t *testing.T) {
 	m := auditd.NewModuleForTest(
 		fakeRunner(serviceEnabled()),
-		testdataPath("rules_default"),
-		testdataPath("auditd_conf_hardened"),
+		testutil.TestdataPath("rules_default"),
+		testutil.TestdataPath("auditd_conf_hardened"),
 	)
 
 	findings, err := m.Audit(context.Background(), nil)
@@ -146,8 +143,8 @@ func TestAudit_DefaultRules_RuleChecksNonCompliant(t *testing.T) {
 func TestAudit_DefaultConf_ConfChecksNonCompliant(t *testing.T) {
 	m := auditd.NewModuleForTest(
 		fakeRunner(serviceEnabled()),
-		testdataPath("rules_hardened"),
-		testdataPath("auditd_conf_default"),
+		testutil.TestdataPath("rules_hardened"),
+		testutil.TestdataPath("auditd_conf_default"),
 	)
 
 	findings, err := m.Audit(context.Background(), nil)
@@ -166,8 +163,8 @@ func TestAudit_DefaultConf_ConfChecksNonCompliant(t *testing.T) {
 func TestAudit_ServiceDisabled_AUD013NonCompliant(t *testing.T) {
 	m := auditd.NewModuleForTest(
 		fakeRunner(serviceDisabled()),
-		testdataPath("rules_hardened"),
-		testdataPath("auditd_conf_hardened"),
+		testutil.TestdataPath("rules_hardened"),
+		testutil.TestdataPath("auditd_conf_hardened"),
 	)
 
 	findings, err := m.Audit(context.Background(), nil)
@@ -182,8 +179,8 @@ func TestAudit_ServiceDisabled_AUD013NonCompliant(t *testing.T) {
 func TestAudit_MissingRulesDir_AllRuleChecksNonCompliant(t *testing.T) {
 	m := auditd.NewModuleForTest(
 		fakeRunner(serviceEnabled()),
-		testdataPath("rules_nonexistent"),
-		testdataPath("auditd_conf_hardened"),
+		testutil.TestdataPath("rules_nonexistent"),
+		testutil.TestdataPath("auditd_conf_hardened"),
 	)
 
 	findings, err := m.Audit(context.Background(), nil)
@@ -200,7 +197,7 @@ func TestAudit_MissingRulesDir_AllRuleChecksNonCompliant(t *testing.T) {
 func TestPlan_WritesRulesFile(t *testing.T) {
 	dir := t.TempDir()
 	rulesDir := filepath.Join(dir, "rules.d")
-	confPath := testdataPath("auditd_conf_hardened")
+	confPath := testutil.TestdataPath("auditd_conf_hardened")
 
 	m := auditd.NewModuleForTest(
 		fakeRunner(serviceEnabled()),
@@ -248,7 +245,7 @@ func TestPlan_AlreadyCompliant_NoChanges(t *testing.T) {
 	m := auditd.NewModuleForTest(
 		fakeRunner(serviceEnabled()),
 		rulesDir,
-		testdataPath("auditd_conf_hardened"),
+		testutil.TestdataPath("auditd_conf_hardened"),
 	)
 
 	changes, err := m.Plan(context.Background(), nil)
@@ -270,7 +267,7 @@ func TestPlan_ApplyRevert(t *testing.T) {
 	m := auditd.NewModuleForTest(
 		fakeRunner(serviceEnabled()),
 		rulesDir,
-		testdataPath("auditd_conf_hardened"),
+		testutil.TestdataPath("auditd_conf_hardened"),
 	)
 
 	changes, err := m.Plan(context.Background(), nil)
@@ -297,4 +294,3 @@ func TestPlan_ApplyRevert(t *testing.T) {
 		t.Error("expected rules file to be removed after Revert()")
 	}
 }
-
