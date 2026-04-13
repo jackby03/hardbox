@@ -37,10 +37,10 @@ type ModuleConfig map[string]any
 
 // ReportConfig controls output format and destination.
 type ReportConfig struct {
-	Format              string `mapstructure:"format"`
-	OutputDir           string `mapstructure:"output_dir"`
-	IncludeRemediation  bool   `mapstructure:"include_remediation"`
-	IncludeEvidence     bool   `mapstructure:"include_evidence"`
+	Format             string `mapstructure:"format"`
+	OutputDir          string `mapstructure:"output_dir"`
+	IncludeRemediation bool   `mapstructure:"include_remediation"`
+	IncludeEvidence    bool   `mapstructure:"include_evidence"`
 }
 
 // AuditConfig controls audit behaviour.

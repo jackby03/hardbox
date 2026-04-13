@@ -107,4 +107,3 @@ func openBrowser(url string) {
 		log.Debug().Err(err).Msg("serve: could not open browser")
 	}
 }
-

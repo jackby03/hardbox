@@ -405,11 +405,11 @@ func TestPlan_DryRunOutput_DoesNotModifyConfig(t *testing.T) {
 // temporary sshd_config, verifying that AtomicWrite integration works correctly.
 func TestPlan_Apply_Revert(t *testing.T) {
 	cases := []struct {
-		name        string
-		initial     string // non-compliant config
-		checkID     string
-		applyWant   string // expected substring after Apply
-		revertWant  string // expected substring after Revert
+		name       string
+		initial    string // non-compliant config
+		checkID    string
+		applyWant  string // expected substring after Apply
+		revertWant string // expected substring after Revert
 	}{
 		{
 			name:       "ssh-001 disable PermitRootLogin",

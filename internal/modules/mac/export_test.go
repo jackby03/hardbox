@@ -4,10 +4,10 @@ import "context"
 
 // TestOptions customizes module internals for tests.
 type TestOptions struct {
-	Backend          string
-	SELinuxConfig    string
-	AppArmorEnabled  string
-	Runner           func(ctx context.Context, name string, args ...string) (string, error)
+	Backend         string
+	SELinuxConfig   string
+	AppArmorEnabled string
+	Runner          func(ctx context.Context, name string, args ...string) (string, error)
 }
 
 // NewModuleForTest returns a Module with injected test hooks.

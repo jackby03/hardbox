@@ -11,8 +11,8 @@ func NewModuleWithModprobe(modprobeDir, lsmodOutput string) *Module {
 }
 
 var (
-	ParseMountPoints   = parseMountPoints
-	IsBlacklisted      = isBlacklisted
-	HasInstallFalse    = hasInstallFalse
-	NormaliseModName   = normaliseModName
+	ParseMountPoints = parseMountPoints
+	IsBlacklisted    = isBlacklisted
+	HasInstallFalse  = hasInstallFalse
+	NormaliseModName = normaliseModName
 )
