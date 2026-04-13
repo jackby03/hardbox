@@ -149,7 +149,7 @@ func (m *Module) auditSecurityRepo(family string) modules.Finding {
 		hasSecurity, detail := hasDebianSecurityRepo(m.aptSourcesPath(), m.aptSourcesDirPath())
 		return modules.Finding{
 			Check:   checkUPD002(),
-			Status:  complianceStatus(hasSecurity),
+			Status:  modules.ComplianceStatus(hasSecurity),
 			Current: detail,
 			Target:  "security repository enabled",
 			Detail:  "parsed apt sources for security repositories",
@@ -163,7 +163,7 @@ func (m *Module) auditSecurityRepo(family string) modules.Finding {
 		ok := upgradeType == "security"
 		return modules.Finding{
 			Check:   checkUPD002(),
-			Status:  complianceStatus(ok),
+			Status:  modules.ComplianceStatus(ok),
 			Current: valueOrMissing(upgradeType),
 			Target:  "security",
 			Detail:  "dnf-automatic upgrade_type should be security",
@@ -184,7 +184,7 @@ func (m *Module) auditUnattended(family string) modules.Finding {
 		ok := val == "1"
 		return modules.Finding{
 			Check:   checkUPD003(),
-			Status:  complianceStatus(ok),
+			Status:  modules.ComplianceStatus(ok),
 			Current: valueOrMissing(val),
 			Target:  "1",
 			Detail:  "APT::Periodic::Unattended-Upgrade must be enabled",
@@ -198,7 +198,7 @@ func (m *Module) auditUnattended(family string) modules.Finding {
 		ok := val == "yes" || val == "true" || val == "1"
 		return modules.Finding{
 			Check:   checkUPD003(),
-			Status:  complianceStatus(ok),
+			Status:  modules.ComplianceStatus(ok),
 			Current: valueOrMissing(val),
 			Target:  "yes",
 			Detail:  "dnf-automatic apply_updates should be enabled",
@@ -224,7 +224,7 @@ func (m *Module) auditAutoReboot(family string, targetEnabled bool) modules.Find
 		currentEnabled := current == "true" || current == "1" || current == "yes"
 		return modules.Finding{
 			Check:   checkUPD004(),
-			Status:  complianceStatus(currentEnabled == targetEnabled),
+			Status:  modules.ComplianceStatus(currentEnabled == targetEnabled),
 			Current: boolLabel(currentEnabled),
 			Target:  target,
 			Detail:  "Unattended-Upgrade::Automatic-Reboot is configurable via module config",
@@ -238,7 +238,7 @@ func (m *Module) auditAutoReboot(family string, targetEnabled bool) modules.Find
 		currentEnabled := current == "when-needed" || current == "yes" || current == "true" || current == "1"
 		return modules.Finding{
 			Check:   checkUPD004(),
-			Status:  complianceStatus(currentEnabled == targetEnabled),
+			Status:  modules.ComplianceStatus(currentEnabled == targetEnabled),
 			Current: boolLabel(currentEnabled),
 			Target:  target,
 			Detail:  "dnf-automatic reboot should match module config",
@@ -533,13 +533,6 @@ func expandPath(pattern string) []string {
 	return []string{pattern}
 }
 
-func complianceStatus(ok bool) modules.Status {
-	if ok {
-		return modules.StatusCompliant
-	}
-	return modules.StatusNonCompliant
-}
-
 func boolLabel(v bool) string {
 	if v {
 		return "enabled"
@@ -594,4 +587,3 @@ func dirHasEntries(path string) bool {
 	entries, err := os.ReadDir(path)
 	return err == nil && len(entries) > 0
 }
-

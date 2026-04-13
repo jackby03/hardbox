@@ -83,14 +83,14 @@ func (m *Module) Audit(ctx context.Context, cfg modules.ModuleConfig) ([]modules
 	findings := make([]modules.Finding, 0, 5)
 	findings = append(findings, modules.Finding{
 		Check:   checkNTP001(),
-		Status:  complianceStatus(installedCount > 0),
+		Status:  modules.ComplianceStatus(installedCount > 0),
 		Current: fmt.Sprintf("%d detected", installedCount),
 		Target:  "at least 1 (chronyd/systemd-timesyncd/ntpd)",
 		Detail:  fmt.Sprintf("installed services: %s", installedServices(services)),
 	})
 	findings = append(findings, modules.Finding{
 		Check:   checkNTP002(),
-		Status:  complianceStatus(activeCount == 1),
+		Status:  modules.ComplianceStatus(activeCount == 1),
 		Current: fmt.Sprintf("%d active", activeCount),
 		Target:  "exactly 1 active service",
 		Detail:  fmt.Sprintf("active services: %s", activeServices(services)),
@@ -111,7 +111,7 @@ func (m *Module) Audit(ctx context.Context, cfg modules.ModuleConfig) ([]modules
 	tzStatus := modules.StatusError
 	tzDetail := "failed to read timezone"
 	if tzErr == nil {
-		tzStatus = complianceStatus(timezoneMatches(tzCurrent, tzTarget))
+		tzStatus = modules.ComplianceStatus(timezoneMatches(tzCurrent, tzTarget))
 		tzDetail = fmt.Sprintf("current timezone: %q", tzCurrent)
 	}
 	findings = append(findings, modules.Finding{
@@ -345,13 +345,6 @@ func checkNTP005() modules.Check {
 	}
 }
 
-func complianceStatus(ok bool) modules.Status {
-	if ok {
-		return modules.StatusCompliant
-	}
-	return modules.StatusNonCompliant
-}
-
 func installedServices(states []serviceState) string {
 	var out []string
 	for _, s := range states {
@@ -491,4 +484,3 @@ func runCommand(ctx context.Context, name string, args ...string) (string, error
 	}
 	return result, nil
 }
-
