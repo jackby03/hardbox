@@ -1,3 +1,17 @@
+// Copyright (C) 2024 Jack (jackby03)
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published
+// by the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 // Package kernel implements sysctl-based kernel hardening checks.
 // It covers network protection (kn-001..011) and memory/process protection
 // (km-001..008) derived from CIS Benchmark Level 1.
@@ -160,3 +174,4 @@ func (m *Module) readSysctl(param string) (string, error) {
 	}
 	return strings.TrimSpace(string(data)), nil
 }
+

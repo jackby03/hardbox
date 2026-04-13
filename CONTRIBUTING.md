@@ -234,4 +234,4 @@ Operational guidance for branch protection, release publication, and smoke valid
 
 ## License
 
-By contributing you agree that your contributions will be licensed under the [MIT License](LICENSE).
+By contributing you agree that your contributions will be licensed under the [GNU Affero General Public License v3](LICENSE).
