@@ -1,17 +1,21 @@
 package config
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/spf13/viper"
+
+	"github.com/hardbox-io/hardbox/configs/profiles"
 )
 
 // Config is the root hardbox configuration, resolved from profile + overrides.
 type Config struct {
 	Version     string `mapstructure:"version"`
 	Profile     string `mapstructure:"profile"`
+	Extends     string `mapstructure:"extends"`     // profile to inherit settings from
 	Environment string `mapstructure:"environment"` // cloud | onprem | container
 
 	// LogLevel controls zerolog verbosity: debug | info | warn | error.
@@ -95,15 +99,15 @@ type SlackConfig struct {
 }
 
 // Load reads configuration from the provided file path (or defaults) and
-// merges the requested profile on top of base defaultss.
+// merges the requested profile on top of base defaults.
 func Load(cfgFile, profile string) (*Config, error) {
 	v := viper.New()
-
-	// Set built-in defaults.
 	setDefaults(v)
 
+	var primaryErr error
 	if cfgFile != "" {
 		v.SetConfigFile(cfgFile)
+		primaryErr = v.ReadInConfig()
 	} else {
 		// Search standard locations.
 		v.SetConfigName("config")
@@ -111,16 +115,17 @@ func Load(cfgFile, profile string) (*Config, error) {
 		v.AddConfigPath("/etc/hardbox")
 		v.AddConfigPath(filepath.Join(os.Getenv("HOME"), ".config", "hardbox"))
 		v.AddConfigPath(".")
+		primaryErr = v.ReadInConfig()
 	}
 
 	// Allow env overrides like HARDBOX_PROFILE=cis-level2.
 	v.SetEnvPrefix("HARDBOX")
 	v.AutomaticEnv()
 
-	if err := v.ReadInConfig(); err != nil {
+	if primaryErr != nil {
 		// A missing config file is fine — we'll use defaults + profile.
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			return nil, fmt.Errorf("reading config: %w", err)
+		if _, ok := primaryErr.(viper.ConfigFileNotFoundError); !ok && !os.IsNotExist(primaryErr) {
+			return nil, fmt.Errorf("reading config: %w", primaryErr)
 		}
 	}
 
@@ -129,12 +134,91 @@ func Load(cfgFile, profile string) (*Config, error) {
 		v.Set("profile", profile)
 	}
 
+	// Resolve inheritance if 'extends' is specified in the loaded config or profile.
+	// If the user didn't specify a config file, but specified a profile flag, we treat
+	// the profile flag as a request to load that built-in profile (which may extend others).
+	baseToLoad := v.GetString("extends")
+	if baseToLoad == "" && primaryErr != nil && profile != "" && profile != "production" {
+		// If no config file was found but a specific profile was requested (and it's not the default "production" which we already have defaults for),
+		// try to load it as a built-in profile to see if it extends anything or has specific module overrides.
+		baseToLoad = profile
+	}
+
+	if baseToLoad != "" {
+		merged, err := resolveInheritance(baseToLoad, 1, []string{v.GetString("profile")}, filepath.Dir(v.ConfigFileUsed()))
+		if err != nil {
+			return nil, fmt.Errorf("resolving profile inheritance: %w", err)
+		}
+		// Deep merge: apply the current (child) settings on top of the inherited (parent) settings.
+		if err := merged.MergeConfigMap(v.AllSettings()); err != nil {
+			return nil, fmt.Errorf("merging child config: %w", err)
+		}
+		v = merged
+	}
+
 	var cfg Config
 	if err := v.Unmarshal(&cfg); err != nil {
 		return nil, fmt.Errorf("unmarshalling config: %w", err)
 	}
 
 	return &cfg, nil
+}
+
+// resolveInheritance recursively loads and merges profiles up the 'extends' chain.
+func resolveInheritance(baseName string, depth int, visited []string, searchDir string) (*viper.Viper, error) {
+	if depth > 5 {
+		return nil, fmt.Errorf("inheritance depth exceeded (max 5)")
+	}
+	for _, v := range visited {
+		if v == baseName {
+			return nil, fmt.Errorf("inheritance cycle detected: %s already visited", baseName)
+		}
+	}
+
+	parent := viper.New()
+	setDefaults(parent)
+	parent.SetConfigType("yaml")
+
+	var loaded bool
+
+	// 1. Try to load from the same directory as the child profile (custom overrides).
+	if searchDir != "" && searchDir != "." {
+		customPath := filepath.Join(searchDir, baseName+".yaml")
+		if data, err := os.ReadFile(customPath); err == nil {
+			if err := parent.ReadConfig(bytes.NewReader(data)); err != nil {
+				return nil, fmt.Errorf("reading custom base profile %q: %w", customPath, err)
+			}
+			loaded = true
+		}
+	}
+
+	// 2. Try to load from built-in embedded profiles.
+	if !loaded {
+		data, err := profiles.Files.ReadFile(fmt.Sprintf("%s.yaml", baseName))
+		if err != nil {
+			return nil, fmt.Errorf("base profile %q not found in built-ins or %s", baseName, searchDir)
+		}
+		if err := parent.ReadConfig(bytes.NewReader(data)); err != nil {
+			return nil, fmt.Errorf("reading embedded profile %q: %w", baseName, err)
+		}
+	}
+
+	// Check if the parent extends something else.
+	nextBase := parent.GetString("extends")
+	if nextBase != "" {
+		visited = append(visited, baseName)
+		grandparent, err := resolveInheritance(nextBase, depth+1, visited, searchDir)
+		if err != nil {
+			return nil, err
+		}
+		// Merge parent on top of grandparent.
+		if err := grandparent.MergeConfigMap(parent.AllSettings()); err != nil {
+			return nil, fmt.Errorf("merging parent %q: %w", baseName, err)
+		}
+		parent = grandparent
+	}
+
+	return parent, nil
 }
 
 // ModuleCfg returns the ModuleConfig for the given module name,
