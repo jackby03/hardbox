@@ -244,7 +244,7 @@ hardbox serve --reports-dir ./reports
 - [ ] `hardbox watch` — daemon mode, audit on schedule, detect regressions automatically
 - [ ] Webhook / alerting — Slack and HTTP webhooks on regression or critical finding
 - [ ] Fleet overview in `hardbox serve` — aggregate multi-host scores, trends, regressions
-- [ ] Profile inheritance — `extends: cis-level1` in YAML, override only what differs
+- [x] Profile inheritance — `extends: cis-level1` in YAML, override only what differs
 - [ ] Trend history — compliance score over time using historical JSON reports
 - [ ] SARIF export — `--format sarif` for GitHub Advanced Security and SIEM integration
 
