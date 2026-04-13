@@ -326,7 +326,7 @@ the terms of the GNU Affero General Public License as published by the
 Free Software Foundation, either version 3 of the License.
 
 For commercial use without AGPL obligations, a commercial license is available.
-Contact: [jackby03@protonmail.com](mailto:jackby03@protonmail.com)
+Contact: jackby03@protonmail.com
 
 See [LICENSE](./LICENSE) for full terms.
 
