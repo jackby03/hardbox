@@ -1,3 +1,17 @@
+// Copyright (C) 2024 Jack (jackby03)
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published
+// by the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
 // Package mount implements partition existence and kernel filesystem module checks.
 // It covers dedicated partition checks (mnt-001..mnt-007) and kernel module
 // blacklisting for unused filesystems (mnt-011..mnt-015).
@@ -358,3 +372,4 @@ func (m *Module) Plan(ctx context.Context, _ modules.ModuleConfig) ([]modules.Ch
 		},
 	}}, nil
 }
+

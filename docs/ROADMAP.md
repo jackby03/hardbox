@@ -222,7 +222,7 @@ The value proposition is not locked features — it is **managed infrastructure,
 
 | | Lynis | hardbox |
 |---|---|---|
-| License | GPL | MIT |
+| License | GPL | AGPL v3 |
 | Remediation | Enterprise (paid) | **Always free** |
 | Multi-host | No | `hardbox fleet` |
 | CI/CD integration | Manual | Native (`diff`, SARIF, exit codes) |

@@ -1,7 +1,7 @@
 # Ansible Role: hardbox
 
 [![Ansible Galaxy](https://img.shields.io/badge/galaxy-jackby03.hardbox-blue)](https://galaxy.ansible.com/jackby03/hardbox)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](../../LICENSE)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](../../LICENSE)
 
 Installs and runs [hardbox](https://github.com/jackby03/hardbox) — a Linux OS hardening tool with built-in compliance profiles.
 
@@ -106,4 +106,4 @@ ansible-galaxy install -r requirements.yml
 
 ## License
 
-MIT — see [LICENSE](../../LICENSE).
+AGPL v3 — see [LICENSE](../../LICENSE).

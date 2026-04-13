@@ -321,7 +321,14 @@ If hardbox saves you time or helps keep your infrastructure secure, consider sup
 
 ## License
 
-[MIT License](LICENSE) — free for personal, commercial, and government use.
+hardbox is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License as published by the
+Free Software Foundation, either version 3 of the License.
+
+For commercial use without AGPL obligations, a commercial license is available.
+Contact: jackby03@protonmail.com
+
+See [LICENSE](./LICENSE) for full terms.
 
 ---
 
