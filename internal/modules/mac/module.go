@@ -143,9 +143,9 @@ func (m *Module) auditAppArmor(ctx context.Context) ([]modules.Finding, error) {
 
 	return []modules.Finding{
 		{Check: checkMAC001(), Status: modules.StatusCompliant, Current: "aa-status available", Target: "installed", Detail: "AppArmor userspace tooling detected"},
-		{Check: checkMAC002(), Status: complianceStatus(enabled), Current: boolLabel(enabled), Target: "enabled", Detail: "read /sys/module/apparmor/parameters/enabled"},
-		{Check: checkMAC003(), Status: complianceStatus(enforcing), Current: fmt.Sprintf("%d profiles enforcing", parseAANumber(out, "profiles are in enforce mode")), Target: ">= 1 enforcing profile", Detail: "parsed aa-status output"},
-		{Check: checkMAC004(), Status: complianceStatus(unconfined == 0), Current: fmt.Sprintf("%d unconfined", unconfined), Target: "0", Detail: "parsed aa-status output"},
+		{Check: checkMAC002(), Status: modules.ComplianceStatus(enabled), Current: boolLabel(enabled), Target: "enabled", Detail: "read /sys/module/apparmor/parameters/enabled"},
+		{Check: checkMAC003(), Status: modules.ComplianceStatus(enforcing), Current: fmt.Sprintf("%d profiles enforcing", parseAANumber(out, "profiles are in enforce mode")), Target: ">= 1 enforcing profile", Detail: "parsed aa-status output"},
+		{Check: checkMAC004(), Status: modules.ComplianceStatus(unconfined == 0), Current: fmt.Sprintf("%d unconfined", unconfined), Target: "0", Detail: "parsed aa-status output"},
 		newSkipped(checkMAC005(), "n/a", "targeted or mls", "SELinux-only check"),
 	}, nil
 }
@@ -179,10 +179,10 @@ func (m *Module) auditSELinux(ctx context.Context) ([]modules.Finding, error) {
 
 	return []modules.Finding{
 		{Check: checkMAC001(), Status: modules.StatusCompliant, Current: "sestatus available", Target: "installed", Detail: "SELinux userspace tooling detected"},
-		{Check: checkMAC002(), Status: complianceStatus(enabled), Current: valueOrUnknown(boolLabel(enabled), status == ""), Target: "enabled", Detail: fmt.Sprintf("SELinux status=%q, config SELINUX=%q", status, cfgMode)},
-		{Check: checkMAC003(), Status: complianceStatus(enforcing), Current: valueOrUnknown(currentMode, currentMode == ""), Target: "enforcing", Detail: "parsed sestatus output"},
+		{Check: checkMAC002(), Status: modules.ComplianceStatus(enabled), Current: valueOrUnknown(boolLabel(enabled), status == ""), Target: "enabled", Detail: fmt.Sprintf("SELinux status=%q, config SELINUX=%q", status, cfgMode)},
+		{Check: checkMAC003(), Status: modules.ComplianceStatus(enforcing), Current: valueOrUnknown(currentMode, currentMode == ""), Target: "enforcing", Detail: "parsed sestatus output"},
 		newSkipped(checkMAC004(), "n/a", "0", "AppArmor-only check"),
-		{Check: checkMAC005(), Status: complianceStatus(policyOk), Current: valueOrUnknown(policy, policy == ""), Target: "targeted or mls", Detail: fmt.Sprintf("SELINUXTYPE=%q", cfgType)},
+		{Check: checkMAC005(), Status: modules.ComplianceStatus(policyOk), Current: valueOrUnknown(policy, policy == ""), Target: "targeted or mls", Detail: fmt.Sprintf("SELINUXTYPE=%q", cfgType)},
 	}, nil
 }
 
@@ -279,13 +279,6 @@ func readSELinuxConfig(path string) map[string]string {
 	return out
 }
 
-func complianceStatus(ok bool) modules.Status {
-	if ok {
-		return modules.StatusCompliant
-	}
-	return modules.StatusNonCompliant
-}
-
 func boolLabel(v bool) string {
 	if v {
 		return "enabled"
@@ -314,4 +307,3 @@ func cfgString(cfg modules.ModuleConfig, key, fallback string) string {
 func newSkipped(chk modules.Check, current, target, detail string) modules.Finding {
 	return modules.Finding{Check: chk, Status: modules.StatusSkipped, Current: current, Target: target, Detail: detail}
 }
-

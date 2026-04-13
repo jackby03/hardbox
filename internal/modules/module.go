@@ -113,3 +113,10 @@ func (s Severity) ScoreWeight() int {
 	}
 }
 
+// ComplianceStatus converts a boolean to a Status.
+func ComplianceStatus(ok bool) Status {
+	if ok {
+		return StatusCompliant
+	}
+	return StatusNonCompliant
+}

@@ -150,7 +150,7 @@ func (m *Module) auditIPv6(cfg modules.ModuleConfig) modules.Finding {
 	if !disableIPv6 {
 		return modules.Finding{Check: chk, Status: modules.StatusManual, Current: val, Target: "disabled when not used", Detail: "profile does not require disabling IPv6"}
 	}
-	return modules.Finding{Check: chk, Status: complianceStatus(val == "1"), Current: val, Target: "1", Detail: "read net.ipv6.conf.all.disable_ipv6"}
+	return modules.Finding{Check: chk, Status: modules.ComplianceStatus(val == "1"), Current: val, Target: "1", Detail: "read net.ipv6.conf.all.disable_ipv6"}
 }
 
 func (m *Module) auditBlacklistedModule(c moduleCheck, cfg modules.ModuleConfig) modules.Finding {
@@ -207,7 +207,7 @@ func (m *Module) auditWireless(cfg modules.ModuleConfig) modules.Finding {
 			ifaces++
 		}
 	}
-	return modules.Finding{Check: chk, Status: complianceStatus(ifaces == 0), Current: fmt.Sprintf("%d interfaces", ifaces), Target: "0 interfaces", Detail: "parsed /proc/net/wireless"}
+	return modules.Finding{Check: chk, Status: modules.ComplianceStatus(ifaces == 0), Current: fmt.Sprintf("%d interfaces", ifaces), Target: "0 interfaces", Detail: "parsed /proc/net/wireless"}
 }
 
 func (m *Module) auditTCPWrappers() modules.Finding {
@@ -223,7 +223,7 @@ func (m *Module) auditTCPWrappers() modules.Finding {
 		return modules.Finding{Check: chk, Status: modules.StatusNonCompliant, Current: "missing files", Target: "both configured", Detail: "hosts.allow and hosts.deny must exist and be non-empty"}
 	}
 	ok := allow != "" && deny != ""
-	return modules.Finding{Check: chk, Status: complianceStatus(ok), Current: fmt.Sprintf("allow=%t deny=%t", allow != "", deny != ""), Target: "both non-empty", Detail: "basic TCP wrappers presence check"}
+	return modules.Finding{Check: chk, Status: modules.ComplianceStatus(ok), Current: fmt.Sprintf("allow=%t deny=%t", allow != "", deny != ""), Target: "both non-empty", Detail: "basic TCP wrappers presence check"}
 }
 
 func (m *Module) auditHomeSecrets() modules.Finding {
@@ -368,13 +368,6 @@ func cfgBool(cfg modules.ModuleConfig, key string, fallback bool) bool {
 	return fallback
 }
 
-func complianceStatus(ok bool) modules.Status {
-	if ok {
-		return modules.StatusCompliant
-	}
-	return modules.StatusNonCompliant
-}
-
 func isFindingCompliant(findings []modules.Finding, checkID string) bool {
 	for _, f := range findings {
 		if f.Check.ID == checkID {
@@ -425,4 +418,3 @@ func (m *Module) passwdFile() string {
 	}
 	return defaultPasswdPath
 }
-
