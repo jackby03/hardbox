@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"github.com/hardbox-io/hardbox/internal/config"
 	"github.com/hardbox-io/hardbox/internal/distro"
 	"github.com/hardbox-io/hardbox/internal/modules"
+	"github.com/hardbox-io/hardbox/internal/modules/util"
 	"github.com/hardbox-io/hardbox/internal/report"
 	"github.com/hardbox-io/hardbox/internal/sdk"
 )
@@ -312,15 +314,15 @@ func (e *Engine) writeReport(sessionID string, findings []modules.Finding, forma
 		path = filepath.Join(path, fmt.Sprintf("hardbox-report-%s%s", sessionID, ext))
 	}
 
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)
-	if err != nil {
-		return fmt.Errorf("creating report file: %w", err)
-	}
-	defer f.Close()
-
-	if err := report.Write(r, format, f); err != nil {
+	var buf bytes.Buffer
+	if err := report.Write(r, format, &buf); err != nil {
 		return err
 	}
+
+	if err := util.AtomicWrite(path, buf.Bytes(), 0o600); err != nil {
+		return fmt.Errorf("writing report file atomically: %w", err)
+	}
+
 	log.Info().Str("path", path).Str("format", format).Msg("report written")
 	return nil
 }

@@ -18,7 +18,7 @@ const defaultSELinuxConfig = "/etc/selinux/config"
 type backendType string
 
 const (
-	backendUnknown   backendType = "unknown"
+	backendUnknown  backendType = "unknown"
 	backendAppArmor backendType = "apparmor"
 	backendSELinux  backendType = "selinux"
 )

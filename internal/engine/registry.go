@@ -5,9 +5,8 @@ import (
 	"github.com/hardbox-io/hardbox/internal/modules/auditd"
 	"github.com/hardbox-io/hardbox/internal/modules/containers"
 	"github.com/hardbox-io/hardbox/internal/modules/crypto"
-	"github.com/hardbox-io/hardbox/internal/modules/firewall"
-	"github.com/hardbox-io/hardbox/internal/modules/ssh"
 	"github.com/hardbox-io/hardbox/internal/modules/filesystem"
+	"github.com/hardbox-io/hardbox/internal/modules/firewall"
 	"github.com/hardbox-io/hardbox/internal/modules/kernel"
 	"github.com/hardbox-io/hardbox/internal/modules/logging"
 	"github.com/hardbox-io/hardbox/internal/modules/mac"
@@ -15,6 +14,7 @@ import (
 	"github.com/hardbox-io/hardbox/internal/modules/network"
 	"github.com/hardbox-io/hardbox/internal/modules/ntp"
 	"github.com/hardbox-io/hardbox/internal/modules/services"
+	"github.com/hardbox-io/hardbox/internal/modules/ssh"
 	"github.com/hardbox-io/hardbox/internal/modules/updates"
 	"github.com/hardbox-io/hardbox/internal/modules/users"
 )

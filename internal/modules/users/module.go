@@ -774,5 +774,3 @@ func sudoersActiveLineContains(content, token string) bool {
 	}
 	return false
 }
-
-

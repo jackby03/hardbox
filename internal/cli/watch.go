@@ -12,6 +12,7 @@ import (
 
 	"github.com/hardbox-io/hardbox/internal/config"
 	"github.com/hardbox-io/hardbox/internal/engine"
+	"github.com/hardbox-io/hardbox/internal/modules/util"
 	"github.com/hardbox-io/hardbox/internal/notify"
 	"github.com/hardbox-io/hardbox/internal/report"
 )
@@ -116,6 +117,7 @@ Examples:
 								Msg("watch: regressions detected")
 							alerter.NotifyRegression(cmd.Context(), d)
 							if failOnRegression {
+								alerter.Wait()
 								return fmt.Errorf("regressions detected: %d check(s) regressed", len(d.Regressions))
 							}
 						}
@@ -125,6 +127,7 @@ Examples:
 
 				if maxRuns > 0 && run >= maxRuns {
 					log.Info().Int("runs", run).Msg("watch: max-runs reached")
+					alerter.Wait()
 					return nil
 				}
 
@@ -132,6 +135,7 @@ Examples:
 				select {
 				case <-cmd.Context().Done():
 					log.Info().Msg("watch: shutting down")
+					alerter.Wait()
 					return nil
 				case <-time.After(interval):
 				}
@@ -154,5 +158,5 @@ func writeWatchReport(r *report.Report, path string) error {
 	if err != nil {
 		return fmt.Errorf("marshalling report: %w", err)
 	}
-	return os.WriteFile(path, data, 0o600)
+	return util.AtomicWrite(path, data, 0o600)
 }

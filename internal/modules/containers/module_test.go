@@ -136,8 +136,8 @@ func TestPlan_ReturnsNoChanges(t *testing.T) {
 func TestAudit_RootlessCompliant(t *testing.T) {
 	m := containers.NewModuleForTest(
 		fakeRunner(map[string]fakeResult{
-			secOptKey():      {out: "name=rootless\nname=apparmor\nname=seccomp,profile=default\n"},
-			"docker ps -q":   {out: ""},
+			secOptKey():    {out: "name=rootless\nname=apparmor\nname=seccomp,profile=default\n"},
+			"docker ps -q": {out: ""},
 		}),
 		alwaysHasDocker,
 		testdataPath(t, "daemon_hardened.json"),

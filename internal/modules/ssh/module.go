@@ -366,7 +366,7 @@ func defaultChecks(cfg modules.ModuleConfig) []sshdCheck {
 		{
 			check: modules.Check{
 				ID: "ssh-014", Title: "Set StrictModes yes",
-				Severity: modules.SeverityMedium,
+				Severity:   modules.SeverityMedium,
 				Compliance: []modules.ComplianceRef{},
 			},
 			key: "strictmodes", expected: "yes",
@@ -398,7 +398,7 @@ func defaultChecks(cfg modules.ModuleConfig) []sshdCheck {
 		{
 			check: modules.Check{
 				ID: "ssh-017", Title: "Non-default SSH port",
-				Severity: modules.SeverityInfo,
+				Severity:   modules.SeverityInfo,
 				Compliance: []modules.ComplianceRef{},
 			},
 			key: "port", expected: "!22",

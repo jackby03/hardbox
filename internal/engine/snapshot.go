@@ -18,12 +18,12 @@ const snapshotBaseDir = "/var/lib/hardbox/snapshots"
 
 // snapshot records the pre-apply state of the system so changes can be reverted.
 type snapshot struct {
-	SessionID    string            `json:"session_id"`
-	Host         string            `json:"host"`
-	Profile      string            `json:"profile"`
-	Timestamp    time.Time         `json:"timestamp"`
-	FilesBackedUp []fileBackup     `json:"files_backed_up"`
-	SysctlValues map[string]string `json:"sysctl_snapshot"`
+	SessionID     string            `json:"session_id"`
+	Host          string            `json:"host"`
+	Profile       string            `json:"profile"`
+	Timestamp     time.Time         `json:"timestamp"`
+	FilesBackedUp []fileBackup      `json:"files_backed_up"`
+	SysctlValues  map[string]string `json:"sysctl_snapshot"`
 
 	dir string // base directory on disk, not serialised
 }
@@ -54,7 +54,10 @@ func (s *snapshot) Save() error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(filepath.Join(s.dir, "manifest.json"), data, 0600)
+	if err := util.AtomicWrite(filepath.Join(s.dir, "manifest.json"), data, 0o600); err != nil {
+		return err
+	}
+	return nil
 }
 
 // BackupFile copies srcPath into the snapshot directory before it is modified.

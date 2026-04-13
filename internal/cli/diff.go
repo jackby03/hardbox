@@ -11,7 +11,7 @@ import (
 
 func newDiffCmd() *cobra.Command {
 	var (
-		format    string
+		format     string
 		outputFile string
 	)
 

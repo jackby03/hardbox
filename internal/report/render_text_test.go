@@ -144,9 +144,9 @@ func TestRenderText_WriteErrors(t *testing.T) {
 		name  string
 		limit int
 	}{
-		{"fail on first write", 0},   // header write fails immediately
-		{"fail after header", 300},   // module-name write fails (header > 300 bytes)
-		{"fail mid-render", 700},     // finding-row write fails (header+module header > 700 bytes)
+		{"fail on first write", 0}, // header write fails immediately
+		{"fail after header", 300}, // module-name write fails (header > 300 bytes)
+		{"fail mid-render", 700},   // finding-row write fails (header+module header > 700 bytes)
 	}
 
 	for _, tt := range tests {

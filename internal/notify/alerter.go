@@ -4,6 +4,7 @@ package notify
 import (
 	"context"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -24,11 +25,11 @@ const (
 // AlertPayload is the JSON body sent by the generic HTTP adapter.
 // The Slack adapter receives the same struct and reformats it as text.
 type AlertPayload struct {
-	Event      EventType    `json:"event"`
-	Timestamp  time.Time    `json:"timestamp"`
-	Profile    string       `json:"profile"`
-	SessionID  string       `json:"session_id"`
-	ScoreDelta int          `json:"score_delta,omitempty"`
+	Event      EventType      `json:"event"`
+	Timestamp  time.Time      `json:"timestamp"`
+	Profile    string         `json:"profile"`
+	SessionID  string         `json:"session_id"`
+	ScoreDelta int            `json:"score_delta,omitempty"`
 	Findings   []AlertFinding `json:"findings"`
 }
 
@@ -49,6 +50,8 @@ type Alerter interface {
 	// NotifyNewFindings fires "critical_finding" or "high_finding" events for
 	// non-compliant critical/high findings in the report.
 	NotifyNewFindings(ctx context.Context, r *report.Report)
+	// Wait blocks until all dispatched alerts have completed or the context expires.
+	Wait()
 }
 
 // NoopAlerter is a zero-cost implementation used when no notifications are configured.
@@ -56,6 +59,7 @@ type NoopAlerter struct{}
 
 func (NoopAlerter) NotifyRegression(_ context.Context, _ *report.DiffReport) {}
 func (NoopAlerter) NotifyNewFindings(_ context.Context, _ *report.Report)    {}
+func (NoopAlerter) Wait()                                                    {}
 
 // adapter is the internal interface each concrete destination implements.
 type adapter interface {
@@ -66,6 +70,7 @@ type adapter interface {
 // MultiAlerter fans out to all configured adapters.
 type MultiAlerter struct {
 	adapters []adapter
+	wg       sync.WaitGroup
 }
 
 // New builds an Alerter from the notifications config.
@@ -150,12 +155,19 @@ func (m *MultiAlerter) NotifyNewFindings(ctx context.Context, r *report.Report) 
 	}
 }
 
+// Wait blocks until all dispatched alerts have completed.
+func (m *MultiAlerter) Wait() {
+	m.wg.Wait()
+}
+
 func (m *MultiAlerter) dispatch(ctx context.Context, event EventType, module string, payload AlertPayload) {
 	for _, a := range m.adapters {
 		if !a.matches(event, module) {
 			continue
 		}
+		m.wg.Add(1)
 		go func(a adapter) {
+			defer m.wg.Done()
 			if err := a.send(ctx, payload); err != nil {
 				log.Warn().
 					Err(err).

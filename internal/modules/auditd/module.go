@@ -19,9 +19,9 @@ const (
 	defaultConfPath  = "/etc/audit/auditd.conf"
 	hardboxRulesFile = "99-hardbox.rules"
 
-	minLogFileSize        = 8  // MB
-	wantLogFileAction     = "keep_logs"
-	wantSpaceLeftAction   = "email"
+	minLogFileSize      = 8 // MB
+	wantLogFileAction   = "keep_logs"
+	wantSpaceLeftAction = "email"
 )
 
 type commandRunner func(ctx context.Context, name string, args ...string) (string, error)
