@@ -16,8 +16,8 @@ package containers_test
 
 import (
 	"context"
+	"github.com/hardbox-io/hardbox/internal/modules/util/testutil"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -68,16 +68,6 @@ func assertStatus(t *testing.T, findings []modules.Finding, id string, want modu
 		}
 	}
 	t.Errorf("check %s: not found in %d findings", id, len(findings))
-}
-
-// testdataPath returns the absolute path to a file in testdata/.
-func testdataPath(t *testing.T, name string) string {
-	t.Helper()
-	p, err := filepath.Abs(filepath.Join("testdata", name))
-	if err != nil {
-		t.Fatalf("testdataPath(%q): %v", name, err)
-	}
-	return p
 }
 
 // emptyAuditDir creates a temporary directory with no .rules files.
@@ -154,8 +144,8 @@ func TestAudit_RootlessCompliant(t *testing.T) {
 			"docker ps -q": {out: ""},
 		}),
 		alwaysHasDocker,
-		testdataPath(t, "daemon_hardened.json"),
-		testdataPath(t, "audit_rules"),
+		testutil.TestdataAbsPath(t, "daemon_hardened.json"),
+		testutil.TestdataAbsPath(t, "audit_rules"),
 	)
 	findings, err := m.Audit(context.Background(), nil)
 	if err != nil {
@@ -171,8 +161,8 @@ func TestAudit_RootlessNonCompliant(t *testing.T) {
 			"docker ps -q": {out: ""},
 		}),
 		alwaysHasDocker,
-		testdataPath(t, "daemon_hardened.json"),
-		testdataPath(t, "audit_rules"),
+		testutil.TestdataAbsPath(t, "daemon_hardened.json"),
+		testutil.TestdataAbsPath(t, "audit_rules"),
 	)
 	findings, err := m.Audit(context.Background(), nil)
 	if err != nil {
@@ -192,7 +182,7 @@ func TestAudit_ICCCompliant(t *testing.T) {
 			"docker ps -q": {out: ""},
 		}),
 		alwaysHasDocker,
-		testdataPath(t, "daemon_hardened.json"),
+		testutil.TestdataAbsPath(t, "daemon_hardened.json"),
 		emptyAuditDir(t),
 	)
 	findings, err := m.Audit(context.Background(), nil)
@@ -209,7 +199,7 @@ func TestAudit_ICCNonCompliant(t *testing.T) {
 			"docker ps -q": {out: ""},
 		}),
 		alwaysHasDocker,
-		testdataPath(t, "daemon_default.json"),
+		testutil.TestdataAbsPath(t, "daemon_default.json"),
 		emptyAuditDir(t),
 	)
 	findings, err := m.Audit(context.Background(), nil)
@@ -230,7 +220,7 @@ func TestAudit_UsernsRemapCompliant(t *testing.T) {
 			"docker ps -q": {out: ""},
 		}),
 		alwaysHasDocker,
-		testdataPath(t, "daemon_hardened.json"),
+		testutil.TestdataAbsPath(t, "daemon_hardened.json"),
 		emptyAuditDir(t),
 	)
 	findings, err := m.Audit(context.Background(), nil)
@@ -247,7 +237,7 @@ func TestAudit_UsernsRemapNonCompliant(t *testing.T) {
 			"docker ps -q": {out: ""},
 		}),
 		alwaysHasDocker,
-		testdataPath(t, "daemon_default.json"),
+		testutil.TestdataAbsPath(t, "daemon_default.json"),
 		emptyAuditDir(t),
 	)
 	findings, err := m.Audit(context.Background(), nil)
@@ -269,7 +259,7 @@ func TestAudit_TLSSkippedNoTCPHost(t *testing.T) {
 			"docker ps -q": {out: ""},
 		}),
 		alwaysHasDocker,
-		testdataPath(t, "daemon_hardened.json"),
+		testutil.TestdataAbsPath(t, "daemon_hardened.json"),
 		emptyAuditDir(t),
 	)
 	findings, err := m.Audit(context.Background(), nil)
@@ -287,7 +277,7 @@ func TestAudit_TLSNonCompliantOnTCPHost(t *testing.T) {
 			"docker ps -q": {out: ""},
 		}),
 		alwaysHasDocker,
-		testdataPath(t, "daemon_tcp_no_tls.json"),
+		testutil.TestdataAbsPath(t, "daemon_tcp_no_tls.json"),
 		emptyAuditDir(t),
 	)
 	findings, err := m.Audit(context.Background(), nil)
@@ -308,7 +298,7 @@ func TestAudit_SeccompAndMACNonCompliant(t *testing.T) {
 			"docker ps -q": {out: ""},
 		}),
 		alwaysHasDocker,
-		testdataPath(t, "daemon_default.json"),
+		testutil.TestdataAbsPath(t, "daemon_default.json"),
 		emptyAuditDir(t),
 	)
 	findings, err := m.Audit(context.Background(), nil)
@@ -326,7 +316,7 @@ func TestAudit_SeccompAndMACCompliant(t *testing.T) {
 			"docker ps -q": {out: ""},
 		}),
 		alwaysHasDocker,
-		testdataPath(t, "daemon_default.json"),
+		testutil.TestdataAbsPath(t, "daemon_default.json"),
 		emptyAuditDir(t),
 	)
 	findings, err := m.Audit(context.Background(), nil)
@@ -350,7 +340,7 @@ func TestAudit_PrivilegedContainerFound(t *testing.T) {
 			inspectKey:     {out: "true"},
 		}),
 		alwaysHasDocker,
-		testdataPath(t, "daemon_default.json"),
+		testutil.TestdataAbsPath(t, "daemon_default.json"),
 		emptyAuditDir(t),
 	)
 	findings, err := m.Audit(context.Background(), nil)
@@ -369,7 +359,7 @@ func TestAudit_NoPrivilegedContainers(t *testing.T) {
 			inspectKey:     {out: "false"},
 		}),
 		alwaysHasDocker,
-		testdataPath(t, "daemon_default.json"),
+		testutil.TestdataAbsPath(t, "daemon_default.json"),
 		emptyAuditDir(t),
 	)
 	findings, err := m.Audit(context.Background(), nil)
@@ -394,7 +384,7 @@ func TestAudit_SocketMountFound(t *testing.T) {
 			mntKey:         {out: "/var/run/docker.sock /home/user/data "},
 		}),
 		alwaysHasDocker,
-		testdataPath(t, "daemon_default.json"),
+		testutil.TestdataAbsPath(t, "daemon_default.json"),
 		emptyAuditDir(t),
 	)
 	findings, err := m.Audit(context.Background(), nil)
@@ -415,7 +405,7 @@ func TestAudit_NoSocketMount(t *testing.T) {
 			mntKey:         {out: "/home/user/data "},
 		}),
 		alwaysHasDocker,
-		testdataPath(t, "daemon_default.json"),
+		testutil.TestdataAbsPath(t, "daemon_default.json"),
 		emptyAuditDir(t),
 	)
 	findings, err := m.Audit(context.Background(), nil)
@@ -436,7 +426,7 @@ func TestAudit_ImageScanningAlwaysManual(t *testing.T) {
 			"docker ps -q": {out: ""},
 		}),
 		alwaysHasDocker,
-		testdataPath(t, "daemon_default.json"),
+		testutil.TestdataAbsPath(t, "daemon_default.json"),
 		emptyAuditDir(t),
 	)
 	findings, err := m.Audit(context.Background(), nil)
@@ -457,8 +447,8 @@ func TestAudit_AuditRulePresent(t *testing.T) {
 			"docker ps -q": {out: ""},
 		}),
 		alwaysHasDocker,
-		testdataPath(t, "daemon_default.json"),
-		testdataPath(t, "audit_rules"),
+		testutil.TestdataAbsPath(t, "daemon_default.json"),
+		testutil.TestdataAbsPath(t, "audit_rules"),
 	)
 	findings, err := m.Audit(context.Background(), nil)
 	if err != nil {
@@ -474,7 +464,7 @@ func TestAudit_AuditRuleMissing(t *testing.T) {
 			"docker ps -q": {out: ""},
 		}),
 		alwaysHasDocker,
-		testdataPath(t, "daemon_default.json"),
+		testutil.TestdataAbsPath(t, "daemon_default.json"),
 		emptyAuditDir(t),
 	)
 	findings, err := m.Audit(context.Background(), nil)
@@ -483,4 +473,3 @@ func TestAudit_AuditRuleMissing(t *testing.T) {
 	}
 	assertStatus(t, findings, "cnt-010", modules.StatusNonCompliant)
 }
-

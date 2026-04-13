@@ -16,6 +16,7 @@ package logging_test
 
 import (
 	"context"
+	"github.com/hardbox-io/hardbox/internal/modules/util/testutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -73,10 +74,6 @@ func assertStatus(t *testing.T, findings []modules.Finding, id string, want modu
 		}
 	}
 	t.Errorf("check %s: not found in findings", id)
-}
-
-func testdataPath(elem ...string) string {
-	return filepath.Join(append([]string{"testdata"}, elem...)...)
 }
 
 // noLogrotate returns a path that doesn't exist.
@@ -148,11 +145,11 @@ func TestAudit_AllCompliant(t *testing.T) {
 
 	m := logging.NewModuleForTest(
 		fakeRunner(rsyslogActive()),
-		testdataPath("rsyslog_remote.conf"),
-		testdataPath("nonexistent_dir"), // rsyslog.d not needed (main conf has remote)
-		testdataPath("journald_persistent.conf"),
-		testdataPath("rsyslog_remote.conf"), // reuse as logrotate.conf placeholder
-		testdataPath("nonexistent_dir"),
+		testutil.TestdataPath("rsyslog_remote.conf"),
+		testutil.TestdataPath("nonexistent_dir"), // rsyslog.d not needed (main conf has remote)
+		testutil.TestdataPath("journald_persistent.conf"),
+		testutil.TestdataPath("rsyslog_remote.conf"), // reuse as logrotate.conf placeholder
+		testutil.TestdataPath("nonexistent_dir"),
 		varLog,
 	)
 
@@ -177,11 +174,11 @@ func TestAudit_AllCompliant(t *testing.T) {
 func TestAudit_NoSyslogService_LOG001NonCompliant(t *testing.T) {
 	m := logging.NewModuleForTest(
 		fakeRunner(noSyslogActive()),
-		testdataPath("rsyslog_remote.conf"),
-		testdataPath("nonexistent_dir"),
-		testdataPath("journald_persistent.conf"),
-		testdataPath("rsyslog_remote.conf"),
-		testdataPath("nonexistent_dir"),
+		testutil.TestdataPath("rsyslog_remote.conf"),
+		testutil.TestdataPath("nonexistent_dir"),
+		testutil.TestdataPath("journald_persistent.conf"),
+		testutil.TestdataPath("rsyslog_remote.conf"),
+		testutil.TestdataPath("nonexistent_dir"),
 		t.TempDir(),
 	)
 
@@ -197,11 +194,11 @@ func TestAudit_NoSyslogService_LOG001NonCompliant(t *testing.T) {
 func TestAudit_LocalOnlyRsyslog_LOG002NonCompliant(t *testing.T) {
 	m := logging.NewModuleForTest(
 		fakeRunner(rsyslogActive()),
-		testdataPath("rsyslog_local.conf"),
-		testdataPath("nonexistent_dir"),
-		testdataPath("journald_persistent.conf"),
-		testdataPath("rsyslog_local.conf"),
-		testdataPath("nonexistent_dir"),
+		testutil.TestdataPath("rsyslog_local.conf"),
+		testutil.TestdataPath("nonexistent_dir"),
+		testutil.TestdataPath("journald_persistent.conf"),
+		testutil.TestdataPath("rsyslog_local.conf"),
+		testutil.TestdataPath("nonexistent_dir"),
 		t.TempDir(),
 	)
 
@@ -217,11 +214,11 @@ func TestAudit_LocalOnlyRsyslog_LOG002NonCompliant(t *testing.T) {
 func TestAudit_JournaldDefault_LOG004LOG005NonCompliant(t *testing.T) {
 	m := logging.NewModuleForTest(
 		fakeRunner(rsyslogActive()),
-		testdataPath("rsyslog_remote.conf"),
-		testdataPath("nonexistent_dir"),
-		testdataPath("journald_default.conf"),
-		testdataPath("rsyslog_remote.conf"),
-		testdataPath("nonexistent_dir"),
+		testutil.TestdataPath("rsyslog_remote.conf"),
+		testutil.TestdataPath("nonexistent_dir"),
+		testutil.TestdataPath("journald_default.conf"),
+		testutil.TestdataPath("rsyslog_remote.conf"),
+		testutil.TestdataPath("nonexistent_dir"),
 		t.TempDir(),
 	)
 
@@ -238,11 +235,11 @@ func TestAudit_JournaldDefault_LOG004LOG005NonCompliant(t *testing.T) {
 func TestAudit_NoLogrotate_LOG006NonCompliant(t *testing.T) {
 	m := logging.NewModuleForTest(
 		fakeRunner(rsyslogActive()),
-		testdataPath("rsyslog_remote.conf"),
-		testdataPath("nonexistent_dir"),
-		testdataPath("journald_persistent.conf"),
+		testutil.TestdataPath("rsyslog_remote.conf"),
+		testutil.TestdataPath("nonexistent_dir"),
+		testutil.TestdataPath("journald_persistent.conf"),
 		noLogrotate(),
-		testdataPath("nonexistent_logrotate_dir"),
+		testutil.TestdataPath("nonexistent_logrotate_dir"),
 		t.TempDir(),
 	)
 
@@ -266,11 +263,11 @@ func TestPlan_WritesJournaldKeys(t *testing.T) {
 
 	m := logging.NewModuleForTest(
 		fakeRunner(rsyslogActive()),
-		testdataPath("rsyslog_remote.conf"),
-		testdataPath("nonexistent_dir"),
+		testutil.TestdataPath("rsyslog_remote.conf"),
+		testutil.TestdataPath("nonexistent_dir"),
 		journaldConfPath,
-		testdataPath("rsyslog_remote.conf"),
-		testdataPath("nonexistent_dir"),
+		testutil.TestdataPath("rsyslog_remote.conf"),
+		testutil.TestdataPath("nonexistent_dir"),
 		t.TempDir(),
 	)
 
@@ -315,11 +312,11 @@ func TestPlan_Revert(t *testing.T) {
 
 	m := logging.NewModuleForTest(
 		fakeRunner(rsyslogActive()),
-		testdataPath("rsyslog_remote.conf"),
-		testdataPath("nonexistent_dir"),
+		testutil.TestdataPath("rsyslog_remote.conf"),
+		testutil.TestdataPath("nonexistent_dir"),
 		journaldConfPath,
-		testdataPath("rsyslog_remote.conf"),
-		testdataPath("nonexistent_dir"),
+		testutil.TestdataPath("rsyslog_remote.conf"),
+		testutil.TestdataPath("nonexistent_dir"),
 		t.TempDir(),
 	)
 
@@ -353,11 +350,11 @@ func TestPlan_Revert(t *testing.T) {
 func TestPlan_AlreadyCompliant_NoChanges(t *testing.T) {
 	m := logging.NewModuleForTest(
 		fakeRunner(rsyslogActive()),
-		testdataPath("rsyslog_remote.conf"),
-		testdataPath("nonexistent_dir"),
-		testdataPath("journald_persistent.conf"),
-		testdataPath("rsyslog_remote.conf"),
-		testdataPath("nonexistent_dir"),
+		testutil.TestdataPath("rsyslog_remote.conf"),
+		testutil.TestdataPath("nonexistent_dir"),
+		testutil.TestdataPath("journald_persistent.conf"),
+		testutil.TestdataPath("rsyslog_remote.conf"),
+		testutil.TestdataPath("nonexistent_dir"),
 		t.TempDir(),
 	)
 
@@ -369,4 +366,3 @@ func TestPlan_AlreadyCompliant_NoChanges(t *testing.T) {
 		t.Errorf("expected 0 changes when already compliant, got %d", len(changes))
 	}
 }
-
