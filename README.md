@@ -3,7 +3,7 @@
 **The definitive Linux hardening toolkit for IT, Cloud, Infrastructure, and Security teams.**
 
 [![Pre-release](https://img.shields.io/github/v/release/jackby03/hardbox?display_name=tag&include_prereleases&sort=semver&style=flat-square&label=pre-release&color=3b82f6)](https://github.com/jackby03/hardbox/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
+[![License: AGPLv3](https://img.shields.io/badge/License-AGPLv3-blue.svg?style=flat-square)](LICENSE)
 [![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go&logoColor=white)](go.mod)
 [![CIS Benchmarks](https://img.shields.io/badge/CIS-Level%201-2563EB?style=flat-square)](docs/COMPLIANCE.md)
 [![Build](https://img.shields.io/github/actions/workflow/status/jackby03/hardbox/quality-gates.yaml?style=flat-square&label=quality)](https://github.com/jackby03/hardbox/actions)
