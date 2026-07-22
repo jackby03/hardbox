@@ -94,7 +94,7 @@ func TestRenderText_Success(t *testing.T) {
 	}
 
 	// Check module
-	if !strings.Contains(output, "Module: test-module           Score:  85%") {
+	if !strings.Contains(output, "Module: test-module           Score: 85%") {
 		t.Errorf("expected module info in output, got:\n%s", output)
 	}
 

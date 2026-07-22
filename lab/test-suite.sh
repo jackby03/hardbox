@@ -9,6 +9,11 @@ WATCH_DIR="/tmp/watch-reports"
 PASS=0
 FAIL=0
 
+# Synced output directory (maps to lab/.tmp/ on host)
+OUT_DIR="/vagrant/.tmp"
+rm -rf "$OUT_DIR" 2>/dev/null
+mkdir -p "$OUT_DIR"
+
 green() { printf '\033[32mOK\033[0m  %s\n' "$*"; ((PASS++)); }
 red()   { printf '\033[31mFAIL\033[0m %s\n' "$*"; ((FAIL++)); }
 skip()  { printf '\033[33mSKIP\033[0m %s\n' "$*"; }
@@ -156,5 +161,17 @@ echo ""
 echo "========================================="
 printf "  Results: \033[32m%d passed\033[0m, \033[31m%d failed\033[0m\n" $PASS $FAIL
 echo "========================================="
+
+# ── Copy artifacts to shared folder ───────────────────────────────────
+echo ""
+echo "Exporting reports to /vagrant/.tmp/ ..."
+cp "$REPORT_DIR/audit-prod.html" "$OUT_DIR/audit-production.html" 2>/dev/null || true
+cp "$REPORT_DIR/audit-cis1.json"  "$OUT_DIR/audit-cis1.json" 2>/dev/null || true
+cp "$REPORT_DIR/audit-inherit.json" "$OUT_DIR/audit-inherit.json" 2>/dev/null || true
+cp /tmp/dry-run.log "$OUT_DIR/dry-run.log" 2>/dev/null || true
+cp /tmp/diff.log "$OUT_DIR/diff.log" 2>/dev/null || true
+ls -la "$OUT_DIR/"
+echo ""
+echo "Reports available at: lab/.tmp/ on your host machine"
 
 exit $FAIL

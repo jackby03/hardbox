@@ -19,9 +19,13 @@ param(
 $ErrorActionPreference = "Stop"
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $projectRoot = Split-Path -Parent $scriptDir
+$tmpDir = Join-Path $scriptDir ".tmp"
 
 function Write-Step { Write-Host "`n>>> " -NoNewline -ForegroundColor Cyan; Write-Host $args[0] }
 function Write-Ok   { Write-Host "  " -NoNewline; Write-Host $args[0] -ForegroundColor Green }
+
+# ── reset tmp dir ─────────────────────────────────────────────────────
+if (Test-Path $tmpDir) { Remove-Item -Recurse -Force $tmpDir }
 
 # ── 0. teardown if requested ──────────────────────────────────────────
 
