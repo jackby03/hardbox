@@ -78,11 +78,6 @@ func Build(sessionID, profile string, findings []modules.Finding) *Report {
 		records := make([]FindingRecord, 0, len(mf))
 
 		for _, f := range mf {
-			w := severityWeight(f.Check.Severity)
-			totalW += w
-			if f.IsCompliant() {
-				compliantW += w
-			}
 			records = append(records, FindingRecord{
 				CheckID:  f.Check.ID,
 				Title:    f.Check.Title,
@@ -92,11 +87,23 @@ func Build(sessionID, profile string, findings []modules.Finding) *Report {
 				Target:   f.Target,
 				Detail:   f.Detail,
 			})
+			// Skipped, manual, and error findings are excluded from scoring — they
+			// represent checks that are not applicable or not actionable on this host.
+			if f.Status == modules.StatusSkipped || f.Status == modules.StatusManual || f.Status == modules.StatusError {
+				continue
+			}
+			w := severityWeight(f.Check.Severity)
+			totalW += w
+			if f.IsCompliant() {
+				compliantW += w
+			}
 		}
 
 		score := 0
 		if totalW > 0 {
 			score = (compliantW * 100) / totalW
+		} else {
+			score = -1 // no applicable checks — display as "N/A"
 		}
 
 		overallCompliant += compliantW

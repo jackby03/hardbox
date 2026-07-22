@@ -40,6 +40,7 @@ const htmlCSS = `<style>
   .score-good{color:#34d399}
   .score-warn{color:#fbbf24}
   .score-bad{color:#f87171}
+  .score-skip{color:#64748b}
   .module{background:#1a1d27;border:1px solid #2d3148;border-radius:10px;
           margin-bottom:24px;overflow:hidden}
   .module-header{display:flex;justify-content:space-between;align-items:center;
@@ -108,7 +109,7 @@ func renderHTML(r *Report, w io.Writer) error {
 	if _, err := fmt.Fprintf(w,
 		"<div class=\"summary\">\n"+
 			"  <div class=\"card\"><div class=\"label\">Overall Score</div>"+
-			"<div class=\"value %s\">%d%%</div></div>\n"+
+			"<div class=\"value %s\">%s</div></div>\n"+
 			"  <div class=\"card\"><div class=\"label\">Modules</div>"+
 			"<div class=\"value\">%d</div></div>\n"+
 			"  <div class=\"card\"><div class=\"label\">Compliant</div>"+
@@ -116,7 +117,7 @@ func renderHTML(r *Report, w io.Writer) error {
 			"  <div class=\"card\"><div class=\"label\">Total Findings</div>"+
 			"<div class=\"value\">%d</div></div>\n"+
 			"</div>\n",
-		scoreClass, r.OverallScore, len(r.Modules), compliant, total,
+		scoreClass, scoreLabel(r.OverallScore), len(r.Modules), compliant, total,
 	); err != nil {
 		return err
 	}
@@ -128,7 +129,7 @@ func renderHTML(r *Report, w io.Writer) error {
 			"<div class=\"module\">\n"+
 				"  <div class=\"module-header\">\n"+
 				"    <span class=\"module-name\">%s</span>\n"+
-				"    <span class=\"module-score %s\">Score: %d%%</span>\n"+
+				"    <span class=\"module-score %s\">Score: %s</span>\n"+
 				"  </div>\n"+
 				"  <table>\n    <thead>\n      <tr>\n"+
 				"        <th>Check ID</th><th>Status</th><th>Severity</th>"+
@@ -136,7 +137,7 @@ func renderHTML(r *Report, w io.Writer) error {
 				"      </tr>\n    </thead>\n    <tbody>\n",
 			html.EscapeString(mod.Name),
 			modScoreClass,
-			mod.Score,
+			scoreLabel(mod.Score),
 		); err != nil {
 			return err
 		}
@@ -195,6 +196,8 @@ func renderHTML(r *Report, w io.Writer) error {
 
 func scoreCSS(score int) string {
 	switch {
+	case score < 0:
+		return "score-skip"
 	case score >= 80:
 		return "score-good"
 	case score >= 50:
@@ -202,6 +205,13 @@ func scoreCSS(score int) string {
 	default:
 		return "score-bad"
 	}
+}
+
+func scoreLabel(score int) string {
+	if score < 0 {
+		return "N/A"
+	}
+	return fmt.Sprintf("%d%%", score)
 }
 
 func htmlStatusBadgeClass(status string) string {

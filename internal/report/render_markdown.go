@@ -27,21 +27,21 @@ func renderMarkdown(r *Report, w io.Writer) error {
 			"| Session | `%s` |\n"+
 			"| Profile | `%s` |\n"+
 			"| Timestamp | %s |\n"+
-			"| **Overall Score** | **%d%%** |\n\n",
+			"| **Overall Score** | **%s** |\n\n",
 		r.SessionID,
 		r.Profile,
 		r.Timestamp.Format("2006-01-02 15:04:05 UTC"),
-		r.OverallScore,
+		scoreLabel(r.OverallScore),
 	); err != nil {
 		return err
 	}
 
 	for _, mod := range r.Modules {
 		if _, err := fmt.Fprintf(w,
-			"## Module: `%s`  —  Score: %d%%\n\n"+
+			"## Module: `%s`  —  Score: %s\n\n"+
 				"| Check ID | Status | Severity | Title | Detail |\n"+
 				"|---|---|---|---|---|\n",
-			mod.Name, mod.Score,
+			mod.Name, scoreLabel(mod.Score),
 		); err != nil {
 			return err
 		}

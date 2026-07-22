@@ -33,7 +33,7 @@ func renderText(r *Report, w io.Writer) error {
 	}
 
 	for _, mod := range r.Modules {
-		if _, err := fmt.Fprintf(w, "\nModule: %-20s  Score: %3d%%\n", mod.Name, mod.Score); err != nil {
+		if _, err := fmt.Fprintf(w, "\nModule: %-20s  Score: %s\n", mod.Name, scoreLabel(mod.Score)); err != nil {
 			return err
 		}
 		if _, err := fmt.Fprintf(w, "  %-12s %-10s %-8s %s\n",
@@ -60,8 +60,8 @@ func renderText(r *Report, w io.Writer) error {
 
 	compliant, total := countFindings(r)
 	if _, err := fmt.Fprintf(w,
-		"\n%s\n  Overall score: %d%%   Findings: %d compliant / %d total\n%s\n\n",
-		sep, r.OverallScore, compliant, total, sep,
+		"\n%s\n  Overall score: %s   Findings: %d compliant / %d total\n%s\n\n",
+		sep, scoreLabel(r.OverallScore), compliant, total, sep,
 	); err != nil {
 		return err
 	}
