@@ -155,14 +155,31 @@ func TestAudit_NoBackendDetectedReturnsErrors(t *testing.T) {
 	}
 }
 
-func TestPlan_NoChanges(t *testing.T) {
-	m := firewall.NewModuleForTest(nil, firewall.FakeDistroDebian, alwaysTrue, "", "")
+func TestPlan_GeneratesChanges(t *testing.T) {
+	compliantUFW := func(ctx context.Context, name string, args ...string) (string, error) {
+		if name == "ufw" && len(args) >= 1 && args[0] == "status" {
+			return `Status: inactive`, nil
+		}
+		return "", nil
+	}
+	m := firewall.NewModuleForTest(compliantUFW, firewall.FakeDistroDebian, alwaysTrue, "", "")
 	changes, err := m.Plan(context.Background(), nil)
 	if err != nil {
 		t.Fatalf("Plan(): %v", err)
 	}
-	if len(changes) != 0 {
-		t.Fatalf("expected no changes, got %d", len(changes))
+	if len(changes) == 0 {
+		t.Fatal("expected changes for inactive UFW system")
+	}
+	for _, c := range changes {
+		if c.Description == "" {
+			t.Error("change missing description")
+		}
+		if c.Apply == nil {
+			t.Error("change missing apply function")
+		}
+		if c.Revert == nil {
+			t.Error("change missing revert function")
+		}
 	}
 }
 
