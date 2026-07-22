@@ -33,10 +33,45 @@ hardbox serve --reports-dir /var/log/hardbox/reports/
 
 | Route | Description |
 |---|---|
-| `/` | Report list — all JSON reports sorted by date |
+| `/` | Report list or fleet overview (auto-detected) |
 | `/report/<session_id>` | Single report — findings table per module |
 | `/diff/<before_id>/<after_id>` | Inline diff between two reports |
+| `/fleet` | Fleet overview — host table with scores and trends |
+| `/host/<hostname>` | Per-host drill-down — score sparkline and history |
 | `/api/reports` | JSON API — report metadata list |
+
+## Fleet overview (v0.5)
+
+When JSON reports from multiple hosts are present in `--reports-dir`
+(each report must include a non-empty `hostname` field), the dashboard
+automatically switches to fleet overview mode.
+
+The fleet page shows:
+
+- **Host table** — hostname, last audit timestamp, compliance score, delta
+- **Regression indicator** — hosts with score drops highlighted in red
+- **Trend sparklines** — inline SVG bars per host showing score history
+- **Per-host drill-down** — click hostname to see all reports and score chart
+
+```bash
+# Generate fleet reports on multiple hosts
+hardbox fleet audit --hosts hosts.txt --profile production
+
+# Start the dashboard — fleet view auto-detected
+hardbox serve --reports-dir /var/log/hardbox/reports/
+```
+
+## Compliance trend history (v0.5)
+
+The dashboard renders SVG sparklines from historical JSON reports in the
+reports directory. No database required — history is derived from files
+on disk produced by `hardbox watch` or consecutive audit runs.
+
+- **Single-host view** — trend card above the report list with stats
+- **Host detail** — sparkline with high, low, and delta from first report
+- **Fleet rows** — mini sparklines per host in the fleet table
+- **Color coding** — green (>=80%), yellow (>=50%), red (<50%)
+- **Graceful** — single report shows "need more data"; two+ renders sparkline
 
 ## Security
 
