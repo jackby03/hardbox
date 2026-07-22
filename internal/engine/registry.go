@@ -17,10 +17,12 @@ package engine
 import (
 	"github.com/hardbox-io/hardbox/internal/modules"
 	"github.com/hardbox-io/hardbox/internal/modules/auditd"
+	"github.com/hardbox-io/hardbox/internal/modules/boot"
 	"github.com/hardbox-io/hardbox/internal/modules/containers"
 	"github.com/hardbox-io/hardbox/internal/modules/crypto"
 	"github.com/hardbox-io/hardbox/internal/modules/filesystem"
 	"github.com/hardbox-io/hardbox/internal/modules/firewall"
+	"github.com/hardbox-io/hardbox/internal/modules/integrity"
 	"github.com/hardbox-io/hardbox/internal/modules/kernel"
 	"github.com/hardbox-io/hardbox/internal/modules/logging"
 	"github.com/hardbox-io/hardbox/internal/modules/mac"
@@ -29,6 +31,7 @@ import (
 	"github.com/hardbox-io/hardbox/internal/modules/ntp"
 	"github.com/hardbox-io/hardbox/internal/modules/services"
 	"github.com/hardbox-io/hardbox/internal/modules/ssh"
+	"github.com/hardbox-io/hardbox/internal/modules/storage"
 	"github.com/hardbox-io/hardbox/internal/modules/updates"
 	"github.com/hardbox-io/hardbox/internal/modules/users"
 )
@@ -54,8 +57,9 @@ func registeredModules() []modules.Module {
 		&crypto.Module{},
 		&containers.Module{},
 		&ssh.Module{},
-		// Stub placeholders — each will be fully implemented in its own package.
-		// &pam.Module{},
+		&boot.Module{},
+		&storage.Module{},
+		&integrity.Module{},
 	}
 }
 
