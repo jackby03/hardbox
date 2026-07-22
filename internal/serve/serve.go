@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"math"
 	"net"
 	"net/http"
 	"os"
@@ -51,7 +52,10 @@ type Server struct {
 
 // New creates a Server and parses the embedded templates.
 func New(cfg Config) (*Server, error) {
-	tmpl, err := template.New("").ParseFS(templateFS, "templates/*.html")
+	funcMap := template.FuncMap{
+		"sparklineSVG": sparklineSVG,
+	}
+	tmpl, err := template.New("").Funcs(funcMap).ParseFS(templateFS, "templates/*.html")
 	if err != nil {
 		return nil, fmt.Errorf("parsing templates: %w", err)
 	}
@@ -189,6 +193,59 @@ type fleetHostRow struct {
 	SessionID   string
 	Reports     int
 	IsRegressed bool
+	Trend       trendSummary
+}
+
+// trendSummary carries score history data used to render SVG sparklines.
+type trendSummary struct {
+	Scores []int
+	High   int
+	Low    int
+	Delta  int
+	Count  int
+}
+
+func computeTrend(reports []*report.Report) trendSummary {
+	if len(reports) == 0 {
+		return trendSummary{}
+	}
+	sorted := make([]*report.Report, len(reports))
+	copy(sorted, reports)
+	sort.Slice(sorted, func(i, j int) bool {
+		return sorted[i].Timestamp.Before(sorted[j].Timestamp)
+	})
+	scores := make([]int, len(sorted))
+	high, low := -999, 999
+	for i, r := range sorted {
+		s := r.OverallScore
+		if s < 0 {
+			s = 0
+		}
+		scores[i] = s
+		if s > high {
+			high = s
+		}
+		if s < low {
+			low = s
+		}
+	}
+	if high < 0 {
+		high = 0
+	}
+	if low > 100 {
+		low = 0
+	}
+	delta := 0
+	if len(scores) >= 2 {
+		delta = scores[len(scores)-1] - scores[0]
+	}
+	return trendSummary{
+		Scores: scores,
+		High:   high,
+		Low:    low,
+		Delta:  delta,
+		Count:  len(scores),
+	}
 }
 
 func (s *Server) isFleet(reports []*report.Report) bool {
@@ -227,6 +284,7 @@ func (s *Server) buildFleetRows(reports []*report.Report) []fleetHostRow {
 			Profile:   reps[0].Profile,
 			SessionID: reps[0].SessionID,
 			Reports:   len(reps),
+			Trend:     computeTrend(reps),
 		}
 
 		if len(reps) >= 2 {
@@ -285,6 +343,7 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	s.render(w, "index.html", map[string]any{
 		"Reports":    reports,
 		"ReportsDir": s.cfg.ReportsDir,
+		"Trend":      computeTrend(reports),
 	})
 }
 
@@ -333,6 +392,7 @@ func (s *Server) handleHost(w http.ResponseWriter, r *http.Request) {
 		"Delta":    delta,
 		"HasDelta": hasDelta,
 		"Scores":   scores,
+		"Trend":    computeTrend(hostReps),
 	})
 }
 
@@ -348,7 +408,15 @@ func (s *Server) handleReport(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "report not found", http.StatusNotFound)
 		return
 	}
-	s.render(w, "report.html", map[string]any{"Report": rep})
+	reports, _ := s.loadReports()
+	var hostReps []*report.Report
+	if rep.Hostname != "" {
+		hostReps = s.hostReports(rep.Hostname, reports)
+	}
+	s.render(w, "report.html", map[string]any{
+		"Report": rep,
+		"Trend":  computeTrend(hostReps),
+	})
 }
 
 // handleDiff renders the diff page at /diff/<id1>/<id2>.
@@ -404,4 +472,41 @@ func (s *Server) render(w http.ResponseWriter, name string, data any) {
 	if err := s.tmpl.ExecuteTemplate(w, name, data); err != nil {
 		http.Error(w, "render error: "+err.Error(), http.StatusInternalServerError)
 	}
+}
+
+// sparklineSVG returns an inline SVG sparkline for a trend summary.
+// Width=120, Height=24, only rendered when 2+ data points exist.
+func sparklineSVG(t trendSummary) template.HTML {
+	if t.Count < 2 || len(t.Scores) == 0 {
+		return ""
+	}
+	high, low := t.High, t.Low
+	span := high - low
+	if span == 0 {
+		span = 1
+	}
+
+	w, h := 120.0, 24.0
+	barW := w / float64(len(t.Scores))
+	if barW < 2 {
+		barW = 2
+	}
+
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf(`<svg width="%.0f" height="%.0f" style="vertical-align:middle;margin-left:4px">`, w, h))
+	for i, score := range t.Scores {
+		x := float64(i) * barW
+		barH := math.Max(2, float64(score-low)/float64(span)*h)
+		y := h - barH
+		color := "#4ade80"
+		if score < 50 {
+			color = "#f87171"
+		} else if score < 80 {
+			color = "#facc15"
+		}
+		sb.WriteString(fmt.Sprintf(`<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" fill="%s" rx="1"/>`,
+			x, y, barW-1, barH, color))
+	}
+	sb.WriteString("</svg>")
+	return template.HTML(sb.String())
 }

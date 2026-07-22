@@ -12,7 +12,7 @@
       <th>Last Audit</th>
       <th>Score</th>
       <th>Delta</th>
-      <th>Reports</th>
+      <th>Trend</th>
       <th></th>
     </tr>
   </thead>
@@ -39,6 +39,7 @@
         {{end}}
       </td>
       <td class="meta">{{.Reports}}</td>
+      <td>{{sparklineSVG .Trend}}</td>
       <td><a href="/report/{{.SessionID}}">view →</a></td>
     </tr>
   {{end}}

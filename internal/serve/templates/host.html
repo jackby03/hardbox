@@ -32,15 +32,23 @@
 </div>
 
 <h3>Score History</h3>
-<div class="card" style="overflow-x:auto">
-{{if .Scores}}
-<div style="display:flex;align-items:flex-end;gap:2px;height:80px;padding:8px 0">
-{{range .Scores}}
-  {{$h := .}}
-  {{if lt $h 0}}<div title="N/A" style="width:12px;background:#64748b;border-radius:2px 2px 0 0;min-height:2px"></div>
-  {{else}}<div title="{{$h}}%" style="width:12px;background:{{if ge $h 80}}#4ade80{{else if ge $h 50}}#facc15{{else}}#f87171{{end}};border-radius:2px 2px 0 0;height:{{$h}}%"></div>{{end}}
-{{end}}
+<div class="card" style="overflow-x:auto;padding:16px">
+{{if .Trend.Count}}
+{{if gt .Trend.Count 1}}
+<div style="display:flex;gap:24px;align-items:center;margin-bottom:12px">
+  <div style="font-size:12px;color:#94a3b8">
+    {{.Trend.Count}} data points &middot;
+    High: <span style="color:#4ade80;font-weight:600">{{.Trend.High}}%</span>
+    &middot; Low: <span style="color:#f87171;font-weight:600">{{.Trend.Low}}%</span>
+    {{if .Trend.Delta}}
+    &middot; Delta: <span style="color:{{if gt .Trend.Delta 0}}#4ade80{{else}}#f87171{{end}};font-weight:600">{{if gt .Trend.Delta 0}}+{{end}}{{.Trend.Delta}}%</span>
+    {{end}}
+  </div>
+  <div>{{sparklineSVG .Trend}}</div>
 </div>
+{{else}}
+<p class="meta">1 data point — more reports needed for trend analysis.</p>
+{{end}}
 {{else}}
 <p class="empty">No historical data available.</p>
 {{end}}
