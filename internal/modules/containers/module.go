@@ -125,9 +125,44 @@ func (m *Module) Audit(ctx context.Context, _ modules.ModuleConfig) ([]modules.F
 	return findings, nil
 }
 
-// Plan is read-only for this iteration; remediation varies per container runtime.
-func (m *Module) Plan(_ context.Context, _ modules.ModuleConfig) ([]modules.Change, error) {
-	return nil, nil
+// Plan applies Docker daemon hardening settings via /etc/docker/daemon.json.
+func (m *Module) Plan(ctx context.Context, _ modules.ModuleConfig) ([]modules.Change, error) {
+	findings, err := m.Audit(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var changes []modules.Change
+	for _, f := range findings {
+		if f.IsCompliant() || f.Status == modules.StatusSkipped || f.Status == modules.StatusManual {
+			continue
+		}
+		if f.Check.ID == "cnt-002" {
+			changes = append(changes, modules.Change{
+				Description:  "Containers: disable inter-container communication",
+				DryRunOutput: `  {"icc": false} in /etc/docker/daemon.json`,
+				Apply: func() error {
+					return m.patchDaemonJSON(map[string]any{"icc": false})
+				},
+				Revert: func() error {
+					return m.removeDaemonJSON("icc")
+				},
+			})
+		}
+		if f.Check.ID == "cnt-003" {
+			changes = append(changes, modules.Change{
+				Description:  "Containers: enable user namespace remapping",
+				DryRunOutput: `  {"userns-remap": "default"} in /etc/docker/daemon.json`,
+				Apply: func() error {
+					return m.patchDaemonJSON(map[string]any{"userns-remap": "default"})
+				},
+				Revert: func() error {
+					return m.removeDaemonJSON("userns-remap")
+				},
+			})
+		}
+	}
+	return changes, nil
 }
 
 // allSkipped returns StatusSkipped for every check with the given detail message.
@@ -411,5 +446,43 @@ func (m *Module) findAuditRules() modules.Finding {
 		Target:  "audit rule for /var/run/docker.sock",
 		Detail:  "Add '-w /var/run/docker.sock -p rwxa -k docker' to /etc/audit/rules.d/docker.rules.",
 	}
+}
+
+func (m *Module) patchDaemonJSON(updates map[string]any) error {
+	dockerRoot := "/etc/docker"
+	_ = os.MkdirAll(dockerRoot, 0o755)
+	path := dockerRoot + "/daemon.json"
+	data, err := os.ReadFile(path)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+
+	cfg := make(map[string]any)
+	if len(data) > 0 {
+		_ = json.Unmarshal(data, &cfg)
+	}
+	for k, v := range updates {
+		cfg[k] = v
+	}
+	out, err := json.MarshalIndent(cfg, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, out, 0o644)
+}
+
+func (m *Module) removeDaemonJSON(key string) error {
+	path := "/etc/docker/daemon.json"
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	cfg := make(map[string]any)
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		return err
+	}
+	delete(cfg, key)
+	out, _ := json.MarshalIndent(cfg, "", "  ")
+	return os.WriteFile(path, out, 0o644)
 }
 
