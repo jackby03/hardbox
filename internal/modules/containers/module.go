@@ -450,7 +450,7 @@ func (m *Module) findAuditRules() modules.Finding {
 
 func (m *Module) patchDaemonJSON(updates map[string]any) error {
 	dockerRoot := "/etc/docker"
-	os.MkdirAll(dockerRoot, 0o755)
+	_ = os.MkdirAll(dockerRoot, 0o755)
 	path := dockerRoot + "/daemon.json"
 	data, err := os.ReadFile(path)
 	if err != nil && !os.IsNotExist(err) {
@@ -459,7 +459,7 @@ func (m *Module) patchDaemonJSON(updates map[string]any) error {
 
 	cfg := make(map[string]any)
 	if len(data) > 0 {
-		json.Unmarshal(data, &cfg)
+		_ = json.Unmarshal(data, &cfg)
 	}
 	for k, v := range updates {
 		cfg[k] = v

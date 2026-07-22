@@ -107,7 +107,7 @@ func (m *Module) Plan(ctx context.Context, cfg modules.ModuleConfig) ([]modules.
 						return m.writeAPTConfig()
 					},
 					Revert: func() error {
-						exec.CommandContext(ctx, "apt-get", "remove", "-y", "unattended-upgrades").Run()
+						_ = exec.CommandContext(ctx, "apt-get", "remove", "-y", "unattended-upgrades").Run()
 						return nil
 					},
 				})
