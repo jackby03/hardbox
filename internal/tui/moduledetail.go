@@ -1,3 +1,5 @@
+//go:build tui
+
 // Copyright (C) 2024 Jack (jackby03)
 //
 // This program is free software: you can redistribute it and/or modify
@@ -222,4 +224,5 @@ func truncate(s string, maxLen int) string {
 	}
 	return string(runes[:maxLen-1]) + "…"
 }
+
 

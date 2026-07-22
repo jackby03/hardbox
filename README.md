@@ -42,7 +42,7 @@ It covers every layer of the security stack: kernel parameters, SSH, firewall, P
 
 | Feature | Description |
 |:---|:---|
-| **Modern TUI** | Interactive terminal UI (Bubble Tea). Navigate, configure, and apply hardening without memorizing commands |
+| **Modern TUI** | Interactive terminal UI (Bubble Tea) — deferred, available with `go build -tags tui` |
 | **Modular Architecture** | Enable or disable any module independently. Mix and match profiles at will |
 | **12 Built-in Profiles** | `cis-level1`, `cis-level2`, `pci-dss`, `stig`, `hipaa`, `nist-800-53`, `iso27001`, `cloud-aws`, `cloud-gcp`, `cloud-azure`, `production`, `development` |
 | **Dry Run Mode** | Preview every exact change before it's applied. Safe to run on live servers |
@@ -285,6 +285,10 @@ hardbox serve --reports-dir ./reports
 - [ ] Plugin SDK v1 API frozen
 - [ ] `.deb` / `.rpm` native packages via GoReleaser
 - [ ] Full documentation and migration guides
+
+> **Note:** The TUI (`internal/tui/`) is implemented but deferred from the first GA release.
+> It is excluded from default builds via `//go:build tui` and can be enabled with:
+> `go build -tags tui ./cmd/hardbox`
 
 ---
 

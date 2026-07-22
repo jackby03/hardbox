@@ -1,3 +1,5 @@
+//go:build tui
+
 // Copyright (C) 2024 Jack (jackby03)
 //
 // This program is free software: you can redistribute it and/or modify
@@ -200,4 +202,5 @@ func (a App) View() string {
 		return lipgloss.NewStyle().Padding(1, 2).Render("Loading...")
 	}
 }
+
 
