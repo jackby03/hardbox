@@ -214,8 +214,8 @@ func (m *Module) planUFW(ctx context.Context) ([]modules.Change, error) {
 						return err
 					},
 					Revert: func() error {
-						m.runner()(ctx, "ufw", "delete", "allow", "in", "on", "lo")
-						m.runner()(ctx, "ufw", "delete", "allow", "out", "on", "lo")
+						_, _ = m.runner()(ctx, "ufw", "delete", "allow", "in", "on", "lo")
+						_, _ = m.runner()(ctx, "ufw", "delete", "allow", "out", "on", "lo")
 						return nil
 					},
 				})
@@ -264,7 +264,7 @@ func (m *Module) planFirewalld(ctx context.Context) ([]modules.Change, error) {
 						return err
 					},
 					Revert: func() error {
-						m.runner()(ctx, "systemctl", "disable", "--now", "firewalld")
+						_, _ = m.runner()(ctx, "systemctl", "disable", "--now", "firewalld")
 						return nil
 					},
 				})
