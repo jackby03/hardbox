@@ -58,7 +58,9 @@ func TestWrite_SARIF_OnlyNonCompliant(t *testing.T) {
 	}
 
 	var doc map[string]interface{}
-	json.Unmarshal([]byte(buf.String()), &doc)
+	if err := json.Unmarshal([]byte(buf.String()), &doc); err != nil {
+		t.Fatalf("json.Unmarshal: %v", err)
+	}
 	runs := doc["runs"].([]interface{})
 	results := runs[0].(map[string]interface{})["results"].([]interface{})
 	if len(results) != 1 {
@@ -116,7 +118,9 @@ func TestWrite_SARIF_RulesPresent(t *testing.T) {
 	}
 
 	var doc map[string]interface{}
-	json.Unmarshal([]byte(buf.String()), &doc)
+	if err := json.Unmarshal([]byte(buf.String()), &doc); err != nil {
+		t.Fatalf("json.Unmarshal: %v", err)
+	}
 	runs := doc["runs"].([]interface{})
 	driver := runs[0].(map[string]interface{})["tool"].(map[string]interface{})["driver"].(map[string]interface{})
 	rules := driver["rules"].([]interface{})
