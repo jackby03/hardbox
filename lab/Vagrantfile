@@ -1,0 +1,38 @@
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/jammy64"
+  config.vm.box_version = "20241002.0.0"
+
+  config.vm.hostname = "hardbox-test"
+
+  # Host-only network for stable IP and SSH access
+  config.vm.network "private_network", ip: "192.168.56.50"
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.name = "hardbox-test"
+    vb.memory = 2048
+    vb.cpus = 2
+    # Small disk - we just need the OS + hardbox
+    vb.linked_clone = true
+  end
+
+  # Install test dependencies on first boot
+  config.vm.provision "shell", inline: <<-SHELL
+    apt-get update -qq
+    apt-get install -y -qq jq
+    # Passwordless sudo for the vagrant user
+    echo "vagrant ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/vagrant
+    # Create reports directory
+    mkdir -p /tmp/reports /tmp/watch-reports
+    chown vagrant:vagrant /tmp/reports /tmp/watch-reports
+  SHELL
+
+  # Sync the project into the VM for development convenience (optional)
+  # config.vm.synced_folder "../", "/hardbox", type: "virtualbox"
+
+  config.vm.post_up_message = <<-MSG
+    hardbox test VM ready!
+    
+    SSH:  vagrant ssh
+    Or:   ssh vagrant@192.168.56.50  (password: vagrant)
+  MSG
+end
