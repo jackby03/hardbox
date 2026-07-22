@@ -1,6 +1,7 @@
 package serve
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -136,5 +137,89 @@ func TestHostReports_FiltersCorrectly(t *testing.T) {
 	}
 	if hostReps[0].OverallScore != 80 {
 		t.Error("most recent report should be first")
+	}
+}
+
+func TestComputeTrend_Basic(t *testing.T) {
+	now := time.Now()
+	reports := []*report.Report{
+		makeTestReport("a", "", 70, now.Add(-2*time.Hour)),
+		makeTestReport("b", "", 75, now.Add(-1*time.Hour)),
+		makeTestReport("c", "", 82, now),
+	}
+	tr := computeTrend(reports)
+	if tr.Count != 3 {
+		t.Errorf("count: got %d, want 3", tr.Count)
+	}
+	if tr.High != 82 {
+		t.Errorf("high: got %d, want 82", tr.High)
+	}
+	if tr.Low != 70 {
+		t.Errorf("low: got %d, want 70", tr.Low)
+	}
+	if tr.Delta != 12 {
+		t.Errorf("delta: got %d, want 12", tr.Delta)
+	}
+	if len(tr.Scores) != 3 {
+		t.Errorf("scores length: got %d, want 3", len(tr.Scores))
+	}
+}
+
+func TestComputeTrend_SingleReport(t *testing.T) {
+	reports := []*report.Report{
+		makeTestReport("a", "", 80, time.Now()),
+	}
+	tr := computeTrend(reports)
+	if tr.Count != 1 {
+		t.Errorf("count: got %d, want 1", tr.Count)
+	}
+	if tr.Delta != 0 {
+		t.Errorf("delta for single report: got %d, want 0", tr.Delta)
+	}
+}
+
+func TestComputeTrend_Empty(t *testing.T) {
+	tr := computeTrend(nil)
+	if tr.Count != 0 {
+		t.Errorf("count for nil: got %d, want 0", tr.Count)
+	}
+}
+
+func TestComputeTrend_NegativeScores(t *testing.T) {
+	now := time.Now()
+	reports := []*report.Report{
+		makeTestReport("a", "", -1, now.Add(-1*time.Hour)),
+		makeTestReport("b", "", 75, now),
+	}
+	tr := computeTrend(reports)
+	if tr.Scores[0] != 0 {
+		t.Errorf("negative score should be 0, got %d", tr.Scores[0])
+	}
+}
+
+func TestSparklineSVG_SinglePoint(t *testing.T) {
+	tr := trendSummary{Scores: []int{80}, Count: 1}
+	svg := sparklineSVG(tr)
+	if svg != "" {
+		t.Error("single point should produce empty SVG")
+	}
+}
+
+func TestSparklineSVG_MultiPoint(t *testing.T) {
+	tr := trendSummary{Scores: []int{50, 60, 70, 80}, Count: 4, High: 80, Low: 50}
+	svg := string(sparklineSVG(tr))
+	if !strings.Contains(svg, "<svg") || !strings.Contains(svg, "</svg>") {
+		t.Error("SVG should have valid tags")
+	}
+	if !strings.Contains(svg, "<rect") {
+		t.Error("SVG should contain rect elements")
+	}
+}
+
+func TestSparklineSVG_Colors(t *testing.T) {
+	tr := trendSummary{Scores: []int{30, 60, 90}, Count: 3, High: 90, Low: 30}
+	svg := string(sparklineSVG(tr))
+	if !strings.Contains(svg, "#4ade80") && !strings.Contains(svg, "#f87171") {
+		t.Error("SVG should have color coding")
 	}
 }

@@ -4,6 +4,25 @@
 <h2>Audit Reports</h2>
 <p class="meta">{{len .Reports}} report(s) in <code>{{.ReportsDir}}</code></p>
 
+{{if .Trend.Count}}
+{{if gt .Trend.Count 1}}
+<div class="card" style="margin-bottom:16px">
+  <div style="display:flex;gap:24px;align-items:center">
+    <div>
+      <div class="label">Score Trend</div>
+      <div style="display:flex;gap:16px;margin-top:4px;font-size:12px">
+        <div>Current: <strong style="color:{{if ge .Trend.High 80}}#4ade80{{else if ge .Trend.High 50}}#facc15{{else}}#f87171{{end}}">{{.Trend.High}}%</strong></div>
+        {{if .Trend.Delta}}<div>Delta: <strong style="color:{{if gt .Trend.Delta 0}}#4ade80{{else}}#f87171{{end}}">{{if gt .Trend.Delta 0}}+{{end}}{{.Trend.Delta}}%</strong></div>{{end}}
+        <div>High: <strong style="color:#4ade80">{{.Trend.High}}%</strong></div>
+        <div>Low: <strong style="color:#f87171">{{.Trend.Low}}%</strong></div>
+      </div>
+    </div>
+    <div>{{sparklineSVG .Trend}}</div>
+  </div>
+</div>
+{{end}}
+{{end}}
+
 {{if not .Reports}}
 <div class="card">
   <p class="empty">No reports found. Run <code>hardbox audit --format json --output report.json</code> to generate one.</p>
