@@ -278,27 +278,27 @@ func (m *Module) planFirewalld(ctx context.Context) ([]modules.Change, error) {
 						_, err := m.runner()(ctx, "firewall-cmd", "--set-default-zone=drop")
 						return err
 					},
-					Revert: func() error {
-						m.runner()(ctx, "firewall-cmd", "--set-default-zone=public")
-						return nil
-					},
-				})
-			}
-		case "fw-004":
-			if !state.loopbackAllowed {
-				changes = append(changes, modules.Change{
-					Description:  "Firewall: add loopback interface to trusted zone",
-					DryRunOutput: "  firewall-cmd --zone=trusted --add-interface=lo --permanent",
-					Apply: func() error {
-						_, err := m.runner()(ctx, "firewall-cmd", "--zone=trusted", "--add-interface=lo", "--permanent")
-						if err == nil {
-							m.runner()(ctx, "firewall-cmd", "--reload")
-						}
-						return err
-					},
-					Revert: func() error {
-						m.runner()(ctx, "firewall-cmd", "--zone=trusted", "--remove-interface=lo", "--permanent")
-						m.runner()(ctx, "firewall-cmd", "--reload")
+				Revert: func() error {
+					_, _ = m.runner()(ctx, "firewall-cmd", "--set-default-zone=public")
+					return nil
+				},
+			})
+		}
+	case "fw-004":
+		if !state.loopbackAllowed {
+			changes = append(changes, modules.Change{
+				Description:  "Firewall: add loopback interface to trusted zone",
+				DryRunOutput: "  firewall-cmd --zone=trusted --add-interface=lo --permanent",
+				Apply: func() error {
+					_, err := m.runner()(ctx, "firewall-cmd", "--zone=trusted", "--add-interface=lo", "--permanent")
+					if err == nil {
+						_, _ = m.runner()(ctx, "firewall-cmd", "--reload")
+					}
+					return err
+				},
+				Revert: func() error {
+					_, _ = m.runner()(ctx, "firewall-cmd", "--zone=trusted", "--remove-interface=lo", "--permanent")
+					_, _ = m.runner()(ctx, "firewall-cmd", "--reload")
 						return nil
 					},
 				})
