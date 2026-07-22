@@ -23,8 +23,11 @@
 ## Quick Start
 
 ```bash
-# Install
-curl -fsSL https://hardbox.jackby03.com/install.sh | bash
+# Clone and build (requires Go 1.22+)
+git clone https://github.com/jackby03/hardbox
+cd hardbox
+go build -o hardbox ./cmd/hardbox
+sudo mv hardbox /usr/local/bin/
 
 # Audit — no changes made
 sudo hardbox audit --profile cis-level1 --format html -o audit.html
