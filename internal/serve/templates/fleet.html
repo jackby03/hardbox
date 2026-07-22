@@ -1,0 +1,58 @@
+{{template "base.html" .}}
+{{define "title"}}hardbox — fleet overview{{end}}
+{{define "content"}}
+<h2>Fleet Overview</h2>
+<p class="meta">{{.TotalHosts}} host(s) tracked in <code>{{.ReportsDir}}</code></p>
+
+<div class="card" style="padding:0">
+<table>
+  <thead>
+    <tr>
+      <th>Host</th>
+      <th>Last Audit</th>
+      <th>Score</th>
+      <th>Delta</th>
+      <th>Reports</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+  {{range .Hosts}}
+    <tr{{if .IsRegressed}} class="regression"{{end}}>
+      <td><a href="/host/{{.Hostname}}" style="font-weight:600">{{.Hostname}}</a></td>
+      <td class="meta">{{.LastAudit.Format "2006-01-02 15:04"}}</td>
+      <td>
+        {{$s := .Score}}
+        {{if lt $s 0}}<span class="score" style="color:#64748b">N/A</span>
+        {{else if ge $s 80}}<span class="score hi" style="font-size:14px">{{$s}}%</span>
+        {{else if ge $s 50}}<span class="score mid" style="font-size:14px">{{$s}}%</span>
+        {{else}}<span class="score lo" style="font-size:14px">{{$s}}%</span>{{end}}
+      </td>
+      <td>
+        {{if .HasDelta}}
+          {{$d := .ScoreDelta}}
+          {{if gt $d 0}}<span class="diff-badge imp">+{{$d}}</span>
+          {{else if lt $d 0}}<span class="diff-badge reg">{{$d}}</span>
+          {{else}}<span class="diff-badge neu">0</span>{{end}}
+        {{else}}
+          <span class="meta">—</span>
+        {{end}}
+      </td>
+      <td class="meta">{{.Reports}}</td>
+      <td><a href="/report/{{.SessionID}}">view →</a></td>
+    </tr>
+  {{end}}
+  </tbody>
+</table>
+</div>
+
+<div class="card" style="margin-top:16px">
+  <p class="meta" style="margin:0">
+    <span class="diff-badge reg">regression</span> = score dropped since last run &nbsp;
+    <span class="diff-badge imp">improvement</span> = score improved &nbsp;
+    <span class="diff-badge neu">0</span> = no change
+  </p>
+</div>
+
+<p class="meta" style="margin-top:16px"><a href="/">← switch to report list view</a></p>
+{{end}}

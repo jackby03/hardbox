@@ -115,6 +115,8 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("/", s.handleIndex)
 	s.mux.HandleFunc("/report/", s.handleReport)
 	s.mux.HandleFunc("/diff/", s.handleDiff)
+	s.mux.HandleFunc("/fleet", s.handleFleet)
+	s.mux.HandleFunc("/host/", s.handleHost)
 	s.mux.HandleFunc("/api/reports", s.handleAPIReports)
 }
 
@@ -124,6 +126,7 @@ type reportMeta struct {
 	Timestamp    time.Time `json:"timestamp"`
 	Profile      string    `json:"profile"`
 	OverallScore int       `json:"overall_score"`
+	Hostname     string    `json:"hostname,omitempty"`
 	Modules      int       `json:"modules"`
 	File         string    `json:"file"`
 }
@@ -174,16 +177,162 @@ func (s *Server) findReport(sessionID string) (*report.Report, error) {
 	return nil, fmt.Errorf("report %q not found", sessionID)
 }
 
-// handleIndex renders the report list page.
+// ── fleet detection & grouping ────────────────────────────────────────
+
+type fleetHostRow struct {
+	Hostname    string
+	Score       int
+	ScoreDelta  int
+	HasDelta    bool
+	LastAudit   time.Time
+	Profile     string
+	SessionID   string
+	Reports     int
+	IsRegressed bool
+}
+
+func (s *Server) isFleet(reports []*report.Report) bool {
+	if len(reports) < 2 {
+		return false
+	}
+	hosts := make(map[string]bool)
+	for _, r := range reports {
+		if r.Hostname != "" {
+			hosts[r.Hostname] = true
+		}
+	}
+	return len(hosts) > 1
+}
+
+func (s *Server) buildFleetRows(reports []*report.Report) []fleetHostRow {
+	byHost := make(map[string][]*report.Report)
+	for _, r := range reports {
+		h := r.Hostname
+		if h == "" {
+			continue
+		}
+		byHost[h] = append(byHost[h], r)
+	}
+
+	var rows []fleetHostRow
+	for host, reps := range byHost {
+		sort.Slice(reps, func(i, j int) bool {
+			return reps[i].Timestamp.After(reps[j].Timestamp)
+		})
+
+		row := fleetHostRow{
+			Hostname:  host,
+			Score:     reps[0].OverallScore,
+			LastAudit: reps[0].Timestamp,
+			Profile:   reps[0].Profile,
+			SessionID: reps[0].SessionID,
+			Reports:   len(reps),
+		}
+
+		if len(reps) >= 2 {
+			row.ScoreDelta = reps[0].OverallScore - reps[1].OverallScore
+			row.HasDelta = true
+			row.IsRegressed = row.ScoreDelta < 0
+		}
+
+		rows = append(rows, row)
+	}
+
+	sort.Slice(rows, func(i, j int) bool {
+		return rows[i].LastAudit.After(rows[j].LastAudit)
+	})
+
+	return rows
+}
+
+func (s *Server) hostReports(hostname string, reports []*report.Report) []*report.Report {
+	var result []*report.Report
+	for _, r := range reports {
+		h := r.Hostname
+		if h == "" {
+			h = "unknown"
+		}
+		if h == hostname {
+			result = append(result, r)
+		}
+	}
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Timestamp.After(result[j].Timestamp)
+	})
+	return result
+}
+
+// ── handlers ──────────────────────────────────────────────────────────
+
+// handleIndex renders the report list page, or shows fleet overview.
 func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
 		return
 	}
 	reports, _ := s.loadReports()
+
+	if s.isFleet(reports) {
+		rows := s.buildFleetRows(reports)
+		s.render(w, "fleet.html", map[string]any{
+			"Hosts":      rows,
+			"TotalHosts": len(rows),
+			"ReportsDir": s.cfg.ReportsDir,
+		})
+		return
+	}
+
 	s.render(w, "index.html", map[string]any{
 		"Reports":    reports,
 		"ReportsDir": s.cfg.ReportsDir,
+	})
+}
+
+// handleFleet renders the fleet overview page.
+func (s *Server) handleFleet(w http.ResponseWriter, r *http.Request) {
+	reports, _ := s.loadReports()
+	rows := s.buildFleetRows(reports)
+	s.render(w, "fleet.html", map[string]any{
+		"Hosts":      rows,
+		"TotalHosts": len(rows),
+		"ReportsDir": s.cfg.ReportsDir,
+	})
+}
+
+// handleHost shows all reports for a single host with score history.
+func (s *Server) handleHost(w http.ResponseWriter, r *http.Request) {
+	hostname := strings.TrimPrefix(r.URL.Path, "/host/")
+	if hostname == "" {
+		http.Redirect(w, r, "/fleet", http.StatusFound)
+		return
+	}
+	reports, _ := s.loadReports()
+	hostReps := s.hostReports(hostname, reports)
+	if len(hostReps) == 0 {
+		http.Error(w, "host not found", http.StatusNotFound)
+		return
+	}
+
+	latest := hostReps[0]
+	delta := 0
+	hasDelta := false
+	if len(hostReps) >= 2 {
+		delta = hostReps[0].OverallScore - hostReps[1].OverallScore
+		hasDelta = true
+	}
+
+	var scores []int
+	for i := len(hostReps) - 1; i >= 0; i-- {
+		scores = append(scores, hostReps[i].OverallScore)
+	}
+
+	s.render(w, "host.html", map[string]any{
+		"Hostname": hostname,
+		"Reports":  hostReps,
+		"Latest":   latest,
+		"Delta":    delta,
+		"HasDelta": hasDelta,
+		"Scores":   scores,
 	})
 }
 
@@ -241,6 +390,7 @@ func (s *Server) handleAPIReports(w http.ResponseWriter, r *http.Request) {
 			Timestamp:    rep.Timestamp,
 			Profile:      rep.Profile,
 			OverallScore: rep.OverallScore,
+			Hostname:     rep.Hostname,
 			Modules:      len(rep.Modules),
 		})
 	}
@@ -255,4 +405,3 @@ func (s *Server) render(w http.ResponseWriter, name string, data any) {
 		http.Error(w, "render error: "+err.Error(), http.StatusInternalServerError)
 	}
 }
-
