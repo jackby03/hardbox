@@ -51,7 +51,7 @@ See the full command reference: `hardbox --help`
 | Category | Capabilities |
 |---|---|
 | **Hardening** | 21 modules: SSH, firewall, kernel, users, filesystem, auditd, crypto, AppArmor/SELinux, NTP, updates, containers, boot, storage, integrity, malware, shells, processes, and more |
-| **Compliance** | 12 built-in profiles: CIS L1/L2, STIG, PCI-DSS, HIPAA, NIST 800-53, ISO 27001, cloud-aws/gcp/azure, production, development |
+| **Compliance** | 12 built-in profiles: `cis-level1`, `cis-level2`, `pci-dss`, `stig`, `hipaa`, `nist-800-53`, `iso27001`, `cloud-aws`, `cloud-gcp`, `cloud-azure`, `production`, `development` |
 | **Safety** | Dry-run mode, atomic file writes, one-command rollback, snapshot/restore |
 | **Reports** | JSON, HTML, Markdown, Text, SARIF — CI/CD-friendly and human-readable |
 | **Operations** | `hardbox watch` daemon, `hardbox fleet` multi-host over SSH, `hardbox serve` web dashboard, `hardbox diff` audit comparison |
