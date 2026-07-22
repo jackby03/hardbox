@@ -238,8 +238,10 @@ hardbox serve --reports-dir ./reports
 - [x] Webhook / alerting — Slack and HTTP webhooks on regression or critical finding
 - [x] Fleet overview in `hardbox serve` — aggregate multi-host scores, trends, regressions ([#136](https://github.com/jackby03/hardbox/issues/136))
 - [x] Profile inheritance — `extends: cis-level1` in YAML, override only what differs
-- [ ] Trend history — compliance score over time using historical JSON reports ([#138](https://github.com/jackby03/hardbox/issues/138))
-- [ ] SARIF export — `--format sarif` for GitHub Advanced Security and SIEM integration ([#139](https://github.com/jackby03/hardbox/issues/139))
+- [x] Trend history — compliance score over time using historical JSON reports ([#138](https://github.com/jackby03/hardbox/issues/138))
+- [x] SARIF export — `--format sarif` for GitHub Advanced Security and SIEM integration ([#139](https://github.com/jackby03/hardbox/issues/139))
+
+> **v0.5 is feature-complete.** All 6 items shipped. Ready for first release.
 
 ### v0.6 — Deep Coverage I
 - [ ] `boot` module — GRUB password, Secure Boot, `/boot` permissions

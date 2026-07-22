@@ -133,21 +133,57 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [0.5.0] — Unreleased — Observability & Continuous Compliance
+## [0.5.0] — 2026-07-22 — Observability & Continuous Compliance
 
-### Planned
+### Added
 
-#### P0 — Must Ship
-- `hardbox watch` — daemon mode; runs audit on a configurable interval, writes JSON results to disk, detects regressions, exits non-zero when score drops
-- Webhook / alerting — generic HTTP webhooks and built-in Slack adapter; fires on regression or new `critical` / `high` finding; configurable per-severity rules in `config.yaml`
-- Fleet overview in `hardbox serve` — when fleet audit JSON reports are present, the dashboard aggregates scores per host, highlights regressions across runs, and shows a per-host compliance timeline
+#### Continuous audit daemon (`hardbox watch`)
+- Daemon mode that runs full audits on a configurable interval
+- Writes timestamped JSON reports to `--report-dir`
+- Detects regressions by comparing consecutive audit results
+- `--fail-on-regression` flag for CI/CD gating
+- `--max-runs` for finite test loops
+- See: `docs/WATCH.md`
 
-#### P1 — Should Ship
-- Profile inheritance — `extends: <profile>` key in YAML profiles; inherits all settings from the base profile and overrides only declared keys; eliminates duplication across similar profiles
-- Trend history — `hardbox serve` renders a compliance score sparkline over time using all JSON reports found in the reports directory
+#### Webhook / alerting system (`internal/notify/`)
+- Generic HTTP webhook adapter with retry and exponential backoff
+- Built-in Slack incoming webhook adapter
+- Event filtering per severity (`critical_finding`, `high_finding`, `regression`)
+- Module-scoped alert filtering
+- MultiAlerter fan-out with goroutine dispatch and WaitGroup sync
+- See: `docs/WATCH.md`
 
-#### P2 — Nice to Have
-- SARIF export — `--format sarif` output for integration with GitHub Advanced Security code scanning and third-party SIEMs; findings map to SARIF `result` objects with rule metadata
+#### Fleet overview in `hardbox serve` (#136)
+- Auto-detects multi-host deployments via `hostname` field in JSON reports
+- Host table: score, delta, regression indicators, sparkline trend
+- Per-host drill-down (`/host/<hostname>`) with score history
+- Graceful fallback to single-report view
+- See: `docs/SERVE.md`
+
+#### Profile inheritance (#137)
+- `extends` key in YAML profiles for deep-merge inheritance
+- Built-in profiles embedded via `//go:embed` in `configs/profiles/`
+- Supports chains up to 5 levels with cycle detection
+- See: `docs/ROADMAP.md`
+
+#### Compliance score trend history (#138)
+- SVG sparklines derived from historical JSON reports on disk
+- Color-coded bars: green (>=80%), yellow (>=50%), red (<50%)
+- Summary stats: high, low, delta, data point count
+- Rendered on fleet table, host detail, and report index pages
+- See: `docs/SERVE.md`
+
+#### SARIF 2.1.0 export format (#139)
+- `--format sarif` on `hardbox audit` and `hardbox diff`
+- Full SARIF 2.1.0 document with rule definitions and severity mapping
+- Compatible with GitHub Advanced Security: `gh codeql upload-results`
+- Excludes compliant and skipped findings from results
+
+#### Developer experience
+- Vagrant-based automated testing lab (`lab/`)
+- 9-test validation suite covering audit, apply, watch, diff, serve, rollback
+- TUI deferred from default build via `//go:build tui` tag
+- Docs consolidated: INTEGRATIONS.md, GitHub Pages assets moved to `.github/pages/`
 
 ---
 
