@@ -251,39 +251,38 @@ hardbox serve --reports-dir ./reports
 - [ ] `shells` module — `TMOUT`, `HISTSIZE`, shell timeout, `.bashrc`/`.profile` audit
 - [ ] `processes` module — process accounting, `ulimits`, `/etc/security/limits.conf`
 
-### v0.7 — Deep Coverage II & Agent
+### v0.7 — Deep Coverage II
 - [ ] `hardware` module — USB lockdown (usbguard), Bluetooth/FireWire/Thunderbolt DMA
 - [ ] `nameservices` module — `/etc/hosts`, `nsswitch.conf`, DNSSEC, resolver validation
 - [ ] `webserver` module — Apache/nginx hardening: tokens, headers, TLS, directory listing
 - [ ] `databases` module — MySQL/PostgreSQL: remote root, test DBs, anonymous users
-- [ ] `hardbox agent` — lightweight telemetry agent reporting JSON to configurable URL
 - [ ] Package integrity — `debsums` / `rpm -Va` binary verification
 
-### v0.8 — SaaS Foundation
-- [ ] Backend API — multi-tenant report ingest, PostgreSQL, Go service
-- [ ] Auth — OAuth2/OIDC (GitHub, Google), JWT sessions
-- [ ] Cloud dashboard — hosted fleet view, trends, alerts powered by agent reports
-- [ ] Multi-host management — group hosts by tag, apply profiles per group
-
-### v0.9 — Enterprise & Polish
-- [ ] SSO / SAML 2.0 — Okta, Azure AD, Google Workspace
-- [ ] RBAC — Admin, Analyst, Read-only roles per org and host group
-- [ ] Audit log — immutable record of who applied what, when, on which host
-- [ ] Billing — Starter / Pro / Business plans, Stripe integration
-- [ ] Compliance PDF reports — executive reports per framework with evidence
+### v0.8 — Polish & Ecosystem
 - [ ] Custom checks — define checks via YAML without writing Go
+- [ ] Compliance PDF reports — executive reports per framework with evidence
+- [ ] `.deb` / `.rpm` native packages via GoReleaser
+- [ ] Plugin SDK v1 API frozen
+- [ ] Full documentation and migration guides
 
 ### v1.0 — Production Ready GA
-- [ ] 300+ checks across 21+ modules — full Lynis parity and beyond
-- [ ] SaaS GA with active billing
-- [ ] Enterprise: SSO, RBAC, audit log, SLA
-- [ ] Plugin SDK v1 API frozen
-- [ ] `.deb` / `.rpm` native packages via GoReleaser
-- [ ] Full documentation and migration guides
+- [ ] 300+ checks across 25+ modules — full Lynis parity
+- [ ] All industry-standard hardening categories covered
+- [ ] Stable API, SemVer from this point forward
 
 > **Note:** The TUI (`internal/tui/`) is implemented but deferred from the first GA release.
 > It is excluded from default builds via `//go:build tui` and can be enabled with:
 > `go build -tags tui ./cmd/hardbox`
+
+### Future / Post-v1.0 — SaaS & Enterprise
+
+The following features are deferred until hardbox has validated product-market fit
+with real users. They remain on the long-term roadmap but are not prioritized for v1.0:
+
+- **SaaS platform** — multi-tenant backend API, OAuth2/OIDC auth, cloud dashboard
+- **Telemetry agent** — lightweight agent reporting JSON to a configurable endpoint
+- **Enterprise** — SSO/SAML, RBAC, immutable audit log, billing integration
+- **Multi-host management** — group hosts by tag, apply profiles per group from dashboard
 
 ---
 

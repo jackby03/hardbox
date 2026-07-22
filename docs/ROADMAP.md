@@ -94,9 +94,9 @@ The dashboard renders a compliance score sparkline over time by reading all JSON
 
 ---
 
-## v0.7 — Deep Coverage II & Agent
+## v0.7 — Deep Coverage II
 
-**Theme:** Complete Lynis category parity. Introduce the telemetry agent that bridges the OSS CLI to the future SaaS platform.
+**Theme:** Close remaining Lynis category gaps. Reach 25 modules and ~260+ checks.
 
 ### New modules
 
@@ -107,89 +107,31 @@ The dashboard renders a compliance score sparkline over time by reading all JSON
 | `webserver` | Server tokens hidden, directory listing disabled, TLS 1.2+ enforced, security headers | CIS — , NIST SC-8 |
 | `databases` | Remote root login, test databases, anonymous users, password auth enforced | CIS — , PCI-DSS 6.3 |
 
-### hardbox agent
-
-A lightweight daemon that wraps `hardbox watch` and ships signed JSON audit results to a configurable HTTPS endpoint. This is the OSS component of the SaaS architecture — self-hosteable, with the endpoint defaulting to `localhost` for users who run their own backend.
-
-```bash
-hardbox agent \
-  --profile production \
-  --interval 6h \
-  --endpoint https://app.hardbox.io/ingest \
-  --token $HARDBOX_TOKEN
-```
-
-The agent is fully OSS. The endpoint it reports to can be hardbox Cloud, a self-hosted backend, or any compatible HTTP server.
-
 ### Package integrity
 
 `debsums` (Debian/Ubuntu) and `rpm -Va` (RHEL/Rocky) — verifies installed binary checksums against the package manager database. Detects tampered system binaries.
 
-**Target after v0.7:** ~300 checks across 25 modules — full Lynis category parity.
+**Target after v0.7:** ~260 checks across 25 modules.
 
 ---
 
-## v0.8 — SaaS Foundation
+## v0.8 — Polish & Ecosystem
 
-**Theme:** Minimum viable backend to support the hardbox Cloud offering. The OSS product remains fully functional without this.
-
-### Components
-
-**Backend API**
-Go service backed by PostgreSQL. Receives signed JSON reports from `hardbox agent`. Multi-tenant with per-organisation data isolation. Exposes a REST API consumed by the cloud dashboard.
-
-**Auth**
-OAuth2/OIDC login via GitHub and Google. JWT session tokens. Organisation and member management.
-
-**Cloud dashboard**
-Hosted version of `hardbox serve` powered by the backend API. Fleet overview, per-host drill-down, compliance score trends, alert feed, report download.
-
-**Multi-host management**
-Group hosts by tag, apply profiles per group, trigger bulk audits from the dashboard, compare compliance posture across groups.
-
-### Architecture
-
-```
-[customer server]                   [hardbox Cloud]
-  hardbox agent  ──── HTTPS ──────▶  ingest API
-  (OSS, any profile)                  PostgreSQL
-                                       dashboard (React)
-                                       alert engine
-                                       report generator
-```
-
----
-
-## v0.9 — Enterprise & Polish
-
-**Theme:** Features that enterprise teams require before adoption. Billing and go-to-market readiness.
+**Theme:** Developer experience, packaging, and extensibility.
 
 | Feature | Description |
 |---|---|
-| SSO / SAML 2.0 | Okta, Azure AD, Google Workspace integration |
-| RBAC | Admin, Analyst, Read-only roles per org and per host group |
-| Audit log | Immutable append-only record: who applied what, when, on which host |
-| Billing | Starter / Pro / Business plans; Stripe; metered by host count |
-| Compliance PDF reports | Auto-generated executive reports per framework with real audit evidence |
 | Custom checks (YAML) | Define new checks in YAML without writing Go; loaded by the engine at startup |
-
-### Pricing model (planned)
-
-| Plan | Price | Hosts | Key features |
-|---|---|---|---|
-| **OSS** | Free forever | Unlimited (self-hosted) | Full CLI, all modules, Plugin SDK |
-| **Cloud Starter** | ~$29 / mo | Up to 10 | Dashboard, alerts, 90-day history |
-| **Cloud Pro** | ~$99 / mo | Up to 50 | Fleet view, webhooks, PDF reports |
-| **Cloud Business** | ~$299 / mo | Unlimited | SSO, RBAC, SLA, audit log |
-| **Enterprise** | Contract | Unlimited | On-premise, dedicated support, custom profiles |
-
-The value proposition is not locked features — it is **managed infrastructure, enterprise controls, and accountability**. Everything the CLI can do, you can do for free.
+| Compliance PDF reports | Auto-generated executive reports per framework with real audit evidence |
+| `.deb` / `.rpm` packages | Native Linux packages via GoReleaser |
+| Plugin SDK v1 | Stable API frozen until v2.0 |
+| Full documentation | Module reference, operator runbooks, migration guides |
 
 ---
 
 ## v1.0 — Production Ready GA
 
-**Theme:** General availability. Stable APIs, full documentation, active commercial offering.
+**Theme:** General availability. Stable APIs, full documentation, industry parity.
 
 ### Completion criteria
 
@@ -198,11 +140,21 @@ The value proposition is not locked features — it is **managed infrastructure,
 | Checks | 300+ across 25+ modules |
 | Compliance profiles | 12+ (CIS, NIST, STIG, PCI-DSS, HIPAA, ISO 27001, cloud-aws/gcp/azure) |
 | Lynis parity | All Lynis audit categories covered |
-| SaaS | GA with active billing |
-| Enterprise | SSO, RBAC, audit log, contractual SLA |
-| Plugin SDK | v1 stable API — frozen until v2.0 |
+| Plugin SDK | v1 stable API |
 | Packages | `.deb`, `.rpm`, and tarballs via GoReleaser |
 | Docs | Full module reference, operator runbooks, migration guides |
+
+---
+
+## Future / Post-v1.0 — SaaS & Enterprise
+
+Deferred until hardbox has validated product-market fit. These features remain on
+the long-term roadmap but are not prioritized for v1.0:
+
+- **SaaS platform** — multi-tenant backend API, OAuth2/OIDC, cloud dashboard
+- **Telemetry agent** — lightweight daemon wrapping `hardbox watch`
+- **Enterprise** — SSO/SAML, RBAC, immutable audit log, billing
+- **Multi-host management** — group hosts by tag, apply profiles per group from dashboard
 
 ---
 
@@ -211,9 +163,10 @@ The value proposition is not locked features — it is **managed infrastructure,
 | Version | New modules | Running total |
 |---|---|---|
 | v0.4 ✅ | `mount` | 15 modules, ~156 checks |
-| v0.5 | — (observability infra) | 15 modules, ~156 checks |
-| v0.6 | `boot`, `storage`, `integrity`, `malware`, `shells`, `processes` | 21 modules, ~240 checks |
-| v0.7 | `hardware`, `nameservices`, `webserver`, `databases` | 25 modules, ~300+ checks |
+| v0.5 ✅ | — (observability infra) | 15 modules, ~169 checks |
+| v0.6 ✅ | `boot`, `storage`, `integrity`, `malware`, `shells`, `processes` | 21 modules, ~199 checks |
+| v0.7 | `hardware`, `nameservices`, `webserver`, `databases` | 25 modules, ~260+ checks |
+| v0.8 | — (polish + ecosystem) | 25 modules |
 | v1.0 | polish, gaps, community additions | 25+ modules, 300+ checks |
 
 ---
@@ -228,7 +181,6 @@ The value proposition is not locked features — it is **managed infrastructure,
 | CI/CD integration | Manual | Native (`diff`, SARIF, exit codes) |
 | Plugin system | No | Plugin SDK |
 | Cloud-native profiles | No | AWS, GCP, Azure |
-| SaaS option | No | v0.8+ |
-| Extensible via YAML | No | v0.9+ |
+| Extensible via YAML | No | v0.8+ |
 
 hardbox is not a Lynis clone. The audit engine is a starting point — the differentiator is **remediation, scale, and ecosystem**.
