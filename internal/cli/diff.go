@@ -80,7 +80,7 @@ Examples:
 		},
 	}
 
-	cmd.Flags().StringVar(&format, "format", "text", "output format: text|html|json")
+	cmd.Flags().StringVar(&format, "format", "text", "output format: text|html|json|sarif")
 	cmd.Flags().StringVarP(&outputFile, "output", "o", "", "write output to file instead of stdout")
 
 	return cmd

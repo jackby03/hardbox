@@ -28,6 +28,8 @@ func WriteDiff(d *DiffReport, format string, w io.Writer) error {
 		return renderJSON(d, w)
 	case "html":
 		return renderDiffHTML(d, w)
+	case "sarif":
+		return renderDiffSARIF(d, w)
 	case "text", "":
 		return renderDiffText(d, w)
 	default:

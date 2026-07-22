@@ -131,7 +131,7 @@ func Build(sessionID, profile string, findings []modules.Finding) *Report {
 }
 
 // Write renders the report in the requested format to w.
-// Supported formats: "json", "text" (default), "markdown" / "md", "html".
+// Supported formats: "json", "text" (default), "markdown" / "md", "html", "sarif".
 func Write(r *Report, format string, w io.Writer) error {
 	switch strings.ToLower(strings.TrimSpace(format)) {
 	case "json":
@@ -140,6 +140,8 @@ func Write(r *Report, format string, w io.Writer) error {
 		return renderMarkdown(r, w)
 	case "html":
 		return renderHTML(r, w)
+	case "sarif":
+		return renderSARIF(r, w)
 	case "text", "":
 		return renderText(r, w)
 	default:
