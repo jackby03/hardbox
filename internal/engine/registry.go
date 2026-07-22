@@ -26,10 +26,13 @@ import (
 	"github.com/hardbox-io/hardbox/internal/modules/kernel"
 	"github.com/hardbox-io/hardbox/internal/modules/logging"
 	"github.com/hardbox-io/hardbox/internal/modules/mac"
+	"github.com/hardbox-io/hardbox/internal/modules/malware"
 	"github.com/hardbox-io/hardbox/internal/modules/mount"
 	"github.com/hardbox-io/hardbox/internal/modules/network"
 	"github.com/hardbox-io/hardbox/internal/modules/ntp"
+	"github.com/hardbox-io/hardbox/internal/modules/processes"
 	"github.com/hardbox-io/hardbox/internal/modules/services"
+	"github.com/hardbox-io/hardbox/internal/modules/shells"
 	"github.com/hardbox-io/hardbox/internal/modules/ssh"
 	"github.com/hardbox-io/hardbox/internal/modules/storage"
 	"github.com/hardbox-io/hardbox/internal/modules/updates"
@@ -60,6 +63,9 @@ func registeredModules() []modules.Module {
 		&boot.Module{},
 		&storage.Module{},
 		&integrity.Module{},
+		&malware.Module{},
+		&shells.Module{},
+		&processes.Module{},
 	}
 }
 
