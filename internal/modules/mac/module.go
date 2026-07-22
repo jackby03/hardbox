@@ -82,13 +82,149 @@ func (m *Module) Audit(ctx context.Context, cfg modules.ModuleConfig) ([]modules
 	}
 }
 
-// Plan is audit-only in v0.1.
+// Plan generates remediation changes for AppArmor and SELinux findings.
 func (m *Module) Plan(ctx context.Context, cfg modules.ModuleConfig) ([]modules.Change, error) {
-	_, err := m.Audit(ctx, cfg)
+	findings, err := m.Audit(ctx, cfg)
 	if err != nil {
 		return nil, err
 	}
-	return nil, nil
+
+	backend := m.detectBackend(cfg)
+	var changes []modules.Change
+
+	for _, f := range findings {
+		if f.IsCompliant() || f.Status == modules.StatusSkipped || f.Status == modules.StatusManual {
+			continue
+		}
+
+		switch f.Check.ID {
+		case "mac-001":
+			changes = append(changes, m.planInstallPackage(ctx, backend))
+		case "mac-002":
+			changes = append(changes, m.planEnableBoot(ctx, backend))
+		case "mac-003":
+			changes = append(changes, m.planSetEnforcing(ctx, backend))
+		case "mac-005":
+			if backend == backendSELinux {
+				changes = append(changes, m.planSELinuxType(ctx))
+			}
+		}
+	}
+	return changes, nil
+}
+
+func (m *Module) planInstallPackage(ctx context.Context, b backendType) modules.Change {
+	switch b {
+	case backendAppArmor:
+		return modules.Change{
+			Description:  "MAC: install apparmor",
+			DryRunOutput: "  apt-get install -y apparmor apparmor-utils",
+			Apply: func() error {
+				_, err := m.runner()(ctx, "apt-get", "install", "-y", "apparmor", "apparmor-utils")
+				return err
+			},
+			Revert: func() error { return nil },
+		}
+	case backendSELinux:
+		return modules.Change{
+			Description:  "MAC: install SELinux policy tools",
+			DryRunOutput: "  yum install -y policycoreutils policycoreutils-python-utils",
+			Apply: func() error {
+				_, err := m.runner()(ctx, "yum", "install", "-y", "policycoreutils")
+				return err
+			},
+			Revert: func() error { return nil },
+		}
+	default:
+		return modules.Change{}
+	}
+}
+
+func (m *Module) planEnableBoot(ctx context.Context, b backendType) modules.Change {
+	switch b {
+	case backendAppArmor:
+		return modules.Change{
+			Description:  "MAC: ensure AppArmor is enabled at boot",
+			DryRunOutput: "  verify apparmor=1 in kernel cmdline",
+			Apply: func() error {
+				// AppArmor on Debian is enabled by default; ensure the service is enabled
+				_, err := m.runner()(ctx, "systemctl", "enable", "apparmor")
+				return err
+			},
+			Revert: func() error { return nil },
+		}
+	case backendSELinux:
+		return modules.Change{
+			Description:  "MAC: set SELinux to enforcing mode in config",
+			DryRunOutput: "  set SELINUX=enforcing in /etc/selinux/config",
+			Apply: func() error {
+				return m.setSELinuxMode("enforcing")
+			},
+			Revert: func() error {
+				return m.setSELinuxMode("permissive")
+			},
+		}
+	default:
+		return modules.Change{}
+	}
+}
+
+func (m *Module) planSetEnforcing(ctx context.Context, b backendType) modules.Change {
+	switch b {
+	case backendSELinux:
+		return modules.Change{
+			Description:  "MAC: set SELinux enforcing immediately",
+			DryRunOutput: "  setenforce 1",
+			Apply: func() error {
+				_, err := m.runner()(ctx, "setenforce", "1")
+				return err
+			},
+			Revert: func() error {
+				_, _ = m.runner()(ctx, "setenforce", "0")
+				return nil
+			},
+		}
+	default:
+		return modules.Change{}
+	}
+}
+
+func (m *Module) planSELinuxType(ctx context.Context) modules.Change {
+	return modules.Change{
+		Description:  "MAC: set SELinux policy type to targeted",
+		DryRunOutput: "  set SELINUXTYPE=targeted in /etc/selinux/config",
+		Apply: func() error {
+			return m.setSELinuxEntry("SELINUXTYPE", "targeted")
+		},
+		Revert: func() error { return nil },
+	}
+}
+
+func (m *Module) setSELinuxMode(mode string) error {
+	return m.setSELinuxEntry("SELINUX", mode)
+}
+
+func (m *Module) setSELinuxEntry(key, value string) error {
+	path := m.selinuxConfigPath()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("mac: reading %s: %w", path, err)
+	}
+	lines := strings.Split(string(data), "\n")
+	found := false
+	prefix := key + "="
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, prefix) || strings.HasPrefix(trimmed, "#"+prefix) {
+			lines[i] = key + "=" + value
+			found = true
+			break
+		}
+	}
+	if !found {
+		lines = append(lines, key+"="+value)
+	}
+	return os.WriteFile(path, []byte(strings.Join(lines, "\n")), 0o644)
 }
 
 func (m *Module) detectBackend(cfg modules.ModuleConfig) backendType {
