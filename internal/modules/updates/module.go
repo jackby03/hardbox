@@ -21,6 +21,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -78,13 +79,51 @@ func (m *Module) Audit(_ context.Context, cfg modules.ModuleConfig) ([]modules.F
 	return findings, nil
 }
 
-// Plan currently returns no changes; this module is audit-only in v0.1.
+// Plan installs unattended-upgrades on Debian/Ubuntu and enables the service.
 func (m *Module) Plan(ctx context.Context, cfg modules.ModuleConfig) ([]modules.Change, error) {
-	_, err := m.Audit(ctx, cfg)
+	findings, err := m.Audit(ctx, cfg)
 	if err != nil {
 		return nil, err
 	}
-	return nil, nil
+
+	var changes []modules.Change
+	f := m.detectFamily(cfg)
+	for _, finding := range findings {
+		if finding.IsCompliant() || finding.Status == modules.StatusSkipped || finding.Status == modules.StatusManual {
+			continue
+		}
+
+		switch finding.Check.ID {
+		case "upd-003":
+			if f == "debian" {
+				changes = append(changes, modules.Change{
+					Description:  "Updates: install and enable unattended-upgrades",
+					DryRunOutput: "  apt-get install -y unattended-upgrades && dpkg-reconfigure -plow unattended-upgrades",
+					Apply: func() error {
+						cmd := exec.CommandContext(ctx, "apt-get", "install", "-y", "unattended-upgrades")
+						if err := cmd.Run(); err != nil {
+							return err
+						}
+						return m.writeAPTConfig()
+					},
+					Revert: func() error {
+						exec.CommandContext(ctx, "apt-get", "remove", "-y", "unattended-upgrades").Run()
+						return nil
+					},
+				})
+			}
+		}
+	}
+	return changes, nil
+}
+
+func (m *Module) writeAPTConfig() error {
+	content := `APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Download-Upgradeable-Packages "1";
+APT::Periodic::AutocleanInterval "7";
+APT::Periodic::Unattended-Upgrade "1";
+`
+	return os.WriteFile("/etc/apt/apt.conf.d/20auto-upgrades", []byte(content), 0o644)
 }
 
 func (m *Module) detectFamily(cfg modules.ModuleConfig) string {
