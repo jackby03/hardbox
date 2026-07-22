@@ -180,7 +180,7 @@ func (m *Module) planSetEnforcing(ctx context.Context, b backendType) modules.Ch
 				return err
 			},
 			Revert: func() error {
-				m.runner()(ctx, "setenforce", "0")
+				_, _ = m.runner()(ctx, "setenforce", "0")
 				return nil
 			},
 		}
