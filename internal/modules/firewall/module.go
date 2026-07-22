@@ -135,9 +135,177 @@ func (m *Module) Audit(ctx context.Context, _ modules.ModuleConfig) ([]modules.F
 	return findings, nil
 }
 
-// Plan is intentionally read-only for now; remediation differs heavily by backend.
-func (m *Module) Plan(_ context.Context, _ modules.ModuleConfig) ([]modules.Change, error) {
-	return nil, nil
+// Plan generates remediation changes for non-compliant firewall findings.
+// UFW and firewalld backends are fully supported; nftables is audit-only.
+func (m *Module) Plan(ctx context.Context, _ modules.ModuleConfig) ([]modules.Change, error) {
+	b, err := m.detectBackend()
+	if err != nil {
+		return nil, nil
+	}
+	switch b {
+	case backendUFW:
+		return m.planUFW(ctx)
+	case backendFirewalld:
+		return m.planFirewalld(ctx)
+	default:
+		return nil, nil
+	}
+}
+
+func (m *Module) planUFW(ctx context.Context) ([]modules.Change, error) {
+	findings, err := m.Audit(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	state, _ := m.auditUFW(ctx)
+	var changes []modules.Change
+
+	for _, f := range findings {
+		if f.IsCompliant() || f.Status == modules.StatusSkipped || f.Status == modules.StatusManual {
+			continue
+		}
+
+		switch f.Check.ID {
+		case "fw-001":
+			if !state.serviceActive {
+				changes = append(changes, modules.Change{
+					Description:  "Firewall: enable UFW",
+					DryRunOutput: "  ufw enable",
+					Apply: func() error {
+						_, err := m.runner()(ctx, "ufw", "--force", "enable")
+						return err
+					},
+					Revert: func() error {
+						_, err := m.runner()(ctx, "ufw", "disable")
+						return err
+					},
+				})
+			}
+		case "fw-002":
+			if !state.inboundDrop {
+				prevValue := state.inboundValue
+				changes = append(changes, modules.Change{
+					Description:  "Firewall: set default inbound policy to deny",
+					DryRunOutput: "  ufw default deny incoming",
+					Apply: func() error {
+						_, err := m.runner()(ctx, "ufw", "default", "deny", "incoming")
+						return err
+					},
+					Revert: func() error {
+						if prevValue == "" || prevValue == "unknown" {
+							return nil
+						}
+						_, err := m.runner()(ctx, "ufw", "default", prevValue, "incoming")
+						return err
+					},
+				})
+			}
+		case "fw-004":
+			if !state.loopbackAllowed {
+				changes = append(changes, modules.Change{
+					Description:  "Firewall: allow loopback traffic",
+					DryRunOutput: "  ufw allow in on lo && ufw allow out on lo",
+					Apply: func() error {
+						if _, err := m.runner()(ctx, "ufw", "allow", "in", "on", "lo"); err != nil {
+							return err
+						}
+						_, err := m.runner()(ctx, "ufw", "allow", "out", "on", "lo")
+						return err
+					},
+					Revert: func() error {
+						_, _ = m.runner()(ctx, "ufw", "delete", "allow", "in", "on", "lo")
+						_, _ = m.runner()(ctx, "ufw", "delete", "allow", "out", "on", "lo")
+						return nil
+					},
+				})
+			}
+		case "fw-006":
+			ipv6Enabled := m.isIPv6Enabled()
+			if ipv6Enabled && !state.ipv6RulesFound {
+				changes = append(changes, modules.Change{
+					Description:  "Firewall: enable IPv6 filtering in /etc/default/ufw",
+					DryRunOutput: "  set IPV6=yes in /etc/default/ufw",
+					Apply: func() error {
+						return setUFWConfig("IPV6", "yes")
+					},
+					Revert: func() error {
+						return setUFWConfig("IPV6", "no")
+					},
+				})
+			}
+		}
+	}
+	return changes, nil
+}
+
+func (m *Module) planFirewalld(ctx context.Context) ([]modules.Change, error) {
+	findings, err := m.Audit(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	state, _ := m.auditFirewalld(ctx)
+	var changes []modules.Change
+
+	for _, f := range findings {
+		if f.IsCompliant() || f.Status == modules.StatusSkipped || f.Status == modules.StatusManual {
+			continue
+		}
+
+		switch f.Check.ID {
+		case "fw-001":
+			if !state.serviceActive {
+				changes = append(changes, modules.Change{
+					Description:  "Firewall: enable and start firewalld",
+					DryRunOutput: "  systemctl enable --now firewalld",
+					Apply: func() error {
+						_, err := m.runner()(ctx, "systemctl", "enable", "--now", "firewalld")
+						return err
+					},
+					Revert: func() error {
+						_, _ = m.runner()(ctx, "systemctl", "disable", "--now", "firewalld")
+						return nil
+					},
+				})
+			}
+		case "fw-002":
+			if !state.inboundDrop {
+				changes = append(changes, modules.Change{
+					Description:  "Firewall: set default zone target to DROP",
+					DryRunOutput: "  firewall-cmd --set-default-zone=drop",
+					Apply: func() error {
+						_, err := m.runner()(ctx, "firewall-cmd", "--set-default-zone=drop")
+						return err
+					},
+				Revert: func() error {
+					_, _ = m.runner()(ctx, "firewall-cmd", "--set-default-zone=public")
+					return nil
+				},
+			})
+		}
+	case "fw-004":
+		if !state.loopbackAllowed {
+			changes = append(changes, modules.Change{
+				Description:  "Firewall: add loopback interface to trusted zone",
+				DryRunOutput: "  firewall-cmd --zone=trusted --add-interface=lo --permanent",
+				Apply: func() error {
+					_, err := m.runner()(ctx, "firewall-cmd", "--zone=trusted", "--add-interface=lo", "--permanent")
+					if err == nil {
+						_, _ = m.runner()(ctx, "firewall-cmd", "--reload")
+					}
+					return err
+				},
+				Revert: func() error {
+					_, _ = m.runner()(ctx, "firewall-cmd", "--zone=trusted", "--remove-interface=lo", "--permanent")
+					_, _ = m.runner()(ctx, "firewall-cmd", "--reload")
+						return nil
+					},
+				})
+			}
+		}
+	}
+	return changes, nil
 }
 
 func (m *Module) detectBackend() (backend, error) {
@@ -481,6 +649,28 @@ func firstLine(s string) string {
 		}
 	}
 	return ""
+}
+
+func setUFWConfig(key, value string) error {
+	path := "/etc/default/ufw"
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("reading %s: %w", path, err)
+	}
+	lines := strings.Split(string(data), "\n")
+	re := regexp.MustCompile(fmt.Sprintf(`^%s=.*`, regexp.QuoteMeta(key)))
+	found := false
+	for i, line := range lines {
+		if re.MatchString(strings.TrimSpace(line)) {
+			lines[i] = fmt.Sprintf("%s=%s", key, value)
+			found = true
+			break
+		}
+	}
+	if !found {
+		lines = append(lines, fmt.Sprintf("%s=%s", key, value))
+	}
+	return os.WriteFile(path, []byte(strings.Join(lines, "\n")), 0o644)
 }
 
 func runCommand(ctx context.Context, name string, args ...string) (string, error) {
