@@ -43,7 +43,7 @@ func newAuditCmd(gf *globalFlags) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&reportFmt, "format", "text", "output format: json|text|markdown|html")
+	cmd.Flags().StringVar(&reportFmt, "format", "text", "output format: json|text|markdown|html|sarif")
 	cmd.Flags().StringVarP(&reportOut, "output", "o", "", "write report to this file")
 
 	return cmd
