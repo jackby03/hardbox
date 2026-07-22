@@ -70,7 +70,7 @@ func (m *Module) Plan(ctx context.Context, cfg modules.ModuleConfig) ([]modules.
 					if err := exec.CommandContext(ctx, "aideinit").Run(); err != nil {
 						return err
 					}
-					os.Rename("/var/lib/aide/aide.db.new", "/var/lib/aide/aide.db")
+					_ = os.Rename("/var/lib/aide/aide.db.new", "/var/lib/aide/aide.db")
 					return nil
 				},
 				Revert: func() error { return nil },

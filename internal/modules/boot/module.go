@@ -194,7 +194,7 @@ func (m *Module) patchGrubDefault(param string) error {
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		return err
 	}
-	exec.Command("update-grub").Run()
+	_ = exec.Command("update-grub").Run()
 	return nil
 }
 
@@ -205,7 +205,7 @@ func filepathWalk(root string, fn func(string, os.FileInfo) error) error {
 	}
 	for _, e := range entries {
 		info, _ := e.Info()
-		fn(root+"/"+e.Name(), info)
+		_ = fn(root+"/"+e.Name(), info)
 	}
 	return nil
 }
