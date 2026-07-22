@@ -187,14 +187,6 @@ hardbox serve --reports-dir ./reports
 
 ---
 
-## Architecture
-
-<div align="center">
-  <img src=".github/assets/architecture.png" alt="hardbox architecture diagram" width="100%" />
-</div>
-
----
-
 ## Operations
 
 - Contributor workflow and development setup: [CONTRIBUTING.md](CONTRIBUTING.md)
@@ -244,10 +236,10 @@ hardbox serve --reports-dir ./reports
 ### v0.5 — Observability & Continuous Compliance
 - [x] `hardbox watch` — daemon mode, audit on schedule, detect regressions automatically
 - [x] Webhook / alerting — Slack and HTTP webhooks on regression or critical finding
-- [ ] Fleet overview in `hardbox serve` — aggregate multi-host scores, trends, regressions ([#136](https://github.com/jackby03/hardbox/issues/136))
+- [x] Fleet overview in `hardbox serve` — aggregate multi-host scores, trends, regressions ([#136](https://github.com/jackby03/hardbox/issues/136))
 - [x] Profile inheritance — `extends: cis-level1` in YAML, override only what differs
 - [ ] Trend history — compliance score over time using historical JSON reports ([#138](https://github.com/jackby03/hardbox/issues/138))
-- [x] SARIF export — `--format sarif` for GitHub Advanced Security and SIEM integration ([#139](https://github.com/jackby03/hardbox/issues/139))
+- [ ] SARIF export — `--format sarif` for GitHub Advanced Security and SIEM integration ([#139](https://github.com/jackby03/hardbox/issues/139))
 
 ### v0.6 — Deep Coverage I
 - [ ] `boot` module — GRUB password, Secure Boot, `/boot` permissions

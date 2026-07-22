@@ -30,6 +30,7 @@ type Report struct {
 	SessionID    string         `json:"session_id"`
 	Timestamp    time.Time      `json:"timestamp"`
 	Profile      string         `json:"profile"`
+	Hostname     string         `json:"hostname,omitempty"`
 	OverallScore int            `json:"overall_score"`
 	Modules      []ModuleReport `json:"modules"`
 }
