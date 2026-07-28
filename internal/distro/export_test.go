@@ -18,3 +18,4 @@ package distro
 // tests outside this package. It is only compiled during testing.
 var TestDetectFromPaths = detectFromPaths
 
+var TestParseKeyValueFile = parseKeyValueFile
