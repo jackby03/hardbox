@@ -15,9 +15,9 @@ Create the boilerplate directory and files for a new hardening module named `<mo
    - Package declaration: `package <module_name>`
    - A `Module` struct implementing the engine's `Module` interface
    - A `New()` constructor returning `*Module`
-   - Stub implementations for all interface methods (`Name()`, `Description()`, `Run()`)
+   - Stub implementations for all interface methods (`Name()`, `Version()`, `Audit()`, `Plan()`)
    - A `zerolog` logger field initialized in `New()`
-   - `// TODO:` comments inside `Run()` indicating where checks should be implemented
+   - `// TO-DO:` comments inside `Audit()` indicating where checks should be implemented
 3. Create `internal/modules/<module_name>/module_test.go` with:
    - A table-driven test skeleton for the module
    - At least one placeholder test case
@@ -27,6 +27,6 @@ Create the boilerplate directory and files for a new hardening module named `<mo
 
 ## Constraints
 
-- Use the atomic write pattern from `internal/engine/snapshot.go` for any file operations inside `Run()`
+- Use the atomic write pattern from `internal/engine/snapshot.go` for any file operations inside `Plan()`
 - Use `zerolog` for all logging — never `fmt.Print*`
 - Follow the naming conventions in `.agents/context/project.md`
