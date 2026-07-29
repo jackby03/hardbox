@@ -37,6 +37,7 @@ var (
 	ParseOpenSSLMinProtocol   = parseOpenSSLMinProtocol
 	ParseOpenSSLCipherString  = parseOpenSSLCipherString
 	GPGUsesLongKeyID          = gpgUsesLongKeyID
+	ReadStringIfExists        = readStringIfExists
 )
 
 func FakeDistroDebian() (*distro.Info, error) {
@@ -46,4 +47,3 @@ func FakeDistroDebian() (*distro.Info, error) {
 func FakeDistroRHEL() (*distro.Info, error) {
 	return &distro.Info{ID: "rhel", Family: distro.FamilyRHEL}, nil
 }
-
