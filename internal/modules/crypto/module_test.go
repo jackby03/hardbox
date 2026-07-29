@@ -18,6 +18,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/hardbox-io/hardbox/internal/modules"
@@ -155,6 +156,9 @@ func TestHelpers(t *testing.T) {
 }
 
 func TestReadStringIfExists_PermissionDenied(t *testing.T) {
+	if runtime.GOOS != "windows" && os.Geteuid() == 0 {
+		t.Skip("Skipping test on root as root can read files with 000 permissions")
+	}
 	dir := t.TempDir()
 	path := filepath.Join(dir, "noperm")
 	if err := os.WriteFile(path, []byte("test"), 0000); err != nil {
