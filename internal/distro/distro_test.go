@@ -128,3 +128,9 @@ func assertEqual(t *testing.T, field, want, got string) {
 	}
 }
 
+func TestParseKeyValueFile_NonExistentFile(t *testing.T) {
+	_, err := distro.TestParseKeyValueFile("testdata/does_not_exist_file")
+	if err == nil {
+		t.Fatal("expected error for non-existent file, got nil")
+	}
+}
