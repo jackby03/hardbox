@@ -16,7 +16,9 @@ package crypto_test
 
 import (
 	"context"
+	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/hardbox-io/hardbox/internal/modules"
@@ -153,6 +155,22 @@ func TestHelpers(t *testing.T) {
 	}
 }
 
+func TestReadStringIfExists_PermissionDenied(t *testing.T) {
+	if runtime.GOOS != "windows" && os.Geteuid() == 0 {
+		t.Skip("Skipping test on root as root can read files with 000 permissions")
+	}
+	dir := t.TempDir()
+	path := filepath.Join(dir, "noperm")
+	if err := os.WriteFile(path, []byte("test"), 0000); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	_, err := crypto.ReadStringIfExists(path)
+	if err == nil {
+		t.Fatal("expected an error due to permission denied, but got nil")
+	}
+}
+
 func td(name string) string {
 	return filepath.Join("testdata", name)
 }
@@ -169,4 +187,3 @@ func assertStatus(t *testing.T, findings []modules.Finding, id string, want modu
 	}
 	t.Fatalf("check %s not found", id)
 }
-
