@@ -3,12 +3,17 @@ package util_test
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/hardbox-io/hardbox/internal/modules/util"
 )
 
 func TestAtomicWrite(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Unix permission assertions are not meaningful on Windows")
+	}
+
 	tempDir := t.TempDir()
 
 	t.Run("success_new_file", func(t *testing.T) {

@@ -15,12 +15,14 @@
 package cli
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 
 	"github.com/hardbox-io/hardbox/internal/fleet"
+	"github.com/hardbox-io/hardbox/internal/modules/util"
 )
 
 // fleetFlags are shared by fleet sub-commands.
@@ -198,17 +200,15 @@ func writeFleetReport(cmd *cobra.Command, results []fleet.HostResult, profile, o
 		format = fleet.FormatHTML
 	}
 
-	w := os.Stdout
-	if outputPath != "" {
-		f, err := os.Create(outputPath)
-		if err != nil {
-			return fmt.Errorf("create report file: %w", err)
-		}
-		defer f.Close()
-		w = f
+	if outputPath == "" {
+		return fleet.WriteReport(os.Stdout, results, profile, format)
 	}
 
-	return fleet.WriteReport(w, results, profile, format)
+	var buf bytes.Buffer
+	if err := fleet.WriteReport(&buf, results, profile, format); err != nil {
+		return err
+	}
+	return util.AtomicWrite(outputPath, buf.Bytes(), 0o644)
 }
 
 func countResults(results []fleet.HostResult) (passed, failed int) {

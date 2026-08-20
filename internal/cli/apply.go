@@ -42,8 +42,10 @@ func newApplyCmd(gf *globalFlags) *cobra.Command {
 			cfg.DryRun = dryRun
 			cfg.NonInteractive = nonInteract
 			cfg.LogLevel = gf.logLevel
+			cfg.Report.Format = reportFmt
+			cfg.Report.OutputDir = reportOut
 			e := engine.New(cfg)
-			return e.Apply(cmd.Context())
+			return e.Apply(cmd.Context(), reportFmt, reportOut)
 		},
 	}
 

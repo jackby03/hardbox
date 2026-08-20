@@ -75,17 +75,18 @@ func (m *Module) Plan(ctx context.Context, cfg modules.ModuleConfig) ([]modules.
 				},
 				Revert: func() error { return nil },
 			})
-		case "int-005":
-			for _, p := range []string{"/etc/aide/aide.conf", "/etc/tripwire/tw.cfg"} {
-				if _, err := os.Stat(p); err == nil {
-					changes = append(changes, modules.Change{
-						Description:  fmt.Sprintf("Integrity: restrict %s permissions", p),
-						DryRunOutput: fmt.Sprintf("  chmod 0600 %s", p),
-						Apply:       func() error { return os.Chmod(p, 0o600) },
-						Revert:      func() error { return nil },
-					})
-				}
+	case "int-005":
+		for _, p := range []string{"/etc/aide/aide.conf", "/etc/tripwire/tw.cfg"} {
+			p := p // capture loop variable for closures
+			if _, err := os.Stat(p); err == nil {
+				changes = append(changes, modules.Change{
+					Description:  fmt.Sprintf("Integrity: restrict %s permissions", p),
+					DryRunOutput: fmt.Sprintf("  chmod 0600 %s", p),
+					Apply:       func() error { return os.Chmod(p, 0o600) },
+					Revert:      func() error { return nil },
+				})
 			}
+		}
 		}
 	}
 	return changes, nil

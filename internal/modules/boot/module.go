@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/hardbox-io/hardbox/internal/modules"
+	"github.com/hardbox-io/hardbox/internal/modules/util"
 )
 
 const (
@@ -191,7 +192,7 @@ func (m *Module) patchGrubDefault(param string) error {
 			break
 		}
 	}
-	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+	if err := util.AtomicWrite(path, []byte(content), 0o644); err != nil {
 		return err
 	}
 	_ = exec.Command("update-grub").Run()

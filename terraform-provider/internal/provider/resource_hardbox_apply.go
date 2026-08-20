@@ -346,14 +346,9 @@ func (r *hardboxApplyResource) applyHardening(
 	tflog.Info(ctx, "hardbox installed", map[string]any{"version": installedVersion})
 
 	// Step 2: Apply hardening profile.
-	reportPath := fmt.Sprintf("/var/lib/hardbox/reports/tf-%d.%s",
-		time.Now().Unix(), m.ReportFormat.ValueString())
-
 	applyCmd := strings.Join([]string{
 		"hardbox apply",
 		"--profile", m.Profile.ValueString(),
-		"--format", m.ReportFormat.ValueString(),
-		"--output", reportPath,
 		"--non-interactive",
 	}, " ")
 	if m.DryRun.ValueBool() {
@@ -378,17 +373,34 @@ func (r *hardboxApplyResource) applyHardening(
 		return
 	}
 
-	// Step 3: Fetch report content.
+	// Step 3: Capture audit report (apply does not generate one).
+	reportPath := fmt.Sprintf("/var/lib/hardbox/reports/tf-%d.%s",
+		time.Now().Unix(), m.ReportFormat.ValueString())
+
+	auditCmd := strings.Join([]string{
+		"hardbox audit",
+		"--profile", m.Profile.ValueString(),
+		"--format", m.ReportFormat.ValueString(),
+		"--output", reportPath,
+		"--non-interactive",
+	}, " ")
+	auditOut, auditErr := conn.Run(auditCmd)
+	tflog.Debug(ctx, "hardbox audit output", map[string]any{"output": auditOut})
+	if auditErr != nil {
+		tflog.Warn(ctx, "Could not generate audit report", map[string]any{"error": auditErr.Error(), "output": auditOut})
+	}
+
+	// Step 4: Fetch report content.
 	reportContent, err := conn.ReadFile(reportPath)
 	if err != nil {
 		tflog.Warn(ctx, "Could not read report file", map[string]any{"path": reportPath, "error": err.Error()})
 		reportContent = ""
 	}
 
-	// Step 4: Parse findings from JSON report (best-effort).
+	// Step 5: Parse findings from JSON report (best-effort).
 	findings := hardbox.ParseFindings(reportContent, m.ReportFormat.ValueString())
 
-	// Step 5: Check thresholds.
+	// Step 6: Check thresholds.
 	if m.FailOnCritical.ValueBool() && findings["critical"] != "0" && findings["critical"] != "" {
 		addError("hardbox: critical findings detected",
 			fmt.Sprintf("Profile %s reported %s critical findings. Review the report.", m.Profile.ValueString(), findings["critical"]))

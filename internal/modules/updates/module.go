@@ -26,6 +26,7 @@ import (
 	"strings"
 
 	"github.com/hardbox-io/hardbox/internal/modules"
+	"github.com/hardbox-io/hardbox/internal/modules/util"
 )
 
 const (
@@ -123,7 +124,7 @@ APT::Periodic::Download-Upgradeable-Packages "1";
 APT::Periodic::AutocleanInterval "7";
 APT::Periodic::Unattended-Upgrade "1";
 `
-	return os.WriteFile("/etc/apt/apt.conf.d/20auto-upgrades", []byte(content), 0o644)
+	return util.AtomicWrite("/etc/apt/apt.conf.d/20auto-upgrades", []byte(content), 0o644)
 }
 
 func (m *Module) detectFamily(cfg modules.ModuleConfig) string {

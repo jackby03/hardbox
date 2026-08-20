@@ -15,11 +15,12 @@
 package cli
 
 import (
+	"bytes"
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 
+	"github.com/hardbox-io/hardbox/internal/modules/util"
 	"github.com/hardbox-io/hardbox/internal/report"
 )
 
@@ -56,19 +57,19 @@ Examples:
 				return err
 			}
 
-			w := cmd.OutOrStdout()
-			if outputFile != "" {
-				f, err := os.Create(outputFile)
-				if err != nil {
-					return fmt.Errorf("creating output file: %w", err)
-				}
-				defer f.Close()
-				w = f
-			}
-
-			if err := report.WriteDiff(d, format, w); err != nil {
+		if outputFile == "" {
+			if err := report.WriteDiff(d, format, cmd.OutOrStdout()); err != nil {
 				return err
 			}
+		} else {
+			var buf bytes.Buffer
+			if err := report.WriteDiff(d, format, &buf); err != nil {
+				return err
+			}
+			if err := util.AtomicWrite(outputFile, buf.Bytes(), 0o644); err != nil {
+				return err
+			}
+		}
 
 			if d.HasRegressions() {
 				fmt.Fprintf(cmd.ErrOrStderr(),

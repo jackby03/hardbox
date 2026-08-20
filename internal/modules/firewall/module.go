@@ -24,6 +24,7 @@ import (
 
 	"github.com/hardbox-io/hardbox/internal/distro"
 	"github.com/hardbox-io/hardbox/internal/modules"
+	"github.com/hardbox-io/hardbox/internal/modules/util"
 )
 
 const defaultIPv6DisablePath = "/proc/sys/net/ipv6/conf/all/disable_ipv6"
@@ -670,7 +671,7 @@ func setUFWConfig(key, value string) error {
 	if !found {
 		lines = append(lines, fmt.Sprintf("%s=%s", key, value))
 	}
-	return os.WriteFile(path, []byte(strings.Join(lines, "\n")), 0o644)
+	return util.AtomicWrite(path, []byte(strings.Join(lines, "\n")), 0o644)
 }
 
 func runCommand(ctx context.Context, name string, args ...string) (string, error) {

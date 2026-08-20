@@ -43,8 +43,9 @@ type snapshot struct {
 }
 
 type fileBackup struct {
-	Path   string `json:"path"`
-	SHA256 string `json:"sha256"`
+	Path   string      `json:"path"`
+	SHA256 string      `json:"sha256"`
+	Mode   os.FileMode `json:"mode"`
 }
 
 // newSnapshot collects the current values of all resources that will be modified.
@@ -92,11 +93,20 @@ func (s *snapshot) BackupFile(srcPath string) error {
 		return err
 	}
 	dest := filepath.Join(destDir, filepath.Base(srcPath))
-	if err := os.WriteFile(dest, data, 0600); err != nil {
+	if err := util.AtomicWrite(dest, data, 0600); err != nil {
 		return err
 	}
 
-	s.FilesBackedUp = append(s.FilesBackedUp, fileBackup{Path: srcPath, SHA256: hash})
+	info, err := os.Stat(srcPath)
+	if err != nil {
+		return fmt.Errorf("stat %s for backup: %w", srcPath, err)
+	}
+
+	s.FilesBackedUp = append(s.FilesBackedUp, fileBackup{
+		Path:   srcPath,
+		SHA256: hash,
+		Mode:   info.Mode().Perm(),
+	})
 	return nil
 }
 
@@ -124,7 +134,11 @@ func (s *snapshot) Restore() error {
 			return fmt.Errorf("restoring %s: parent path %s is not a directory", fb.Path, parentDir)
 		}
 
-		if err := util.AtomicWrite(fb.Path, data, 0644); err != nil {
+		mode := fb.Mode
+		if mode == 0 {
+			mode = 0644 // fallback for snapshots created before mode was recorded
+		}
+		if err := util.AtomicWrite(fb.Path, data, mode); err != nil {
 			return fmt.Errorf("restoring %s: %w", fb.Path, err)
 		}
 	}

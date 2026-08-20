@@ -53,6 +53,10 @@ type PluginInfo struct {
 // Plugins are loaded from cfg.PluginDir; plugin load errors are logged as
 // warnings and do not prevent the engine from starting.
 func New(cfg *config.Config) *Engine {
+	if cfg == nil {
+		cfg = &config.Config{}
+	}
+
 	e := &Engine{
 		cfg:     cfg,
 		modules: registeredModules(),
@@ -112,7 +116,9 @@ func (e *Engine) Audit(ctx context.Context, format, outputPath string) error {
 }
 
 // Apply audits, plans, snapshots, and applies all remediation changes.
-func (e *Engine) Apply(ctx context.Context) error {
+// If reportFormat is non-empty and this is not a dry run, a post-apply report
+// is written to reportOutput (file path or directory).
+func (e *Engine) Apply(ctx context.Context, reportFormat, reportOutput string) error {
 	log.Info().
 		Str("profile", e.cfg.Profile).
 		Bool("dry_run", e.cfg.DryRun).
@@ -160,7 +166,23 @@ func (e *Engine) Apply(ctx context.Context) error {
 	}
 
 	log.Info().Msg("apply complete")
+
+	if reportFormat != "" && reportOutput != "" {
+		if err := e.writePostApplyReport(ctx, sessionID, reportFormat, reportOutput); err != nil {
+			log.Error().Err(err).Msg("post-apply report failed")
+			return fmt.Errorf("writing post-apply report: %w", err)
+		}
+	}
+
 	return nil
+}
+
+func (e *Engine) writePostApplyReport(ctx context.Context, sessionID, format, path string) error {
+	findings, err := e.runAudit(ctx)
+	if err != nil {
+		return err
+	}
+	return e.writeReport(sessionID, findings, format, path)
 }
 
 // RunAudit executes all module checks and returns the structured Report.

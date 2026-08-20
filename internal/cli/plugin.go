@@ -16,7 +16,6 @@ package cli
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 
@@ -24,6 +23,7 @@ import (
 
 	"github.com/hardbox-io/hardbox/internal/config"
 	"github.com/hardbox-io/hardbox/internal/engine"
+	"github.com/hardbox-io/hardbox/internal/modules/util"
 )
 
 func newPluginCmd(gf *globalFlags) *cobra.Command {
@@ -101,21 +101,10 @@ func newPluginInstallCmd(gf *globalFlags) *cobra.Command {
 }
 
 func copyFile(src, dst string) error {
-	in, err := os.Open(src)
+	data, err := os.ReadFile(src)
 	if err != nil {
 		return err
 	}
-	defer in.Close()
-
-	out, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	if _, err := io.Copy(out, in); err != nil {
-		return err
-	}
-	return out.Close()
+	return util.AtomicWrite(dst, data, 0o644)
 }
 

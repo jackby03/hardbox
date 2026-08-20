@@ -25,11 +25,17 @@ Technical constraints and standards:
 - File writes must use the atomic write pattern (`internal/engine/snapshot.go` pattern).
 - Logging must use `zerolog`.
 
+Development and testing environment:
+- hardbox is a Linux-only tool; it is never executed on Windows.
+- Unit tests must be run under WSL or a Linux VM/CI environment (`go test ./... -race`).
+- Integration and smoke tests are performed in the Vagrant lab.
+- CI runs on `ubuntu-latest` and executes `go vet`, `go build`, `go test -race`, `golangci-lint`, and the `hardbox-audit` dry-run job.
+
 Key repository structure:
 - `cmd/hardbox/main.go`: CLI entrypoint.
 - `internal/engine`: orchestration, registry, snapshots/rollback.
 - `internal/modules/<name>`: hardening modules.
-- `internal/tui`: Bubble Tea based user interface.
+- `internal/tui`: Bubble Tea based user interface (deprecated — will be removed in a future release).
 - `configs/profiles`: built-in hardening profiles.
 - `docs`: architecture, modules, compliance mapping.
 
@@ -126,3 +132,16 @@ Before opening or merging a PR, ensure:
 - `golangci-lint run`
 - `go test ./... -race`
 - Relevant docs updated when adding/modifying checks (`docs/MODULES.md` and related docs).
+
+---
+
+## AI Agent Instructions
+
+- **Purpose:** Short, actionable guidance for AI coding agents working in this repository.
+- **Start here:** Read [.agents/main.yaml](.agents/main.yaml) for agent permissions, then this file.
+- **Build & test:** Run `go build ./...` on any platform; run `go test ./... -race` under WSL/Linux or a Linux VM. See [Makefile](Makefile) for CI targets.
+- **Key files to inspect:** [cmd/hardbox/main.go](cmd/hardbox/main.go), [internal/engine](internal/engine), [internal/modules](internal/modules), [configs/profiles](configs/profiles), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+- **Conventions:** Follow the `go-best-practices` and `github-flow` skills under `.agents/skills/`.
+- **Safety rules:** Do not push directly to `main`. Make small, focused changes and open a PR targeting `main`.
+- **Authoring guidance:** Link to existing docs rather than copying their contents — prefer the "link, don't embed" principle.
+
