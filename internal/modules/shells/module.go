@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/hardbox-io/hardbox/internal/modules"
+	"github.com/hardbox-io/hardbox/internal/modules/util"
 )
 
 type Module struct{}
@@ -34,9 +35,9 @@ func (m *Module) Plan(ctx context.Context, cfg modules.ModuleConfig) ([]modules.
 			c = append(c, modules.Change{
 				Description: "Shells: set TMOUT=900 in /etc/profile.d/timeout.sh",
 				DryRunOutput: "  echo 'TMOUT=900' >> /etc/profile.d/timeout.sh",
-				Apply: func() error {
-					return os.WriteFile("/etc/profile.d/timeout.sh", []byte("TMOUT=900\nexport TMOUT\nreadonly TMOUT\n"), 0o644)
-				},
+			Apply: func() error {
+				return util.AtomicWrite("/etc/profile.d/timeout.sh", []byte("TMOUT=900\nexport TMOUT\nreadonly TMOUT\n"), 0o644)
+			},
 				Revert: func() error { os.Remove("/etc/profile.d/timeout.sh"); return nil },
 			})
 			break

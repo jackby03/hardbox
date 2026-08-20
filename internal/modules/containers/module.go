@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"github.com/hardbox-io/hardbox/internal/modules"
+	"github.com/hardbox-io/hardbox/internal/modules/util"
 )
 
 const (
@@ -468,7 +469,7 @@ func (m *Module) patchDaemonJSON(updates map[string]any) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, out, 0o644)
+	return util.AtomicWrite(path, out, 0o644)
 }
 
 func (m *Module) removeDaemonJSON(key string) error {
@@ -483,6 +484,6 @@ func (m *Module) removeDaemonJSON(key string) error {
 	}
 	delete(cfg, key)
 	out, _ := json.MarshalIndent(cfg, "", "  ")
-	return os.WriteFile(path, out, 0o644)
+	return util.AtomicWrite(path, out, 0o644)
 }
 

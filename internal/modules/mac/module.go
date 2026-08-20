@@ -24,6 +24,7 @@ import (
 
 	"github.com/hardbox-io/hardbox/internal/distro"
 	"github.com/hardbox-io/hardbox/internal/modules"
+	"github.com/hardbox-io/hardbox/internal/modules/util"
 )
 
 const defaultSELinuxConfig = "/etc/selinux/config"
@@ -224,7 +225,7 @@ func (m *Module) setSELinuxEntry(key, value string) error {
 	if !found {
 		lines = append(lines, key+"="+value)
 	}
-	return os.WriteFile(path, []byte(strings.Join(lines, "\n")), 0o644)
+	return util.AtomicWrite(path, []byte(strings.Join(lines, "\n")), 0o644)
 }
 
 func (m *Module) detectBackend(cfg modules.ModuleConfig) backendType {

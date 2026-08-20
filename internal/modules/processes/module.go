@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/hardbox-io/hardbox/internal/modules"
+	"github.com/hardbox-io/hardbox/internal/modules/util"
 )
 
 type Module struct{}
@@ -115,5 +116,5 @@ func (m *Module) appendLimits(line string) error {
 		return nil
 	}
 	content += fmt.Sprintf("\n%s\n", line)
-	return os.WriteFile(path, []byte(content), 0o644)
+	return util.AtomicWrite(path, []byte(content), 0o644)
 }
