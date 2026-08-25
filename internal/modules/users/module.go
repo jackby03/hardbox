@@ -61,6 +61,11 @@ type Module struct {
 	sudoers     string
 	sudoersDir  string
 	useraddConf string
+
+	passwdCachePath string
+	passwdCache     []passwdEntry
+	passwdCacheErr  error
+	passwdLoaded    bool
 }
 
 func (m *Module) Name() string    { return "users" }
@@ -112,7 +117,7 @@ func (m *Module) useraddConfPath() string {
 func (m *Module) Audit(ctx context.Context, cfg modules.ModuleConfig) ([]modules.Finding, error) {
 	loginDefs := m.readFileOrEmpty(m.loginDefsPath())
 	pamContent := m.loadPamContent()
-	passwd, passwdErr := parsePasswdFile(m.passwdPath())
+	passwd, passwdErr := m.loadPasswd()
 	sudoersContent := m.loadSudoersAll()
 	useraddContent := m.readFileOrEmpty(m.useraddConfPath())
 
@@ -690,33 +695,98 @@ func setSimpleKey(content, key, value string) string {
 	return content + key + "=" + value + "\n"
 }
 
+// loadPasswd returns parsed passwd entries, caching the result on the Module instance.
+func (m *Module) loadPasswd() ([]passwdEntry, error) {
+	path := m.passwdPath()
+	if m.passwdLoaded && m.passwdCachePath == path {
+		return m.passwdCache, m.passwdCacheErr
+	}
+	m.passwdCachePath = path
+	m.passwdCache, m.passwdCacheErr = parsePasswdFile(path)
+	m.passwdLoaded = true
+	return m.passwdCache, m.passwdCacheErr
+}
+
 // parsePasswdFile parses /etc/passwd into a slice of passwdEntry.
 func parsePasswdFile(path string) ([]passwdEntry, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("read %s: %w", path, err)
 	}
+	return parsePasswdContent(string(data)), nil
+}
+
+// parsePasswdContent parses passwd content string into passwdEntry structs without extra allocations.
+func parsePasswdContent(content string) []passwdEntry {
+	s := content
 	var entries []passwdEntry
-	for _, line := range strings.Split(string(data), "\n") {
+	for len(s) > 0 {
+		var line string
+		if idx := strings.IndexByte(s, '\n'); idx >= 0 {
+			line = s[:idx]
+			s = s[idx+1:]
+		} else {
+			line = s
+			s = ""
+		}
 		line = strings.TrimSpace(line)
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
-		fields := strings.Split(line, ":")
-		if len(fields) < 7 {
+
+		c1 := strings.IndexByte(line, ':')
+		if c1 < 0 {
 			continue
 		}
-		uid, err := strconv.Atoi(fields[2])
+		username := line[:c1]
+
+		rem := line[c1+1:]
+		c2 := strings.IndexByte(rem, ':')
+		if c2 < 0 {
+			continue
+		}
+
+		rem = rem[c2+1:]
+		c3 := strings.IndexByte(rem, ':')
+		if c3 < 0 {
+			continue
+		}
+		uidStr := rem[:c3]
+
+		rem = rem[c3+1:]
+		c4 := strings.IndexByte(rem, ':')
+		if c4 < 0 {
+			continue
+		}
+
+		rem = rem[c4+1:]
+		c5 := strings.IndexByte(rem, ':')
+		if c5 < 0 {
+			continue
+		}
+
+		rem = rem[c5+1:]
+		c6 := strings.IndexByte(rem, ':')
+		if c6 < 0 {
+			continue
+		}
+
+		shell := rem[c6+1:]
+		if c7 := strings.IndexByte(shell, ':'); c7 >= 0 {
+			shell = shell[:c7]
+		}
+
+		uid, err := strconv.Atoi(uidStr)
 		if err != nil {
 			continue
 		}
 		entries = append(entries, passwdEntry{
-			username: fields[0],
+			username: username,
 			uid:      uid,
-			shell:    fields[6],
+			shell:    shell,
 		})
 	}
-	return entries, nil
+	return entries
 }
 
 // pamHasModule returns true if any non-commented PAM line references the given module.
@@ -788,4 +858,3 @@ func sudoersActiveLineContains(content, token string) bool {
 	}
 	return false
 }
-
