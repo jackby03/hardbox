@@ -21,10 +21,20 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"regexp"
 	"strings"
 
 	"github.com/hardbox-io/hardbox/internal/modules"
 )
+
+var unitNameRegexp = regexp.MustCompile(`^[a-zA-Z0-9_.:@-]+$`)
+
+func isValidUnitName(name string) bool {
+	if name == "" || strings.HasPrefix(name, "-") {
+		return false
+	}
+	return unitNameRegexp.MatchString(name)
+}
 
 type commandRunner func(ctx context.Context, name string, args ...string) (string, error)
 
@@ -151,6 +161,17 @@ func (m *Module) Audit(ctx context.Context, cfg modules.ModuleConfig) ([]modules
 			},
 		}
 
+		if !isValidUnitName(entry.unit) {
+			findings = append(findings, modules.Finding{
+				Check:   chk,
+				Status:  modules.StatusError,
+				Current: "invalid unit name",
+				Target:  "inactive/disabled",
+				Detail:  fmt.Sprintf("invalid systemd unit name %q", entry.unit),
+			})
+			continue
+		}
+
 		activeOut, _ := run(ctx, "systemctl", "is-active", entry.unit)
 		enabledOut, _ := run(ctx, "systemctl", "is-enabled", entry.unit)
 		isActive := activeOut == "active"
@@ -206,6 +227,10 @@ func (m *Module) Plan(ctx context.Context, cfg modules.ModuleConfig) ([]modules.
 		// Capture current state at plan time so Revert can restore it.
 		prevActive, _ := run(ctx, "systemctl", "is-active", unit)
 		prevEnabled, _ := run(ctx, "systemctl", "is-enabled", unit)
+
+		if !isValidUnitName(unit) {
+			continue
+		}
 
 		changes = append(changes, modules.Change{
 			Description:  fmt.Sprintf("services: disable %s (%s)", unit, entry.cisRef),

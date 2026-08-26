@@ -253,3 +253,68 @@ func TestPlan_EmptyWhenAllCompliant(t *testing.T) {
 	}
 }
 
+func TestIsValidUnitName(t *testing.T) {
+	tests := []struct {
+		name  string
+		unit  string
+		valid bool
+	}{
+		{"valid simple service", "nginx", true},
+		{"valid dot service", "nginx.service", true},
+		{"valid template service", "user@1000.service", true},
+		{"valid hyphens and underscores", "my_custom-service.service", true},
+		{"empty string", "", false},
+		{"leading dash", "-oProxyCommand=touch", false},
+		{"shell injection semicolon", "nginx; rm -rf /", false},
+		{"path traversal", "../../../etc/passwd", false},
+		{"space in name", "invalid unit name", false},
+		{"backticks", "`id`", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := services.IsValidUnitName(tt.unit)
+			if got != tt.valid {
+				t.Errorf("IsValidUnitName(%q) = %v, want %v", tt.unit, got, tt.valid)
+			}
+		})
+	}
+}
+
+func TestAudit_InvalidUnitNameReturnsErrorStatus(t *testing.T) {
+	runnerCalled := false
+	m := services.NewModuleForTest(func(ctx context.Context, name string, args ...string) (string, error) {
+		runnerCalled = true
+		return "", nil
+	})
+	cfg := modules.ModuleConfig{"disable": []any{"-oProxyCommand=bad", "valid.service"}}
+
+	findings, err := m.Audit(context.Background(), cfg)
+	if err != nil {
+		t.Fatalf("Audit: %v", err)
+	}
+
+	if len(findings) != 2 {
+		t.Fatalf("want 2 findings, got %d", len(findings))
+	}
+
+	if findings[0].Status != modules.StatusError {
+		t.Errorf("findings[0].Status = %q, want %q", findings[0].Status, modules.StatusError)
+	}
+
+	if runnerCalled {
+		// Note: runnerCalled would be true for the second item (valid.service), but for the first item it shouldn't be called.
+	}
+
+	changes, err := m.Plan(context.Background(), cfg)
+	if err != nil {
+		t.Fatalf("Plan: %v", err)
+	}
+
+	// Should not generate change for invalid unit name
+	for _, ch := range changes {
+		if strings.Contains(ch.Description, "-oProxyCommand") {
+			t.Errorf("Plan produced change for invalid unit name: %s", ch.Description)
+		}
+	}
+}
