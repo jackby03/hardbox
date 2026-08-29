@@ -85,7 +85,16 @@ func (r *Runner) Apply(ctx context.Context, hosts []Host) []HostResult {
 // abort the run for other hosts.
 func (r *Runner) Audit(ctx context.Context, hosts []Host) []HostResult {
 	return r.dispatch(ctx, hosts, func(ctx context.Context, h Host, conn *sshClient) (string, error) {
-		reportPath := fmt.Sprintf("/tmp/hardbox-fleet-%d.json", time.Now().UnixNano())
+		reportPath, err := conn.run(ctx, "mktemp /tmp/hardbox-fleet-XXXXXX")
+		if err != nil {
+			return "", fmt.Errorf("create remote temp report file: %w", err)
+		}
+		reportPath = strings.TrimSpace(reportPath)
+		defer func() {
+			// Clean up temp report file (best-effort).
+			_, _ = conn.run(ctx, fmt.Sprintf("rm -f -- %s", shellQuote(reportPath)))
+		}()
+
 		auditCmd := fmt.Sprintf(
 			"hardbox audit --profile %s --format json --output %s",
 			shellQuote(r.cfg.Profile),
@@ -99,8 +108,6 @@ func (r *Runner) Audit(ctx context.Context, hosts []Host) []HostResult {
 		if err != nil {
 			return "", fmt.Errorf("fetch remote report %s: %w", reportPath, err)
 		}
-		// Clean up temp report file (best-effort).
-		_, _ = conn.run(ctx, fmt.Sprintf("rm -f -- %s", shellQuote(reportPath)))
 		return content, nil
 	})
 }
