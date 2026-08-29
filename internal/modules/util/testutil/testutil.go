@@ -1,8 +1,13 @@
+// Copyright (C) 2024 Jack (jackby03)
+// Standard AGPLv3 License header or matching existing headers in the codebase
+
 package testutil
 
 import (
 	"path/filepath"
 	"testing"
+
+	"github.com/hardbox-io/hardbox/internal/modules"
 )
 
 // TestdataPath returns the relative path to a file or directory in testdata/.
@@ -19,4 +24,18 @@ func TestdataAbsPath(t *testing.T, name string) string {
 		t.Fatalf("TestdataAbsPath(%q): %v", name, err)
 	}
 	return p
+}
+
+// AssertStatus verifies that a finding with the given check ID exists and has the expected status.
+func AssertStatus(t *testing.T, findings []modules.Finding, id string, want modules.Status) {
+	t.Helper()
+	for _, f := range findings {
+		if f.Check.ID == id {
+			if f.Status != want {
+				t.Errorf("check %s: got status %q, want %q (current=%q, detail=%q)", id, f.Status, want, f.Current, f.Detail)
+			}
+			return
+		}
+	}
+	t.Errorf("check %s: not found in findings", id)
 }
