@@ -16,6 +16,7 @@ package network_test
 
 import (
 	"context"
+	"github.com/hardbox-io/hardbox/internal/modules/util/testutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -59,7 +60,7 @@ func TestAudit_CompliantScenario(t *testing.T) {
 	}
 
 	for _, id := range []string{"net-001", "net-002", "net-003", "net-004", "net-005", "net-006", "net-007", "net-008"} {
-		assertStatus(t, findings, id, modules.StatusCompliant)
+		testutil.AssertStatus(t, findings, id, modules.StatusCompliant)
 	}
 }
 
@@ -120,7 +121,7 @@ func TestAudit_DetectsNetrcInHome(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "net-008", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "net-008", modules.StatusNonCompliant)
 }
 
 func buildFixture(t *testing.T, root string) network.TestOptions {
@@ -182,17 +183,3 @@ func buildFixture(t *testing.T, root string) network.TestOptions {
 		PasswdPath:      passwdPath,
 	}
 }
-
-func assertStatus(t *testing.T, findings []modules.Finding, id string, want modules.Status) {
-	t.Helper()
-	for _, f := range findings {
-		if f.Check.ID == id {
-			if f.Status != want {
-				t.Fatalf("%s: got %s, want %s", id, f.Status, want)
-			}
-			return
-		}
-	}
-	t.Fatalf("check %s not found", id)
-}
-
