@@ -56,20 +56,6 @@ func secOptKey() string {
 	return "docker info --format " + containers.SecurityOptsFmt
 }
 
-// assertStatus fails the test when the named check does not match the expected status.
-func assertStatus(t *testing.T, findings []modules.Finding, id string, want modules.Status) {
-	t.Helper()
-	for _, f := range findings {
-		if f.Check.ID == id {
-			if f.Status != want {
-				t.Errorf("check %s: got status %q, want %q (detail: %s)", id, f.Status, want, f.Detail)
-			}
-			return
-		}
-	}
-	t.Errorf("check %s: not found in %d findings", id, len(findings))
-}
-
 // emptyAuditDir creates a temporary directory with no .rules files.
 func emptyAuditDir(t *testing.T) string {
 	t.Helper()
@@ -157,7 +143,7 @@ func TestAudit_RootlessCompliant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "cnt-001", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "cnt-001", modules.StatusCompliant)
 }
 
 func TestAudit_RootlessNonCompliant(t *testing.T) {
@@ -174,7 +160,7 @@ func TestAudit_RootlessNonCompliant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "cnt-001", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "cnt-001", modules.StatusNonCompliant)
 }
 
 // ----------------------------------------------------------------------------
@@ -195,7 +181,7 @@ func TestAudit_ICCCompliant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "cnt-002", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "cnt-002", modules.StatusCompliant)
 }
 
 func TestAudit_ICCNonCompliant(t *testing.T) {
@@ -212,7 +198,7 @@ func TestAudit_ICCNonCompliant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "cnt-002", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "cnt-002", modules.StatusNonCompliant)
 }
 
 // ----------------------------------------------------------------------------
@@ -233,7 +219,7 @@ func TestAudit_UsernsRemapCompliant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "cnt-003", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "cnt-003", modules.StatusCompliant)
 }
 
 func TestAudit_UsernsRemapNonCompliant(t *testing.T) {
@@ -250,7 +236,7 @@ func TestAudit_UsernsRemapNonCompliant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "cnt-003", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "cnt-003", modules.StatusNonCompliant)
 }
 
 // ----------------------------------------------------------------------------
@@ -272,7 +258,7 @@ func TestAudit_TLSSkippedNoTCPHost(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "cnt-004", modules.StatusSkipped)
+	testutil.AssertStatus(t, findings, "cnt-004", modules.StatusSkipped)
 }
 
 func TestAudit_TLSNonCompliantOnTCPHost(t *testing.T) {
@@ -290,7 +276,7 @@ func TestAudit_TLSNonCompliantOnTCPHost(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "cnt-004", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "cnt-004", modules.StatusNonCompliant)
 }
 
 // ----------------------------------------------------------------------------
@@ -311,8 +297,8 @@ func TestAudit_SeccompAndMACNonCompliant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "cnt-005", modules.StatusNonCompliant)
-	assertStatus(t, findings, "cnt-006", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "cnt-005", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "cnt-006", modules.StatusNonCompliant)
 }
 
 func TestAudit_SeccompAndMACCompliant(t *testing.T) {
@@ -329,8 +315,8 @@ func TestAudit_SeccompAndMACCompliant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "cnt-005", modules.StatusCompliant)
-	assertStatus(t, findings, "cnt-006", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "cnt-005", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "cnt-006", modules.StatusCompliant)
 }
 
 // ----------------------------------------------------------------------------
@@ -353,7 +339,7 @@ func TestAudit_PrivilegedContainerFound(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "cnt-007", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "cnt-007", modules.StatusNonCompliant)
 }
 
 func TestAudit_NoPrivilegedContainers(t *testing.T) {
@@ -372,7 +358,7 @@ func TestAudit_NoPrivilegedContainers(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "cnt-007", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "cnt-007", modules.StatusCompliant)
 }
 
 // ----------------------------------------------------------------------------
@@ -397,7 +383,7 @@ func TestAudit_SocketMountFound(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "cnt-008", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "cnt-008", modules.StatusNonCompliant)
 }
 
 func TestAudit_NoSocketMount(t *testing.T) {
@@ -418,7 +404,7 @@ func TestAudit_NoSocketMount(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "cnt-008", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "cnt-008", modules.StatusCompliant)
 }
 
 // ----------------------------------------------------------------------------
@@ -439,7 +425,7 @@ func TestAudit_ImageScanningAlwaysManual(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "cnt-009", modules.StatusManual)
+	testutil.AssertStatus(t, findings, "cnt-009", modules.StatusManual)
 }
 
 // ----------------------------------------------------------------------------
@@ -460,7 +446,7 @@ func TestAudit_AuditRulePresent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "cnt-010", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "cnt-010", modules.StatusCompliant)
 }
 
 func TestAudit_AuditRuleMissing(t *testing.T) {
@@ -477,5 +463,5 @@ func TestAudit_AuditRuleMissing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "cnt-010", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "cnt-010", modules.StatusNonCompliant)
 }

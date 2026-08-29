@@ -24,6 +24,7 @@ import (
 
 	"github.com/hardbox-io/hardbox/internal/modules"
 	"github.com/hardbox-io/hardbox/internal/modules/ssh"
+	"github.com/hardbox-io/hardbox/internal/modules/util/testutil"
 )
 
 // writeTempConfig writes content to a temp sshd_config file and returns a cleanup func.
@@ -103,19 +104,6 @@ func runAuditOnConfig(t *testing.T, configContent string) []modules.Finding {
 		t.Fatalf("Audit(): unexpected error: %v", err)
 	}
 	return findings
-}
-
-func assertStatus(t *testing.T, findings []modules.Finding, id string, want modules.Status) {
-	t.Helper()
-	for _, f := range findings {
-		if f.Check.ID == id {
-			if f.Status != want {
-				t.Errorf("check %s: got %s, want %s (current=%q)", id, f.Status, want, f.Current)
-			}
-			return
-		}
-	}
-	t.Errorf("check %s: not found in findings", id)
 }
 
 func TestAudit_AllCompliant(t *testing.T) {
@@ -364,7 +352,7 @@ func TestAudit_TableDriven(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			findings := runAuditOnConfig(t, tc.config)
-			assertStatus(t, findings, tc.checkID, tc.want)
+			testutil.AssertStatus(t, findings, tc.checkID, tc.want)
 		})
 	}
 }

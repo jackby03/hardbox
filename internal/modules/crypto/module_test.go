@@ -23,6 +23,7 @@ import (
 
 	"github.com/hardbox-io/hardbox/internal/modules"
 	"github.com/hardbox-io/hardbox/internal/modules/crypto"
+	"github.com/hardbox-io/hardbox/internal/modules/util/testutil"
 )
 
 func TestModule_ImplementsInterface(t *testing.T) {
@@ -53,12 +54,12 @@ func TestAudit_RHEL_Compliant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "cry-001", modules.StatusCompliant)
-	assertStatus(t, findings, "cry-002", modules.StatusCompliant)
-	assertStatus(t, findings, "cry-003", modules.StatusCompliant)
-	assertStatus(t, findings, "cry-004", modules.StatusCompliant)
-	assertStatus(t, findings, "cry-005", modules.StatusCompliant)
-	assertStatus(t, findings, "cry-006", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "cry-001", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "cry-002", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "cry-003", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "cry-004", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "cry-005", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "cry-006", modules.StatusCompliant)
 }
 
 func TestAudit_RHEL_Legacy(t *testing.T) {
@@ -75,12 +76,12 @@ func TestAudit_RHEL_Legacy(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "cry-001", modules.StatusNonCompliant)
-	assertStatus(t, findings, "cry-002", modules.StatusNonCompliant)
-	assertStatus(t, findings, "cry-003", modules.StatusNonCompliant)
-	assertStatus(t, findings, "cry-004", modules.StatusNonCompliant)
-	assertStatus(t, findings, "cry-005", modules.StatusManual)
-	assertStatus(t, findings, "cry-006", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "cry-001", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "cry-002", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "cry-003", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "cry-004", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "cry-005", modules.StatusManual)
+	testutil.AssertStatus(t, findings, "cry-006", modules.StatusNonCompliant)
 }
 
 func TestAudit_Debian_Hardened(t *testing.T) {
@@ -97,12 +98,12 @@ func TestAudit_Debian_Hardened(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "cry-001", modules.StatusCompliant)
-	assertStatus(t, findings, "cry-002", modules.StatusCompliant)
-	assertStatus(t, findings, "cry-003", modules.StatusCompliant)
-	assertStatus(t, findings, "cry-004", modules.StatusCompliant)
-	assertStatus(t, findings, "cry-005", modules.StatusManual)
-	assertStatus(t, findings, "cry-006", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "cry-001", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "cry-002", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "cry-003", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "cry-004", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "cry-005", modules.StatusManual)
+	testutil.AssertStatus(t, findings, "cry-006", modules.StatusCompliant)
 }
 
 func TestAudit_Debian_Weak(t *testing.T) {
@@ -119,11 +120,11 @@ func TestAudit_Debian_Weak(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "cry-001", modules.StatusNonCompliant)
-	assertStatus(t, findings, "cry-002", modules.StatusNonCompliant)
-	assertStatus(t, findings, "cry-003", modules.StatusNonCompliant)
-	assertStatus(t, findings, "cry-004", modules.StatusNonCompliant)
-	assertStatus(t, findings, "cry-006", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "cry-001", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "cry-002", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "cry-003", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "cry-004", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "cry-006", modules.StatusNonCompliant)
 }
 
 func TestPlan_NoChanges(t *testing.T) {
@@ -175,15 +176,3 @@ func td(name string) string {
 	return filepath.Join("testdata", name)
 }
 
-func assertStatus(t *testing.T, findings []modules.Finding, id string, want modules.Status) {
-	t.Helper()
-	for _, f := range findings {
-		if f.Check.ID == id {
-			if f.Status != want {
-				t.Fatalf("%s: got %s want %s (current=%q detail=%q)", id, f.Status, want, f.Current, f.Detail)
-			}
-			return
-		}
-	}
-	t.Fatalf("check %s not found", id)
-}

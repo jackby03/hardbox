@@ -22,6 +22,7 @@ import (
 
 	"github.com/hardbox-io/hardbox/internal/modules"
 	"github.com/hardbox-io/hardbox/internal/modules/updates"
+	"github.com/hardbox-io/hardbox/internal/modules/util/testutil"
 )
 
 func TestModule_ImplementsInterface(t *testing.T) {
@@ -48,11 +49,11 @@ func TestAudit_Debian_Compliant(t *testing.T) {
 		t.Fatalf("Audit(): %v", err)
 	}
 
-	assertStatus(t, findings, "upd-001", modules.StatusCompliant)
-	assertStatus(t, findings, "upd-002", modules.StatusCompliant)
-	assertStatus(t, findings, "upd-003", modules.StatusCompliant)
-	assertStatus(t, findings, "upd-004", modules.StatusCompliant)
-	assertStatus(t, findings, "upd-005", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "upd-001", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "upd-002", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "upd-003", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "upd-004", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "upd-005", modules.StatusCompliant)
 }
 
 func TestAudit_RHEL_Compliant(t *testing.T) {
@@ -78,9 +79,9 @@ func TestAudit_RHEL_Compliant(t *testing.T) {
 		t.Fatalf("Audit(): %v", err)
 	}
 
-	assertStatus(t, findings, "upd-002", modules.StatusCompliant)
-	assertStatus(t, findings, "upd-003", modules.StatusCompliant)
-	assertStatus(t, findings, "upd-004", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "upd-002", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "upd-003", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "upd-004", modules.StatusCompliant)
 }
 
 func TestAudit_Debian_MissingGPG_NonCompliant(t *testing.T) {
@@ -93,7 +94,7 @@ func TestAudit_Debian_MissingGPG_NonCompliant(t *testing.T) {
 		t.Fatalf("Audit(): %v", err)
 	}
 
-	assertStatus(t, findings, "upd-001", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "upd-001", modules.StatusNonCompliant)
 }
 
 func TestPlan_AuditOnly(t *testing.T) {
@@ -157,18 +158,5 @@ func buildDebianFixture(t *testing.T, root string, withKey bool) updates.TestOpt
 		APTTrustedGPGDir:  trustedDir,
 		USRShareKeyrings:  keyringsDir,
 	}
-}
-
-func assertStatus(t *testing.T, findings []modules.Finding, id string, want modules.Status) {
-	t.Helper()
-	for _, f := range findings {
-		if f.Check.ID == id {
-			if f.Status != want {
-				t.Fatalf("check %s status = %s, want %s", id, f.Status, want)
-			}
-			return
-		}
-	}
-	t.Fatalf("check %s not found", id)
 }
 
