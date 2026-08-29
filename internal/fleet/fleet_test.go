@@ -16,7 +16,9 @@
 package fleet_test
 
 import (
+	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/hardbox-io/hardbox/internal/fleet"
@@ -102,5 +104,33 @@ func TestHasCritical(t *testing.T) {
 				t.Errorf("HasCritical() = %v, want %v", got, tc.want)
 			}
 		})
+	}
+}
+
+func TestAuditTempFileCreation(t *testing.T) {
+	ctx := context.Background()
+
+	runner := fleet.New(fleet.Config{
+		Concurrency: 1,
+		Profile:     "cis-level1",
+	})
+
+	host := fleet.Host{
+		User: "testuser",
+		Addr: "127.0.0.1",
+		Port: 1, // Closed port to force fast connection error
+	}
+
+	results := runner.Audit(ctx, []fleet.Host{host})
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result, got %d", len(results))
+	}
+
+	if results[0].Err == nil {
+		t.Fatal("expected error for unreachable host, got nil")
+	}
+
+	if !strings.Contains(results[0].Err.Error(), "create remote temp report file") {
+		t.Errorf("expected error to contain 'create remote temp report file', got %v", results[0].Err)
 	}
 }
