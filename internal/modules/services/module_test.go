@@ -287,15 +287,15 @@ func TestAudit_InvalidUnitNameReturnsErrorStatus(t *testing.T) {
 		runnerCalled = true
 		return "", nil
 	})
-	cfg := modules.ModuleConfig{"disable": []any{"-oProxyCommand=bad", "valid.service"}}
+	cfg := modules.ModuleConfig{"disable": []any{"-oProxyCommand=bad"}}
 
 	findings, err := m.Audit(context.Background(), cfg)
 	if err != nil {
 		t.Fatalf("Audit: %v", err)
 	}
 
-	if len(findings) != 2 {
-		t.Fatalf("want 2 findings, got %d", len(findings))
+	if len(findings) != 1 {
+		t.Fatalf("want 1 finding, got %d", len(findings))
 	}
 
 	if findings[0].Status != modules.StatusError {
@@ -303,7 +303,7 @@ func TestAudit_InvalidUnitNameReturnsErrorStatus(t *testing.T) {
 	}
 
 	if runnerCalled {
-		// Note: runnerCalled would be true for the second item (valid.service), but for the first item it shouldn't be called.
+		t.Error("runner was called for invalid unit name, expected no execution")
 	}
 
 	changes, err := m.Plan(context.Background(), cfg)
@@ -311,10 +311,7 @@ func TestAudit_InvalidUnitNameReturnsErrorStatus(t *testing.T) {
 		t.Fatalf("Plan: %v", err)
 	}
 
-	// Should not generate change for invalid unit name
-	for _, ch := range changes {
-		if strings.Contains(ch.Description, "-oProxyCommand") {
-			t.Errorf("Plan produced change for invalid unit name: %s", ch.Description)
-		}
+	if len(changes) != 0 {
+		t.Errorf("Plan produced %d changes for invalid unit name, want 0", len(changes))
 	}
 }
