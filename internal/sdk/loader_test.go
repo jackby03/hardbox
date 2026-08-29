@@ -32,6 +32,10 @@ import (
 func buildTestPluginInPkgDir(t *testing.T, srcContent string, outPath string) {
 	t.Helper()
 
+	if !isCgoEnabled {
+		t.Skip("-buildmode=plugin requires cgo enabled")
+	}
+
 	// Go plugins importing internal packages must be located inside the module repo tree during build.
 	// We create a temporary package directory under internal/sdk/testdata.
 	testDataDir := filepath.Join(".", "testdata")
