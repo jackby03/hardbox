@@ -16,6 +16,7 @@
 package fleet_test
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"testing"
@@ -107,7 +108,7 @@ func TestHasCritical(t *testing.T) {
 }
 
 func TestAuditTempFileCreation(t *testing.T) {
-	ctx := t.Context()
+	ctx := context.Background()
 
 	runner := fleet.New(fleet.Config{
 		Concurrency: 1,
