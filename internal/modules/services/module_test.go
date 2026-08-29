@@ -253,3 +253,65 @@ func TestPlan_EmptyWhenAllCompliant(t *testing.T) {
 	}
 }
 
+func TestIsValidUnitName(t *testing.T) {
+	tests := []struct {
+		name  string
+		unit  string
+		valid bool
+	}{
+		{"valid simple service", "nginx", true},
+		{"valid dot service", "nginx.service", true},
+		{"valid template service", "user@1000.service", true},
+		{"valid hyphens and underscores", "my_custom-service.service", true},
+		{"empty string", "", false},
+		{"leading dash", "-oProxyCommand=touch", false},
+		{"shell injection semicolon", "nginx; rm -rf /", false},
+		{"path traversal", "../../../etc/passwd", false},
+		{"space in name", "invalid unit name", false},
+		{"backticks", "`id`", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := services.IsValidUnitName(tt.unit)
+			if got != tt.valid {
+				t.Errorf("IsValidUnitName(%q) = %v, want %v", tt.unit, got, tt.valid)
+			}
+		})
+	}
+}
+
+func TestAudit_InvalidUnitNameReturnsErrorStatus(t *testing.T) {
+	runnerCalled := false
+	m := services.NewModuleForTest(func(ctx context.Context, name string, args ...string) (string, error) {
+		runnerCalled = true
+		return "", nil
+	})
+	cfg := modules.ModuleConfig{"disable": []any{"-oProxyCommand=bad"}}
+
+	findings, err := m.Audit(context.Background(), cfg)
+	if err != nil {
+		t.Fatalf("Audit: %v", err)
+	}
+
+	if len(findings) != 1 {
+		t.Fatalf("want 1 finding, got %d", len(findings))
+	}
+
+	if findings[0].Status != modules.StatusError {
+		t.Errorf("findings[0].Status = %q, want %q", findings[0].Status, modules.StatusError)
+	}
+
+	if runnerCalled {
+		t.Error("runner was called for invalid unit name, expected no execution")
+	}
+
+	changes, err := m.Plan(context.Background(), cfg)
+	if err != nil {
+		t.Fatalf("Plan: %v", err)
+	}
+
+	if len(changes) != 0 {
+		t.Errorf("Plan produced %d changes for invalid unit name, want 0", len(changes))
+	}
+}

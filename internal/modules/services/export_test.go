@@ -21,3 +21,5 @@ func NewModuleForTest(run func(ctx context.Context, name string, args ...string)
 	return &Module{run: run}
 }
 
+// IsValidUnitName exposes isValidUnitName for unit testing.
+var IsValidUnitName = isValidUnitName
