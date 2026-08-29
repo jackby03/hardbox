@@ -17,6 +17,7 @@ package mac_test
 import (
 	"context"
 	"fmt"
+	"github.com/hardbox-io/hardbox/internal/modules/util/testutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -77,11 +78,11 @@ func TestAudit_AppArmor_Compliant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit: %v", err)
 	}
-	assertStatus(t, findings, "mac-001", modules.StatusCompliant)
-	assertStatus(t, findings, "mac-002", modules.StatusCompliant)
-	assertStatus(t, findings, "mac-003", modules.StatusCompliant)
-	assertStatus(t, findings, "mac-004", modules.StatusCompliant)
-	assertStatus(t, findings, "mac-005", modules.StatusSkipped)
+	testutil.AssertStatus(t, findings, "mac-001", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "mac-002", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "mac-003", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "mac-004", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "mac-005", modules.StatusSkipped)
 }
 
 func TestAudit_SELinux_Compliant(t *testing.T) {
@@ -103,11 +104,11 @@ func TestAudit_SELinux_Compliant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit: %v", err)
 	}
-	assertStatus(t, findings, "mac-001", modules.StatusCompliant)
-	assertStatus(t, findings, "mac-002", modules.StatusCompliant)
-	assertStatus(t, findings, "mac-003", modules.StatusCompliant)
-	assertStatus(t, findings, "mac-004", modules.StatusSkipped)
-	assertStatus(t, findings, "mac-005", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "mac-001", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "mac-002", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "mac-003", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "mac-004", modules.StatusSkipped)
+	testutil.AssertStatus(t, findings, "mac-005", modules.StatusCompliant)
 }
 
 func TestAudit_AppArmor_NonCompliantUnconfined(t *testing.T) {
@@ -128,9 +129,9 @@ func TestAudit_AppArmor_NonCompliantUnconfined(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit: %v", err)
 	}
-	assertStatus(t, findings, "mac-002", modules.StatusNonCompliant)
-	assertStatus(t, findings, "mac-003", modules.StatusNonCompliant)
-	assertStatus(t, findings, "mac-004", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "mac-002", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "mac-003", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "mac-004", modules.StatusNonCompliant)
 }
 
 func TestPlan_AuditOnly(t *testing.T) {
@@ -155,17 +156,3 @@ func TestPlan_AuditOnly(t *testing.T) {
 		t.Fatalf("Plan returned %d changes, want 0", len(changes))
 	}
 }
-
-func assertStatus(t *testing.T, findings []modules.Finding, id string, want modules.Status) {
-	t.Helper()
-	for _, f := range findings {
-		if f.Check.ID == id {
-			if f.Status != want {
-				t.Fatalf("%s: got %s, want %s", id, f.Status, want)
-			}
-			return
-		}
-	}
-	t.Fatalf("check %s not found", id)
-}
-

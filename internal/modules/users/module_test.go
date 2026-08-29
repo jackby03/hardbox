@@ -16,6 +16,7 @@ package users_test
 
 import (
 	"context"
+	"github.com/hardbox-io/hardbox/internal/modules/util/testutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -32,19 +33,6 @@ func tdPath(elem ...string) string {
 }
 
 func noSudoersDir() string { return tdPath("nonexistent_sudoers_d") }
-
-func assertStatus(t *testing.T, findings []modules.Finding, id string, want modules.Status) {
-	t.Helper()
-	for _, f := range findings {
-		if f.Check.ID == id {
-			if f.Status != want {
-				t.Errorf("check %s: got %q, want %q (current=%q)", id, f.Status, want, f.Current)
-			}
-			return
-		}
-	}
-	t.Errorf("check %s: not found in findings", id)
-}
 
 func newHardenedModule() *users.Module {
 	return users.NewModuleForTest(
@@ -140,10 +128,10 @@ func TestAudit_DefaultLoginDefs_NonCompliant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "usr-001", modules.StatusNonCompliant) // 99999 > 90
-	assertStatus(t, findings, "usr-002", modules.StatusNonCompliant) // 0 < 1
-	assertStatus(t, findings, "usr-004", modules.StatusNonCompliant) // not set
-	assertStatus(t, findings, "usr-015", modules.StatusNonCompliant) // 022 not ≥ 027 bits
+	testutil.AssertStatus(t, findings, "usr-001", modules.StatusNonCompliant) // 99999 > 90
+	testutil.AssertStatus(t, findings, "usr-002", modules.StatusNonCompliant) // 0 < 1
+	testutil.AssertStatus(t, findings, "usr-004", modules.StatusNonCompliant) // not set
+	testutil.AssertStatus(t, findings, "usr-015", modules.StatusNonCompliant) // 022 not ≥ 027 bits
 }
 
 // ── audit: dirty passwd ───────────────────────────────────────────────────────
@@ -162,8 +150,8 @@ func TestAudit_DirtyPasswd_NonCompliant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "usr-010", modules.StatusNonCompliant) // toor has UID 0
-	assertStatus(t, findings, "usr-011", modules.StatusNonCompliant) // daemon has /bin/bash
+	testutil.AssertStatus(t, findings, "usr-010", modules.StatusNonCompliant) // toor has UID 0
+	testutil.AssertStatus(t, findings, "usr-011", modules.StatusNonCompliant) // daemon has /bin/bash
 }
 
 // ── audit: nopasswd sudoers ───────────────────────────────────────────────────
@@ -182,7 +170,7 @@ func TestAudit_NopasswdSudoers_NonCompliant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "usr-013", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "usr-013", modules.StatusNonCompliant)
 }
 
 // ── audit: default PAM ────────────────────────────────────────────────────────
@@ -201,11 +189,11 @@ func TestAudit_DefaultPAM_NonCompliant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "usr-005", modules.StatusNonCompliant) // no pwquality
-	assertStatus(t, findings, "usr-006", modules.StatusNonCompliant) // no history
-	assertStatus(t, findings, "usr-007", modules.StatusNonCompliant) // no faillock
-	assertStatus(t, findings, "usr-008", modules.StatusNonCompliant) // no unlock_time
-	assertStatus(t, findings, "usr-009", modules.StatusNonCompliant) // no even_deny_root
+	testutil.AssertStatus(t, findings, "usr-005", modules.StatusNonCompliant) // no pwquality
+	testutil.AssertStatus(t, findings, "usr-006", modules.StatusNonCompliant) // no history
+	testutil.AssertStatus(t, findings, "usr-007", modules.StatusNonCompliant) // no faillock
+	testutil.AssertStatus(t, findings, "usr-008", modules.StatusNonCompliant) // no unlock_time
+	testutil.AssertStatus(t, findings, "usr-009", modules.StatusNonCompliant) // no even_deny_root
 }
 
 // ── audit: default useradd ────────────────────────────────────────────────────
@@ -224,7 +212,7 @@ func TestAudit_DefaultUseradd_NonCompliant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "usr-017", modules.StatusNonCompliant) // INACTIVE=-1
+	testutil.AssertStatus(t, findings, "usr-017", modules.StatusNonCompliant) // INACTIVE=-1
 }
 
 // ── plan: fixes login.defs ────────────────────────────────────────────────────
@@ -315,4 +303,3 @@ func TestPlan_AlreadyCompliant_NoChanges(t *testing.T) {
 		t.Errorf("expected 0 changes when already compliant, got %d", len(changes))
 	}
 }
-
