@@ -1,8 +1,22 @@
+// Copyright (C) 2026 Hardbox Authors
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU Affero General Public License for more details.
+
 package testutil
 
 import (
 	"path/filepath"
 	"testing"
+
+	"github.com/hardbox-io/hardbox/internal/modules"
 )
 
 // TestdataPath returns the relative path to a file or directory in testdata/.
@@ -19,4 +33,19 @@ func TestdataAbsPath(t *testing.T, name string) string {
 		t.Fatalf("TestdataAbsPath(%q): %v", name, err)
 	}
 	return p
+}
+
+// AssertStatus verifies that a finding with the specified check ID exists in findings
+// and has the expected status want.
+func AssertStatus(t *testing.T, findings []modules.Finding, id string, want modules.Status) {
+	t.Helper()
+	for _, f := range findings {
+		if f.Check.ID == id {
+			if f.Status != want {
+				t.Fatalf("check %s: got status %s, want %s (current=%q detail=%q)", id, f.Status, want, f.Current, f.Detail)
+			}
+			return
+		}
+	}
+	t.Fatalf("check %s not found in findings", id)
 }

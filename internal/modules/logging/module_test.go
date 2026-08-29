@@ -63,19 +63,6 @@ func noSyslogActive() map[string]fakeResult {
 	}
 }
 
-func assertStatus(t *testing.T, findings []modules.Finding, id string, want modules.Status) {
-	t.Helper()
-	for _, f := range findings {
-		if f.Check.ID == id {
-			if f.Status != want {
-				t.Errorf("check %s: got status %q, want %q (current=%q)", id, f.Status, want, f.Current)
-			}
-			return
-		}
-	}
-	t.Errorf("check %s: not found in findings", id)
-}
-
 // noLogrotate returns a path that doesn't exist.
 func noLogrotate() string { return filepath.Join("testdata", "nonexistent_logrotate.conf") }
 
@@ -161,12 +148,12 @@ func TestAudit_AllCompliant(t *testing.T) {
 		t.Fatalf("expected 7 findings, got %d", len(findings))
 	}
 
-	assertStatus(t, findings, "log-001", modules.StatusCompliant)
-	assertStatus(t, findings, "log-002", modules.StatusCompliant)
-	assertStatus(t, findings, "log-004", modules.StatusCompliant)
-	assertStatus(t, findings, "log-005", modules.StatusCompliant)
-	assertStatus(t, findings, "log-006", modules.StatusCompliant)
-	assertStatus(t, findings, "log-007", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "log-001", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "log-002", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "log-004", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "log-005", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "log-006", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "log-007", modules.StatusCompliant)
 }
 
 // ── audit: no syslog service ──────────────────────────────────────────────────
@@ -186,7 +173,7 @@ func TestAudit_NoSyslogService_LOG001NonCompliant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit() error: %v", err)
 	}
-	assertStatus(t, findings, "log-001", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "log-001", modules.StatusNonCompliant)
 }
 
 // ── audit: no remote target ───────────────────────────────────────────────────
@@ -206,7 +193,7 @@ func TestAudit_LocalOnlyRsyslog_LOG002NonCompliant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit() error: %v", err)
 	}
-	assertStatus(t, findings, "log-002", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "log-002", modules.StatusNonCompliant)
 }
 
 // ── audit: journald not persistent ───────────────────────────────────────────
@@ -226,8 +213,8 @@ func TestAudit_JournaldDefault_LOG004LOG005NonCompliant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit() error: %v", err)
 	}
-	assertStatus(t, findings, "log-004", modules.StatusNonCompliant)
-	assertStatus(t, findings, "log-005", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "log-004", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "log-005", modules.StatusNonCompliant)
 }
 
 // ── audit: no logrotate ───────────────────────────────────────────────────────
@@ -247,7 +234,7 @@ func TestAudit_NoLogrotate_LOG006NonCompliant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit() error: %v", err)
 	}
-	assertStatus(t, findings, "log-006", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "log-006", modules.StatusNonCompliant)
 }
 
 // ── plan: writes journald keys when non-compliant ─────────────────────────────
