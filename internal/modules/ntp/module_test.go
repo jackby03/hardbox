@@ -15,6 +15,7 @@
 package ntp_test
 
 import (
+	"github.com/hardbox-io/hardbox/internal/modules/util/testutil"
 	"context"
 	"fmt"
 	"os"
@@ -81,11 +82,11 @@ func TestAudit_NonCompliantScenarios(t *testing.T) {
 		t.Fatalf("Audit(): unexpected error: %v", err)
 	}
 
-	assertStatus(t, findings, "ntp-001", modules.StatusCompliant)
-	assertStatus(t, findings, "ntp-002", modules.StatusNonCompliant)
-	assertStatus(t, findings, "ntp-003", modules.StatusNonCompliant)
-	assertStatus(t, findings, "ntp-004", modules.StatusNonCompliant)
-	assertStatus(t, findings, "ntp-005", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "ntp-001", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "ntp-002", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "ntp-003", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "ntp-004", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "ntp-005", modules.StatusNonCompliant)
 }
 
 func TestAudit_SkipsChronyDirectivesWhenChronyNotInstalled(t *testing.T) {
@@ -104,11 +105,11 @@ func TestAudit_SkipsChronyDirectivesWhenChronyNotInstalled(t *testing.T) {
 		t.Fatalf("Audit(): unexpected error: %v", err)
 	}
 
-	assertStatus(t, findings, "ntp-001", modules.StatusNonCompliant)
-	assertStatus(t, findings, "ntp-002", modules.StatusNonCompliant)
-	assertStatus(t, findings, "ntp-003", modules.StatusSkipped)
-	assertStatus(t, findings, "ntp-004", modules.StatusSkipped)
-	assertStatus(t, findings, "ntp-005", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "ntp-001", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "ntp-002", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "ntp-003", modules.StatusSkipped)
+	testutil.AssertStatus(t, findings, "ntp-004", modules.StatusSkipped)
+	testutil.AssertStatus(t, findings, "ntp-005", modules.StatusCompliant)
 }
 
 func TestPlan_UpdatesChronyAndReverts(t *testing.T) {
@@ -183,18 +184,6 @@ func TestPlan_NoChangesWhenCompliant(t *testing.T) {
 	}
 }
 
-func assertStatus(t *testing.T, findings []modules.Finding, id string, want modules.Status) {
-	t.Helper()
-	for _, f := range findings {
-		if f.Check.ID == id {
-			if f.Status != want {
-				t.Fatalf("check %s: got %s, want %s", id, f.Status, want)
-			}
-			return
-		}
-	}
-	t.Fatalf("check %s not found", id)
-}
 
 type fakeResult struct {
 	out string

@@ -15,6 +15,7 @@
 package firewall_test
 
 import (
+	"github.com/hardbox-io/hardbox/internal/modules/util/testutil"
 	"context"
 	"fmt"
 	"os"
@@ -54,12 +55,12 @@ func TestAudit_UFWCompliant(t *testing.T) {
 	if len(findings) != 6 {
 		t.Fatalf("expected 6 findings, got %d", len(findings))
 	}
-	assertStatus(t, findings, "fw-001", modules.StatusCompliant)
-	assertStatus(t, findings, "fw-002", modules.StatusCompliant)
-	assertStatus(t, findings, "fw-003", modules.StatusCompliant)
-	assertStatus(t, findings, "fw-004", modules.StatusCompliant)
-	assertStatus(t, findings, "fw-005", modules.StatusCompliant)
-	assertStatus(t, findings, "fw-006", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "fw-001", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "fw-002", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "fw-003", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "fw-004", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "fw-005", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "fw-006", modules.StatusCompliant)
 }
 
 func TestAudit_UFWSensitivePortOpen(t *testing.T) {
@@ -72,8 +73,8 @@ func TestAudit_UFWSensitivePortOpen(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "fw-005", modules.StatusNonCompliant)
-	assertStatus(t, findings, "fw-006", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "fw-005", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "fw-006", modules.StatusNonCompliant)
 }
 
 func TestAudit_FirewalldInboundNotDrop(t *testing.T) {
@@ -87,12 +88,12 @@ func TestAudit_FirewalldInboundNotDrop(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "fw-001", modules.StatusCompliant)
-	assertStatus(t, findings, "fw-002", modules.StatusNonCompliant)
-	assertStatus(t, findings, "fw-003", modules.StatusSkipped)
-	assertStatus(t, findings, "fw-004", modules.StatusCompliant)
-	assertStatus(t, findings, "fw-005", modules.StatusCompliant)
-	assertStatus(t, findings, "fw-006", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "fw-001", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "fw-002", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "fw-003", modules.StatusSkipped)
+	testutil.AssertStatus(t, findings, "fw-004", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "fw-005", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "fw-006", modules.StatusCompliant)
 }
 
 func TestAudit_NftablesCompliant(t *testing.T) {
@@ -122,7 +123,7 @@ table ip6 filter {
 		t.Fatalf("Audit(): %v", err)
 	}
 	for _, id := range []string{"fw-001", "fw-002", "fw-003", "fw-004", "fw-005", "fw-006"} {
-		assertStatus(t, findings, id, modules.StatusCompliant)
+		testutil.AssertStatus(t, findings, id, modules.StatusCompliant)
 	}
 }
 
@@ -136,7 +137,7 @@ func TestAudit_IPv6DisabledSkipsFW006(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit(): %v", err)
 	}
-	assertStatus(t, findings, "fw-006", modules.StatusSkipped)
+	testutil.AssertStatus(t, findings, "fw-006", modules.StatusSkipped)
 }
 
 func TestAudit_NoBackendDetectedReturnsErrors(t *testing.T) {
@@ -199,19 +200,6 @@ func TestNftHasIPv6Rules(t *testing.T) {
 	}
 }
 
-func assertStatus(t *testing.T, findings []modules.Finding, id string, want modules.Status) {
-	t.Helper()
-	for _, f := range findings {
-		if f.Check.ID != id {
-			continue
-		}
-		if f.Status != want {
-			t.Fatalf("check %s: got %s want %s (current=%q detail=%q)", id, f.Status, want, f.Current, f.Detail)
-		}
-		return
-	}
-	t.Fatalf("check %s not found", id)
-}
 
 type fakeResult struct {
 	out string

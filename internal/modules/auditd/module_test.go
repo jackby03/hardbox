@@ -61,18 +61,6 @@ func serviceDisabled() map[string]fakeResult {
 	}
 }
 
-func assertStatus(t *testing.T, findings []modules.Finding, id string, want modules.Status) {
-	t.Helper()
-	for _, f := range findings {
-		if f.Check.ID == id {
-			if f.Status != want {
-				t.Errorf("check %s: got status %q, want %q (current=%q)", id, f.Status, want, f.Current)
-			}
-			return
-		}
-	}
-	t.Errorf("check %s: not found in findings", id)
-}
 
 // ── interface ─────────────────────────────────────────────────────────────────
 
@@ -129,13 +117,13 @@ func TestAudit_DefaultRules_RuleChecksNonCompliant(t *testing.T) {
 
 	ruleIDs := []string{"aud-001", "aud-002", "aud-003", "aud-004", "aud-005", "aud-006", "aud-007", "aud-008", "aud-009"}
 	for _, id := range ruleIDs {
-		assertStatus(t, findings, id, modules.StatusNonCompliant)
+		testutil.AssertStatus(t, findings, id, modules.StatusNonCompliant)
 	}
 	// conf checks still pass
-	assertStatus(t, findings, "aud-010", modules.StatusCompliant)
-	assertStatus(t, findings, "aud-011", modules.StatusCompliant)
-	assertStatus(t, findings, "aud-012", modules.StatusCompliant)
-	assertStatus(t, findings, "aud-013", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "aud-010", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "aud-011", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "aud-012", modules.StatusCompliant)
+	testutil.AssertStatus(t, findings, "aud-013", modules.StatusCompliant)
 }
 
 // ── audit: non-compliant conf ─────────────────────────────────────────────────
@@ -153,9 +141,9 @@ func TestAudit_DefaultConf_ConfChecksNonCompliant(t *testing.T) {
 	}
 
 	// Default conf: max_log_file=5 (< 8), action=ROTATE (ok), space_left=SYSLOG (ok)
-	assertStatus(t, findings, "aud-010", modules.StatusNonCompliant)
-	assertStatus(t, findings, "aud-011", modules.StatusCompliant) // ROTATE is acceptable
-	assertStatus(t, findings, "aud-012", modules.StatusCompliant) // SYSLOG is acceptable
+	testutil.AssertStatus(t, findings, "aud-010", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "aud-011", modules.StatusCompliant) // ROTATE is acceptable
+	testutil.AssertStatus(t, findings, "aud-012", modules.StatusCompliant) // SYSLOG is acceptable
 }
 
 // ── audit: service disabled ───────────────────────────────────────────────────
@@ -171,7 +159,7 @@ func TestAudit_ServiceDisabled_AUD013NonCompliant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Audit() error: %v", err)
 	}
-	assertStatus(t, findings, "aud-013", modules.StatusNonCompliant)
+	testutil.AssertStatus(t, findings, "aud-013", modules.StatusNonCompliant)
 }
 
 // ── audit: missing rules dir ──────────────────────────────────────────────────
@@ -188,7 +176,7 @@ func TestAudit_MissingRulesDir_AllRuleChecksNonCompliant(t *testing.T) {
 		t.Fatalf("Audit() error: %v", err)
 	}
 	for _, id := range []string{"aud-001", "aud-009"} {
-		assertStatus(t, findings, id, modules.StatusNonCompliant)
+		testutil.AssertStatus(t, findings, id, modules.StatusNonCompliant)
 	}
 }
 
