@@ -52,7 +52,13 @@ func buildTestPluginInPkgDir(t *testing.T, srcContent string, outPath string) {
 		t.Fatalf("failed to write test plugin source: %v", err)
 	}
 
-	cmd := exec.Command("go", "build", "-buildmode=plugin", "-o", outPath, "./"+pkgDir)
+	args := []string{"build", "-buildmode=plugin"}
+	if isRaceEnabled {
+		args = append(args, "-race")
+	}
+	args = append(args, "-o", outPath, "./"+pkgDir)
+
+	cmd := exec.Command("go", args...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("failed to build test plugin: %v\nOutput: %s", err, string(out))
