@@ -201,40 +201,62 @@ hardbox apply --profile production
 
 ### Snapshot & Rollback
 
-Before any change is applied, hardbox creates a **change manifest**:
+Before any change is applied, hardbox records the pre-apply state of everything
+the selected changes declare they will touch. Each module's `Plan` returns
+`Change` values carrying `Files` and `SysctlKeys`; the engine backs those up
+before a single byte is written.
 
-```yaml
-# /var/lib/hardbox/snapshots/2024-03-06T143200Z/manifest.yaml
-session_id: 2024-03-06T143200Z
-host: prod-web-01
-profile: production
-files_backed_up:
-  - path: /etc/ssh/sshd_config
-    sha256: abc123...
-  - path: /etc/sysctl.d/99-hardbox.conf
-    sha256: def456...
-sysctl_snapshot:
-  net.ipv4.ip_forward: "0"
-  kernel.dmesg_restrict: "0"
-services_snapshot:
-  avahi-daemon: active
-  cups: active
+```json
+// /var/lib/hardbox/snapshots/2024-03-06T143200Z/manifest.json
+{
+  "session_id": "2024-03-06T143200Z",
+  "host": "prod-web-01",
+  "timestamp": "2024-03-06T14:32:00Z",
+  "files_backed_up": [
+    { "path": "/etc/ssh/sshd_config", "sha256": "abc123...", "mode": 384, "existed": true },
+    { "path": "/etc/sysctl.d/99-hardbox.conf", "sha256": "", "mode": 0, "existed": false }
+  ],
+  "sysctl_snapshot": {
+    "net.ipv4.ip_forward": "0",
+    "kernel.dmesg_restrict": "0"
+  }
+}
 ```
 
-Rollback restores every backed-up file and re-applies the recorded service/sysctl states:
+`existed: false` marks a path that apply will create: rollback removes it
+instead of restoring content that never existed.
+
+Restoring rewrites file contents and modes, deletes paths that were created,
+and writes the recorded sysctl values back:
 
 ```bash
 # List sessions
 hardbox rollback list
 
-# Rollback last session
-hardbox rollback --last
+# Rollback the most recent session
+hardbox rollback apply --last
 
-# Rollback specific session
-hardbox rollback --session 2024-03-06T143200Z
+# Rollback a specific session
+hardbox rollback apply --session 2024-03-06T143200Z
 ```
 
----
+#### What rollback does not cover
+
+Rollback restores **files and sysctl values**. It does **not** reverse:
+
+- packages installed or removed (`apt-get`, `dnf`);
+- services enabled, disabled or started (`systemctl`);
+- firewall rules pushed through `ufw` or `firewall-cmd`;
+- SELinux mode changes applied with `setenforce`, or AppArmor profile loads;
+- permissions changed on directories, such as the world-writable sticky-bit and
+  `/boot` ownership changes, because a directory's contents are not snapshotted;
+- kernel modules loaded at runtime.
+
+Changes of those kinds carry a `Revert` closure that is used when apply fails
+mid-session, but it cannot be replayed later: closures are not serialisable, so a
+`hardbox rollback` run in a new process has no way to re-run them. Treat package
+and service remediation as forward-only, and take your own snapshot (VM, LVM,
+or filesystem) before applying it on a host you cannot rebuild.
 
 ## Config File Format
 

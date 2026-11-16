@@ -362,4 +362,3 @@ func orUnknown(v string) string {
 	}
 	return strings.TrimSpace(v)
 }
-

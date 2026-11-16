@@ -142,6 +142,7 @@ func (m *Module) Plan(ctx context.Context, _ modules.ModuleConfig) ([]modules.Ch
 		{
 			Description:  fmt.Sprintf("kernel: write %d hardened sysctl parameters to %s", len(fixes), sysctlConfPath),
 			DryRunOutput: sb.String(),
+			Files:        []string{sysctlConfPath},
 			Apply: func() error {
 				return util.AtomicWrite(sysctlConfPath, newContent, 0o644)
 			},
@@ -174,4 +175,3 @@ func (m *Module) readSysctl(param string) (string, error) {
 	}
 	return strings.TrimSpace(string(data)), nil
 }
-

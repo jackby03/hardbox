@@ -13,7 +13,7 @@ import (
 
 type Module struct{}
 
-func (m *Module) Name() string { return "processes" }
+func (m *Module) Name() string    { return "processes" }
 func (m *Module) Version() string { return "1.0" }
 
 func (m *Module) Audit(ctx context.Context, _ modules.ModuleConfig) ([]modules.Finding, error) {
@@ -30,11 +30,13 @@ func (m *Module) Plan(ctx context.Context, cfg modules.ModuleConfig) ([]modules.
 	findings, _ := m.Audit(ctx, cfg)
 	var c []modules.Change
 	for _, f := range findings {
-		if f.IsCompliant() || f.Status == modules.StatusSkipped { continue }
+		if f.IsCompliant() || f.Status == modules.StatusSkipped {
+			continue
+		}
 		switch f.Check.ID {
 		case "prc-001":
 			c = append(c, modules.Change{
-				Description: "Processes: install and enable process accounting",
+				Description:  "Processes: install and enable process accounting",
 				DryRunOutput: "  apt-get install -y acct && systemctl enable --now acct",
 				Apply: func() error {
 					if err := exec.CommandContext(ctx, "apt-get", "install", "-y", "acct").Run(); err != nil {
@@ -46,8 +48,9 @@ func (m *Module) Plan(ctx context.Context, cfg modules.ModuleConfig) ([]modules.
 			})
 		case "prc-002":
 			c = append(c, modules.Change{
-				Description: "Processes: disable core dumps in limits.conf",
+				Description:  "Processes: disable core dumps in limits.conf",
 				DryRunOutput: "  add '* hard core 0' to /etc/security/limits.conf",
+				Files:        []string{"/etc/security/limits.conf"},
 				Apply: func() error {
 					return m.appendLimits("* hard core 0")
 				},

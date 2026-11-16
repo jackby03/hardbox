@@ -118,6 +118,7 @@ func (m *Module) Plan(ctx context.Context, cfg modules.ModuleConfig) ([]modules.
 		{
 			Description:  fmt.Sprintf("network: write protocol blacklist config to %s", path),
 			DryRunOutput: sb.String(),
+			Files:        []string{path},
 			Apply: func() error {
 				return util.AtomicWrite(path, newContent, 0o644)
 			},

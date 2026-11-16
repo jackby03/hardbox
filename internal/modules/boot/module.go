@@ -82,6 +82,7 @@ func (m *Module) Plan(ctx context.Context, cfg modules.ModuleConfig) ([]modules.
 			changes = append(changes, modules.Change{
 				Description:  "Boot: restrict grub.cfg to root only",
 				DryRunOutput: "  chmod 0600 /boot/grub/grub.cfg",
+				Files:        []string{grubCfg},
 				Apply: func() error {
 					return os.Chmod(grubCfg, 0o600)
 				},
@@ -91,6 +92,7 @@ func (m *Module) Plan(ctx context.Context, cfg modules.ModuleConfig) ([]modules.
 			changes = append(changes, modules.Change{
 				Description:  "Boot: add security params to GRUB cmdline",
 				DryRunOutput: "  add audit=1 to GRUB_CMDLINE_LINUX in /etc/default/grub",
+				Files:        []string{"/etc/default/grub"},
 				Apply: func() error {
 					return m.patchGrubDefault("audit=1")
 				},

@@ -171,6 +171,7 @@ func (m *Module) Plan(ctx context.Context, cfg modules.ModuleConfig) ([]modules.
 		{
 			Description:  fmt.Sprintf("ntp: update chrony directives in %s", path),
 			DryRunOutput: strings.TrimSpace(newContent),
+			Files:        []string{path},
 			Apply: func() error {
 				return util.AtomicWrite(path, []byte(newContent), 0o644)
 			},

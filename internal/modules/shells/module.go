@@ -13,7 +13,7 @@ import (
 
 type Module struct{}
 
-func (m *Module) Name() string { return "shells" }
+func (m *Module) Name() string    { return "shells" }
 func (m *Module) Version() string { return "1.0" }
 
 func (m *Module) Audit(ctx context.Context, _ modules.ModuleConfig) ([]modules.Finding, error) {
@@ -30,14 +30,17 @@ func (m *Module) Plan(ctx context.Context, cfg modules.ModuleConfig) ([]modules.
 	findings, _ := m.Audit(ctx, cfg)
 	var c []modules.Change
 	for _, f := range findings {
-		if f.IsCompliant() || f.Status == modules.StatusSkipped { continue }
+		if f.IsCompliant() || f.Status == modules.StatusSkipped {
+			continue
+		}
 		if f.Check.ID == "shl-001" || f.Check.ID == "shl-003" {
 			c = append(c, modules.Change{
-				Description: "Shells: set TMOUT=900 in /etc/profile.d/timeout.sh",
+				Description:  "Shells: set TMOUT=900 in /etc/profile.d/timeout.sh",
 				DryRunOutput: "  echo 'TMOUT=900' >> /etc/profile.d/timeout.sh",
-			Apply: func() error {
-				return util.AtomicWrite("/etc/profile.d/timeout.sh", []byte("TMOUT=900\nexport TMOUT\nreadonly TMOUT\n"), 0o644)
-			},
+				Files:        []string{"/etc/profile.d/timeout.sh"},
+				Apply: func() error {
+					return util.AtomicWrite("/etc/profile.d/timeout.sh", []byte("TMOUT=900\nexport TMOUT\nreadonly TMOUT\n"), 0o644)
+				},
 				Revert: func() error { os.Remove("/etc/profile.d/timeout.sh"); return nil },
 			})
 			break
@@ -82,7 +85,9 @@ func (m *Module) checkShellPerms() modules.Finding {
 	for _, fn := range []string{".bashrc", ".bash_profile", ".profile"} {
 		home, _ := os.UserHomeDir()
 		info, err := os.Stat(filepath.Join(home, fn))
-		if err != nil { continue }
+		if err != nil {
+			continue
+		}
 		if info.Mode().Perm()&0o022 != 0 {
 			bad = append(bad, fn)
 		}

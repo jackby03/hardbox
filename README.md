@@ -39,6 +39,8 @@ sudo hardbox apply --profile production --dry-run
 
 # Apply hardening with rollback safety
 sudo hardbox apply --profile production
+# Undo the last session (restores file and sysctl state)
+sudo hardbox rollback apply --last
 
 # CI / headless mode
 sudo hardbox apply --config /etc/hardbox/config.yaml --non-interactive
@@ -55,7 +57,7 @@ See the full command reference: `hardbox --help`
 
 | Category | Capabilities |
 |---|---|
-| **Remediation** | Preview with `--dry-run`, atomic writes, pre-apply snapshot, one-command rollback — free and in the same binary as the audit |
+| **Remediation** | Preview with `--dry-run`, atomic writes, pre-apply snapshot of every file a change declares, one-command rollback of file and sysctl state — free and in the same binary as the audit. Package and service changes are forward-only; see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#what-rollback-does-not-cover) |
 | **Hardening** | 21 modules: SSH, firewall, kernel, users, filesystem, auditd, crypto, AppArmor/SELinux, NTP, updates, containers, boot, storage, integrity, malware, shells, processes, and more |
 | **Compliance** | 12 built-in profiles: `cis-level1`, `cis-level2`, `pci-dss`, `stig`, `hipaa`, `nist-800-53`, `iso27001`, `cloud-aws`, `cloud-gcp`, `cloud-azure`, `production`, `development` |
 | **Reports** | JSON, HTML, Markdown, Text, SARIF — CI/CD-friendly and human-readable |

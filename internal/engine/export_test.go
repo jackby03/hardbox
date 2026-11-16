@@ -28,3 +28,11 @@ func NewEngineForTest(cfg *config.Config, mods ...modules.Module) *Engine {
 	}
 	return &Engine{cfg: cfg, modules: mods}
 }
+
+// SetSnapshotBaseDirForTest redirects the snapshot store to a temporary
+// directory and returns a function that restores the previous value.
+func SetSnapshotBaseDirForTest(dir string) func() {
+	previous := snapshotBaseDir
+	snapshotBaseDir = dir
+	return func() { snapshotBaseDir = previous }
+}

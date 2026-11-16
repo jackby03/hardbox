@@ -374,6 +374,7 @@ func (m *Module) planJournaldUpdate(setStorage, setForward bool) (*modules.Chang
 	ch := &modules.Change{
 		Description:  "logging: set journald " + strings.Join(desc, ", "),
 		DryRunOutput: newContent,
+		Files:        []string{path},
 		Apply: func() error {
 			return util.AtomicWrite(path, []byte(newContent), 0o644)
 		},
@@ -496,4 +497,3 @@ func runCommand(ctx context.Context, name string, args ...string) (string, error
 	}
 	return result, nil
 }
-
