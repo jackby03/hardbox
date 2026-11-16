@@ -104,7 +104,7 @@ func (e *Engine) Audit(ctx context.Context, format, outputPath string) error {
 
 	printAuditSummary(all, moduleErrors)
 
-	if err := e.writeReportWithErrors(sessionID, all, moduleErrors, format, outputPath); err != nil {
+	if err := e.writeReport(sessionID, all, moduleErrors, format, outputPath); err != nil {
 		return fmt.Errorf("writing report: %w", err)
 	}
 
@@ -179,7 +179,7 @@ func (e *Engine) Apply(ctx context.Context, reportFormat, reportOutput string) e
 
 func (e *Engine) writePostApplyReport(ctx context.Context, sessionID, format, path string) error {
 	findings, moduleErrors := e.runAudit(ctx)
-	return e.writeReportWithErrors(sessionID, findings, moduleErrors, format, path)
+	return e.writeReport(sessionID, findings, moduleErrors, format, path)
 }
 
 // RunAudit executes all module checks and returns the structured Report.
@@ -363,11 +363,9 @@ func hasCritical(findings []modules.Finding) bool {
 
 // writeReport renders the audit report to stdout (when path is empty) or to a
 // file. If path points to a directory, a timestamped file is created inside it.
-func (e *Engine) writeReport(sessionID string, findings []modules.Finding, format, path string) error {
-	return e.writeReportWithErrors(sessionID, findings, nil, format, path)
-}
-
-func (e *Engine) writeReportWithErrors(
+// moduleErrors carries the modules that could not be audited, so the report can
+// flag itself as partial.
+func (e *Engine) writeReport(
 	sessionID string,
 	findings []modules.Finding,
 	moduleErrors map[string]string,
