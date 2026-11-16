@@ -106,8 +106,9 @@ add-on, but it will not block a release and it should not be the first thing you
    or `yum` directly), and `crypto` which returns no remediation at all for its six checks.
 2. **Coverage of what servers actually run.** `webserver`, `databases` and `nameservices`
    are the next modules. Each must ship audit **and** remediation.
-3. **Custom rules.** YAML-defined checks and the Plugin SDK. Defining your own baseline
-   without writing Go is a core promise and it is still the least developed part.
+3. **Custom rules.** YAML-defined checks landed (see
+   [`docs/CUSTOM-CHECKS.md`](docs/CUSTOM-CHECKS.md)); the remaining work is wider
+   assertions, sysctl remediation and the Plugin SDK decision.
 4. **Documentation parity.** `docs/MODULES.md` and `docs/COMPLIANCE.md` are missing several
    shipped modules. For a compliance product, undocumented checks are unauditable checks.
 

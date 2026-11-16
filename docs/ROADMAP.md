@@ -20,7 +20,9 @@ That is the whole product. Three claims, in order of importance:
    tier, no seat count, no feature flag. This is a product decision, not a marketing line.
 3. **It runs the operator's rules.** Today that means adjusting the built-in checks: profiles,
    `extends` inheritance and per-module configuration let a team set its own values. Adding a
-   *new* check without writing Go is **not implemented** — it is the v0.8 YAML custom checks.
+   *new* check without writing Go is available as YAML custom checks (see
+   [`CUSTOM-CHECKS.md`](CUSTOM-CHECKS.md)); the built-in profiles remain the way to change
+   values.
    The Plugin SDK exists in the source tree but cannot load in the published binaries, which are
    built with `CGO_ENABLED=0` while Go plugins require cgo; see
    [`PLUGIN-SDK.md`](PLUGIN-SDK.md#limitation-published-binaries-cannot-load-plugins).
@@ -99,7 +101,9 @@ What the product promises is that an operator can encode their own baseline inst
 consuming the built-in profiles. That is currently true only for *values*: profiles, `extends`
 and module configuration. Two gaps remain, and they are not equivalent in size:
 
-- **Adding a check without writing Go (the real gap).** This is the YAML custom checks work.
+- **Adding a check without writing Go.** Shipped as YAML custom checks; the remaining work is
+  wider assertions, sysctl remediation and covering the loaded checks with the documentation
+  gates.
   The decisive test is whether someone with a compliance rule but no Go toolchain can express
   it. Today they cannot.
 - **Adding a check with arbitrary logic.** The Plugin SDK in `internal/sdk` compiles a Go
@@ -166,7 +170,7 @@ Pillar 3. The promise of "your own rules" has been deferred long enough.
 
 | Feature | Description |
 |---|---|
-| **YAML custom checks** | Define checks and remediations in YAML, loaded by the engine at startup, no Go required. Custom checks must support remediation, not just detection. |
+| **YAML custom checks** ✅ | Declarative checks in `/etc/hardbox/checks.d`, loaded at startup, with remediation and snapshot integration. Guide: [`CUSTOM-CHECKS.md`](CUSTOM-CHECKS.md). |
 | **Plugin SDK v1** | Freeze the API until v2.0. |
 | **Module and check reference** | Every module and every check documented, with its compliance mapping. Generated or verified by CI, not hand-maintained. |
 

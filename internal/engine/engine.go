@@ -27,6 +27,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/hardbox-io/hardbox/internal/config"
+	"github.com/hardbox-io/hardbox/internal/customchecks"
 	"github.com/hardbox-io/hardbox/internal/distro"
 	"github.com/hardbox-io/hardbox/internal/modules"
 	"github.com/hardbox-io/hardbox/internal/modules/util"
@@ -74,6 +75,18 @@ func New(cfg *config.Config) *Engine {
 			Str("family", string(info.Family)).
 			Str("pretty_name", info.PrettyName).
 			Msg("distro detected")
+	}
+
+	if cfg.CustomChecksDir != "" {
+		checks, err := customchecks.Load(cfg.CustomChecksDir)
+		if err != nil {
+			// A malformed check file must be loud: silently ignoring it would mean
+			// the operator believes a baseline is being enforced when it is not.
+			log.Error().Err(err).Str("dir", cfg.CustomChecksDir).Msg("custom checks rejected")
+		} else if len(checks) > 0 {
+			e.modules = append(e.modules, customchecks.NewModule(checks))
+			log.Info().Int("checks", len(checks)).Str("dir", cfg.CustomChecksDir).Msg("custom checks loaded")
+		}
 	}
 
 	if cfg.PluginDir != "" {
@@ -406,4 +419,3 @@ func formatExtension(format string) string {
 		return ".txt"
 	}
 }
-

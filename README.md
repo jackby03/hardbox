@@ -64,7 +64,7 @@ See the full command reference: `hardbox --help`
 | **Safety** | Dry-run mode, atomic file writes, snapshot/restore, every failed module surfaced as a partial audit instead of being hidden |
 | **Operations** *(add-ons)* | `hardbox watch` scheduled re-audit, `hardbox fleet` multi-host over SSH, `hardbox serve` local report dashboard, `hardbox diff` regression comparison |
 | **Integrations** *(add-ons)* | Ansible role, Terraform provider, cloud-init templates, Slack/HTTP webhook alerts |
-| **Extensibility** | YAML profiles with `extends` inheritance and per-module settings, so you can set your own values for the built-in checks. A Plugin SDK exists in source but cannot load in the published cgo-free binaries — see [`docs/PLUGIN-SDK.md`](docs/PLUGIN-SDK.md#limitation-published-binaries-cannot-load-plugins) |
+| **Extensibility** | Profiles with `extends` inheritance and per-module settings for the built-in checks, plus **YAML custom checks** for rules that do not exist yet — declarative assertions with remediation, no Go required ([guide](docs/CUSTOM-CHECKS.md)). A Plugin SDK exists in source but cannot load in the published cgo-free binaries — see [`docs/PLUGIN-SDK.md`](docs/PLUGIN-SDK.md#limitation-published-binaries-cannot-load-plugins) |
 | **Platforms** | Audited in CI on Ubuntu, Debian, RHEL, Rocky Linux, AlmaLinux, Amazon Linux and Fedora. Remediation is currently verified on Debian only — closing that gap is the v0.7 priority, see [`docs/ROADMAP.md`](docs/ROADMAP.md) |
 
 > Full module reference: [`docs/MODULES.md`](docs/MODULES.md) | Compliance mappings: [`docs/COMPLIANCE.md`](docs/COMPLIANCE.md)
@@ -100,6 +100,7 @@ See the full command reference: `hardbox --help`
 |---|---|
 | Contributing | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
 | Module development | [`docs/MODULES.md`](docs/MODULES.md) |
+| Custom checks (YAML) | [`docs/CUSTOM-CHECKS.md`](docs/CUSTOM-CHECKS.md) |
 | Integrations (Ansible, Terraform, cloud-init) | [`docs/INTEGRATIONS.md`](docs/INTEGRATIONS.md) |
 | Watch daemon | [`docs/WATCH.md`](docs/WATCH.md) |
 | Web dashboard | [`docs/SERVE.md`](docs/SERVE.md) |
