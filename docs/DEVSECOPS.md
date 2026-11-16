@@ -77,6 +77,14 @@ Each leg performs:
 3. **Smoke audit** — `hardbox audit --profile cis-level1 --format json`
 4. **Structure assertion** — `jq` validates the JSON output has `session_id`, `overall_score`, and non-empty `modules`
 5. **Findings assertion** — fails if 0 findings are returned (indicates distro detection is broken)
+6. **Partial-audit report** — prints the modules listed under `module_errors` (informational)
+
+Each leg runs against a **bare container**. It deliberately does not create stub
+config files such as `/etc/ssh/sshd_config` or `/etc/login.defs`: a previous
+revision did, which meant the job validated a system nobody runs and hid the
+fact that a single missing file aborted the entire audit. A module whose config
+is absent must report its checks as `skipped`, and the report must still be
+produced in full.
 
 The `Distro Parity Gate` job aggregates all matrix results. Only this check
 name needs to be added to branch protection rules.

@@ -33,6 +33,15 @@ type Report struct {
 	Hostname     string         `json:"hostname,omitempty"`
 	OverallScore int            `json:"overall_score"`
 	Modules      []ModuleReport `json:"modules"`
+	// ModuleErrors lists the modules that could not be audited at all, keyed by
+	// module name. Its presence means the report is partial: those modules were
+	// never inspected, so the overall score does not cover them.
+	//
+	// This is keyed by module name rather than folded into Modules because the
+	// report groups modules by the prefix of their check IDs ("fs" for the
+	// filesystem module), which is not derivable from a module that produced no
+	// findings.
+	ModuleErrors map[string]string `json:"module_errors,omitempty"`
 }
 
 // ModuleReport aggregates findings for a single hardening module.
@@ -57,6 +66,13 @@ type FindingRecord struct {
 // Findings are grouped by the module prefix in their Check ID
 // (e.g. "ssh-001" → module "ssh", "kern-003" → module "kern").
 func Build(sessionID, profile string, findings []modules.Finding) *Report {
+	return BuildWithErrors(sessionID, profile, findings, nil)
+}
+
+// BuildWithErrors is Build plus the modules that could not be audited, keyed by
+// module name. They are recorded separately so a consumer can tell the
+// difference between a clean module and one that was never inspected.
+func BuildWithErrors(sessionID, profile string, findings []modules.Finding, moduleErrors map[string]string) *Report {
 	grouped := make(map[string][]modules.Finding)
 	for _, f := range findings {
 		mod := ModulePrefix(f.Check.ID)
@@ -128,6 +144,7 @@ func Build(sessionID, profile string, findings []modules.Finding) *Report {
 		Profile:      profile,
 		OverallScore: overall,
 		Modules:      modReports,
+		ModuleErrors: moduleErrors,
 	}
 }
 

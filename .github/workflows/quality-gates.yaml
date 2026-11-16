@@ -9,7 +9,12 @@ on:
   # silently skipped CI for stacked PRs (base = another feature branch), and
   # retargeting the base does not fire an 'edited' event to start it later, so
   # branch protection sat on "waiting for status to be reported" forever.
+  #
+  # 'labeled' and 'ready_for_review' are listed explicitly because they are not
+  # default types: without them, adding the 'full-ci' label would not start the
+  # distro-parity matrix it is supposed to gate.
   pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled, ready_for_review]
   # Lets a maintainer re-run the suite on the current commit without pushing.
   workflow_dispatch:
 
@@ -269,21 +274,13 @@ jobs:
       - name: Build hardbox binary
         run: go build -o hardbox ./cmd/hardbox
 
-      - name: Prepare system stubs for container audit
-        # Containers lack the OS files hardbox reads during audit.
-        # Create the minimum stubs so every module can open its config
-        # files and produce findings rather than aborting with ENOENT.
-        run: |
-          mkdir -p /etc/ssh && touch /etc/ssh/sshd_config
-          mkdir -p /etc/audit/rules.d
-          mkdir -p /etc/sysctl.d
-          mkdir -p /etc/pam.d && touch /etc/pam.d/common-auth /etc/pam.d/common-password
-          mkdir -p /etc/chrony && touch /etc/chrony/chrony.conf
-          mkdir -p /etc/systemd/system
-          touch /etc/login.defs
-          touch /etc/rsyslog.conf
-
-      - name: Smoke audit (cis-level1)
+      # Deliberately no system stubs here. Earlier revisions of this job created
+      # /etc/ssh/sshd_config, /etc/login.defs, /etc/rsyslog.conf and friends by
+      # hand so the audit would not abort on a missing file. That validated a
+      # system nobody runs. A bare container is exactly the case that must work:
+      # the audit has to degrade to per-module "not applicable" findings and
+      # still emit a complete report.
+      - name: Smoke audit (cis-level1) on a bare container
         run: |
           ./hardbox audit --profile cis-level1 --format json \
             --output audit-${{ matrix.slug }}.json || true
@@ -306,6 +303,17 @@ jobs:
             echo "::error::Audit returned 0 findings on ${{ matrix.distro }} — distro detection may be broken"
             exit 1
           fi
+
+      - name: Report modules that could not be audited
+        run: |
+          ERRS=$(jq '[.module_errors // {} | keys[]] | length' "audit-${{ matrix.slug }}.json")
+          echo "Modules not audited on ${{ matrix.distro }}: ${ERRS}"
+          if [ "${ERRS}" -gt 0 ]; then
+            jq -r '.module_errors | to_entries[] | "  \(.key): \(.value)"' "audit-${{ matrix.slug }}.json"
+          fi
+          # Informational: a bare container legitimately lacks some services.
+          # The report must still exist and remain structurally valid, and no
+          # single missing config may abort the whole audit.
 
       - name: Upload audit report
         uses: actions/upload-artifact@v4
