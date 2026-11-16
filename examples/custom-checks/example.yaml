@@ -1,0 +1,60 @@
+# Example custom checks for hardbox.
+#
+# Install by copying this file into the custom check directory (/etc/hardbox/checks.d
+# by default, override with custom_checks_dir in config.yaml). Every *.yaml file in
+# that directory is loaded at startup.
+#
+# Rules enforced by the loader:
+#   - id must look like <prefix>-NNN, and <prefix> must not collide with a built-in
+#     module prefix (ssh, fs, kn, ...) because the report groups findings by prefix
+#   - every check needs either remediate.write or audit_only: true
+#   - assertions are declarative; there is no way to run a shell command
+
+version: "1"
+
+checks:
+  # Remediable: hardbox can write the file.
+  - id: corp-001
+    title: Authorized-use banner is set on /etc/issue.net
+    description: Remote logins must display the approved warning banner.
+    severity: medium
+    compliance:
+      - framework: NIST
+        control: AC-8
+      - framework: ISO
+        control: A.7.2.2
+    assert:
+      file:
+        path: /etc/issue.net
+        contains: "Authorized use only"
+        mode: "0644"
+        owner: root
+    remediate:
+      write:
+        path: /etc/issue.net
+        content: |
+          Authorized use only. All activity is logged.
+        mode: "0644"
+
+  # Audit only: this file cannot be written safely by a generic remediation.
+  - id: corp-002
+    title: APT does not allow unauthenticated packages
+    severity: high
+    compliance:
+      - framework: NIST
+        control: SI-7
+    audit_only: true
+    assert:
+      file:
+        path: /etc/apt/apt.conf.d/99verify-peer.conf
+        not_contains: "AllowUnauthenticated \"true\""
+
+  # Sysctl assertions are audit-only in this version.
+  - id: corp-003
+    title: Kernel pointer addresses are hidden from unprivileged users
+    severity: low
+    audit_only: true
+    assert:
+      sysctl:
+        key: kernel.kptr_restrict
+        equals: "2"
