@@ -18,6 +18,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/hardbox-io/hardbox/internal/modules"
@@ -126,14 +127,105 @@ func TestAudit_Debian_Weak(t *testing.T) {
 	testutil.AssertStatus(t, findings, "cry-006", modules.StatusNonCompliant)
 }
 
-func TestPlan_NoChanges(t *testing.T) {
-	m := crypto.NewModuleForTest(nil, "", "", "", "", "", "")
+// TestPlan_RHELPolicyChange covers the one remediation that fixes cry-001..004
+// together on the RHEL family: setting the system crypto policy to DEFAULT.
+func TestPlan_RHELPolicyChange(t *testing.T) {
+	dir := t.TempDir()
+	policyPath := filepath.Join(dir, "crypto-policies-config")
+	if err := os.WriteFile(policyPath, []byte("LEGACY\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	gpgPath := filepath.Join(dir, "gpg.conf")
+
+	m := crypto.NewModuleForTest(crypto.FakeDistroRHEL, policyPath,
+		filepath.Join(dir, "openssl.cnf"), "", gpgPath, "", dir)
 	changes, err := m.Plan(context.Background(), nil)
 	if err != nil {
 		t.Fatalf("Plan(): %v", err)
 	}
-	if len(changes) != 0 {
-		t.Fatalf("expected 0 changes, got %d", len(changes))
+
+	var policy []modules.Change
+	for _, c := range changes {
+		if c.Description == "Crypto: set system crypto policy to DEFAULT" {
+			policy = append(policy, c)
+		}
+	}
+	if len(policy) != 1 {
+		t.Fatalf("expected exactly one policy change (four checks share it), got %d", len(policy))
+	}
+	if len(policy[0].Files) != 1 || policy[0].Files[0] != policyPath {
+		t.Errorf("policy change must declare the policy file, got %v", policy[0].Files)
+	}
+	if !strings.Contains(policy[0].DryRunOutput, "update-crypto-policies --set DEFAULT") {
+		t.Errorf("unexpected dry run: %q", policy[0].DryRunOutput)
+	}
+}
+
+// TestPlan_DebianPolicyIsAuditOnly pins the documented exception: rewriting the
+// system OpenSSL configuration is not automated on the Debian family, because a
+// wrong edit breaks TLS for every consumer on the host.
+func TestPlan_DebianPolicyIsAuditOnly(t *testing.T) {
+	dir := t.TempDir()
+	opensslPath := filepath.Join(dir, "openssl.cnf")
+	if err := os.WriteFile(opensslPath, []byte("MinProtocol = TLSv1\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	m := crypto.NewModuleForTest(crypto.FakeDistroDebian, filepath.Join(dir, "policy"),
+		opensslPath, "", filepath.Join(dir, "gpg.conf"), "", dir)
+	changes, err := m.Plan(context.Background(), nil)
+	if err != nil {
+		t.Fatalf("Plan(): %v", err)
+	}
+
+	for _, c := range changes {
+		for _, f := range c.Files {
+			if f == opensslPath {
+				t.Fatalf("openssl.cnf must not be rewritten automatically, got change %q", c.Description)
+			}
+		}
+	}
+}
+
+// TestPlan_GPGKeyIDFormat checks the one crypto remediation available on both
+// families, and that it replaces an existing directive instead of duplicating it.
+func TestPlan_GPGKeyIDFormat(t *testing.T) {
+	dir := t.TempDir()
+	gpgPath := filepath.Join(dir, "gpg.conf")
+	if err := os.WriteFile(gpgPath, []byte("keyid-format short\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	m := crypto.NewModuleForTest(crypto.FakeDistroDebian, filepath.Join(dir, "policy"),
+		filepath.Join(dir, "openssl.cnf"), "", gpgPath, "", dir)
+	changes, err := m.Plan(context.Background(), nil)
+	if err != nil {
+		t.Fatalf("Plan(): %v", err)
+	}
+
+	found := false
+	for _, c := range changes {
+		if c.Description != "Crypto: set GnuPG keyid-format to 0xlong" {
+			continue
+		}
+		found = true
+		if err := c.Apply(); err != nil {
+			t.Fatalf("Apply(): %v", err)
+		}
+	}
+	if !found {
+		t.Fatal("expected a gpg keyid-format change")
+	}
+
+	content, err := os.ReadFile(gpgPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Count(string(content), "keyid-format") != 1 {
+		t.Errorf("directive duplicated: %q", content)
+	}
+	if !strings.Contains(string(content), "0xlong") {
+		t.Errorf("directive not updated: %q", content)
 	}
 }
 

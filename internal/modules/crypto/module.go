@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -25,6 +26,7 @@ import (
 
 	"github.com/hardbox-io/hardbox/internal/distro"
 	"github.com/hardbox-io/hardbox/internal/modules"
+	"github.com/hardbox-io/hardbox/internal/modules/util"
 )
 
 const (
@@ -122,9 +124,107 @@ func (m *Module) Audit(_ context.Context, _ modules.ModuleConfig) ([]modules.Fin
 	return findings, nil
 }
 
-// Plan is intentionally read-only for crypto checks in this iteration.
-func (m *Module) Plan(_ context.Context, _ modules.ModuleConfig) ([]modules.Change, error) {
-	return nil, nil
+// Plan returns the remediation for the crypto checks that can be fixed safely.
+//
+// Two of the six are remediable, five on the RHEL family:
+//
+//   - cry-001..cry-004 on RHEL are all governed by the system crypto policy, so
+//     changing the policy to DEFAULT fixes them together. The change goes
+//     through update-crypto-policies, which is the distribution's own supported
+//     mechanism and also refreshes the policy symlinks.
+//   - cry-006 is a single directive in gpg.conf, safe to write.
+//
+// cry-005 (FIPS mode) is permanently audit-only: enabling it requires a
+// FIPS-validated kernel and a boot parameter, and asserting it is a change of
+// compliance regime, not a configuration tweak.
+//
+// cry-002..cry-004 on the Debian family are audit-only on purpose. There is no
+// conf.d for OpenSSL, the [system_default_sect] wiring differs between releases,
+// and the file is read by every TLS consumer on the host. Rewriting it
+// automatically can break TLS system-wide, so the finding carries the exact
+// directives to apply and the operator decides. This is a documented exception,
+// not a silent no-op.
+func (m *Module) Plan(ctx context.Context, _ modules.ModuleConfig) ([]modules.Change, error) {
+	findings, err := m.Audit(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	family := distro.FamilyUnknown
+	if info, detErr := m.detector()(); detErr == nil && info != nil {
+		family = info.Family
+	}
+
+	var changes []modules.Change
+	for _, f := range findings {
+		if f.IsCompliant() || f.Status == modules.StatusSkipped || f.Status == modules.StatusManual || f.Status == modules.StatusError {
+			continue
+		}
+
+		switch f.Check.ID {
+		case "cry-001", "cry-002", "cry-003", "cry-004":
+			if family != distro.FamilyRHEL {
+				continue // documented audit-only exception, see above
+			}
+			changes = append(changes, modules.Change{
+				Description:  "Crypto: set system crypto policy to DEFAULT",
+				DryRunOutput: "  update-crypto-policies --set DEFAULT",
+				Files:        []string{m.cryptoPolicy()},
+				Apply: func() error {
+					return exec.CommandContext(ctx, "update-crypto-policies", "--set", "DEFAULT").Run()
+				},
+				Revert: func() error {
+					return exec.CommandContext(ctx, "update-crypto-policies", "--set", "LEGACY").Run()
+				},
+			})
+			// One policy change covers all four checks; the loop would otherwise
+			// emit four identical changes.
+			return changes, nil
+		case "cry-006":
+			target := m.gpgUserPath()
+			if _, statErr := os.Stat(m.gpgSystemPath()); target == "" || statErr == nil {
+				target = m.gpgSystemPath()
+			}
+			changes = append(changes, modules.Change{
+				Description:  "Crypto: set GnuPG keyid-format to 0xlong",
+				DryRunOutput: "  set 'keyid-format 0xlong' in " + target,
+				Files:        []string{target},
+				Apply: func() error {
+					return m.setGPGKeyIDFormat(target)
+				},
+				Revert: func() error { return nil },
+			})
+		}
+	}
+	return changes, nil
+}
+
+// setGPGKeyIDFormat writes keyid-format 0xlong to path, replacing an existing
+// directive or appending one.
+func (m *Module) setGPGKeyIDFormat(path string) error {
+	existing, err := readStringIfExists(path)
+	if err != nil {
+		return fmt.Errorf("crypto: read %s: %w", path, err)
+	}
+
+	const directive = "keyid-format 0xlong"
+	if existing == "" {
+		return util.AtomicWrite(path, []byte(directive+"\n"), 0o600)
+	}
+
+	body := strings.Split(strings.TrimRight(existing, "\n"), "\n")
+	replaced := false
+	for i, l := range body {
+		if strings.HasPrefix(strings.ToLower(strings.TrimSpace(l)), "keyid-format") {
+			body[i] = directive
+			replaced = true
+			break
+		}
+	}
+	if !replaced {
+		body = append(body, directive)
+	}
+	return util.AtomicWrite(path, []byte(strings.Join(body, "\n")+"\n"), 0o600)
 }
 
 func (m *Module) auditPolicy(family distro.Family, rhelPolicy, opensslContent string) modules.Finding {

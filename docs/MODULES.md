@@ -252,6 +252,24 @@ Each module is self-contained, independently enabled/disabled, and maps every ch
 | cry-005 | FIPS 140-2 mode available (optional, for regulated envs) | High | SC-13 | — |
 | cry-006 | GnuPG keyid format is long | Low | — | — |
 
+### Remediation coverage
+
+| Check | Debian family | RHEL family |
+|---|---|---|
+| cry-001 … cry-004 | **Audit only** — see exception below | `update-crypto-policies --set DEFAULT` |
+| cry-005 (FIPS) | Audit only — enabling FIPS needs a validated kernel and a boot parameter | Audit only |
+| cry-006 | Writes `keyid-format 0xlong` to `gpg.conf` | Same |
+
+**Documented exception (cry-001 … cry-004 on Debian):** OpenSSL has no
+`conf.d`, the `[system_default_sect]` wiring differs between releases, and
+`/etc/ssl/openssl.cnf` is read by every TLS consumer on the host. Rewriting it
+automatically can break TLS system-wide, so `hardbox apply` leaves these as
+findings. The finding carries the directives to set; the operator applies them.
+
+**Documented exception (cry-005):** enabling FIPS mode changes the compliance
+regime of the host and requires a FIPS-validated kernel plus `fips=1` on the
+kernel command line. It is never automated.
+
 ---
 
 ## Module: Mandatory Access Control

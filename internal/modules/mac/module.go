@@ -115,29 +115,45 @@ func (m *Module) Plan(ctx context.Context, cfg modules.ModuleConfig) ([]modules.
 }
 
 func (m *Module) planInstallPackage(ctx context.Context, b backendType) modules.Change {
+	var pkgs []string
 	switch b {
 	case backendAppArmor:
-		return modules.Change{
-			Description:  "MAC: install apparmor",
-			DryRunOutput: "  apt-get install -y apparmor apparmor-utils",
-			Apply: func() error {
-				_, err := m.runner()(ctx, "apt-get", "install", "-y", "apparmor", "apparmor-utils")
-				return err
-			},
-			Revert: func() error { return nil },
-		}
+		pkgs = []string{"apparmor", "apparmor-utils"}
 	case backendSELinux:
-		return modules.Change{
-			Description:  "MAC: install SELinux policy tools",
-			DryRunOutput: "  yum install -y policycoreutils policycoreutils-python-utils",
-			Apply: func() error {
-				_, err := m.runner()(ctx, "yum", "install", "-y", "policycoreutils")
-				return err
-			},
-			Revert: func() error { return nil },
-		}
+		// policycoreutils-python-utils is what ships semanage/audit2allow; it is
+		// named python3-policycoreutils on newer RHEL rebuilds, so request both
+		// and let the package manager resolve what exists.
+		pkgs = []string{"policycoreutils", "policycoreutils-python-utils"}
 	default:
 		return modules.Change{}
+	}
+
+	// The backend is chosen by what the host actually runs, but the package
+	// manager must still come from the host family: hardcoding apt-get here made
+	// apply fail on every RPM distribution.
+	install, err := util.InstallPackages(pkgs...)
+	if err != nil {
+		return modules.Change{}
+	}
+	remove, _ := util.RemovePackages(pkgs...)
+
+	description := "MAC: install apparmor"
+	if b == backendSELinux {
+		description = "MAC: install SELinux policy tools"
+	}
+
+	return modules.Change{
+		Description:  description,
+		DryRunOutput: "  " + install.DryRun,
+		Apply: func() error {
+			return exec.CommandContext(ctx, install.Bin, install.Args...).Run()
+		},
+		Revert: func() error {
+			if remove.Bin == "" {
+				return nil
+			}
+			return exec.CommandContext(ctx, remove.Bin, remove.Args...).Run()
+		},
 	}
 }
 

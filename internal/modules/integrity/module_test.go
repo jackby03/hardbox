@@ -6,6 +6,7 @@ import (
 
 	"github.com/hardbox-io/hardbox/internal/modules"
 	"github.com/hardbox-io/hardbox/internal/modules/integrity"
+	"github.com/hardbox-io/hardbox/internal/modules/util/testutil"
 )
 
 func TestModule_ImplementsInterface(t *testing.T) {
@@ -27,6 +28,10 @@ func TestAudit_ProducesFindings(t *testing.T) {
 }
 
 func TestPlan_GeneratesValidChanges(t *testing.T) {
+	// Plan resolves the host's package manager to install AIDE, so it needs a
+	// Linux host with one of the supported managers present.
+	testutil.RequireLinux(t)
+
 	m := &integrity.Module{}
 	changes, err := m.Plan(context.Background(), nil)
 	if err != nil {

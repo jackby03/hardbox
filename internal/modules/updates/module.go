@@ -96,27 +96,70 @@ func (m *Module) Plan(ctx context.Context, cfg modules.ModuleConfig) ([]modules.
 
 		switch finding.Check.ID {
 		case "upd-003":
-			if f == "debian" {
+			switch f {
+			case "rhel":
+				install, installErr := util.InstallPackages("dnf-automatic")
+				if installErr != nil {
+					return nil, installErr
+				}
+				remove, _ := util.RemovePackages("dnf-automatic")
+				changes = append(changes, modules.Change{
+					Description:  "Updates: install and enable dnf-automatic",
+					Files:        []string{m.dnfAutomaticPath()},
+					DryRunOutput: "  " + install.DryRun + " && systemctl enable --now dnf-automatic.timer",
+					Apply: func() error {
+						if err := exec.CommandContext(ctx, install.Bin, install.Args...).Run(); err != nil {
+							return err
+						}
+						if err := m.writeDNFAutomaticConfig(); err != nil {
+							return err
+						}
+						return exec.CommandContext(ctx, "systemctl", "enable", "--now", "dnf-automatic.timer").Run()
+					},
+					Revert: func() error {
+						_ = exec.CommandContext(ctx, "systemctl", "disable", "--now", "dnf-automatic.timer").Run()
+						if remove.Bin == "" {
+							return nil
+						}
+						return exec.CommandContext(ctx, remove.Bin, remove.Args...).Run()
+					},
+				})
+			case "debian":
+				install, installErr := util.InstallPackages("unattended-upgrades")
+				if installErr != nil {
+					return nil, installErr
+				}
+				remove, _ := util.RemovePackages("unattended-upgrades")
 				changes = append(changes, modules.Change{
 					Description:  "Updates: install and enable unattended-upgrades",
-					DryRunOutput: "  apt-get install -y unattended-upgrades && dpkg-reconfigure -plow unattended-upgrades",
 					Files:        []string{m.aptAutoPath()},
+					DryRunOutput: "  " + install.DryRun + " && dpkg-reconfigure -plow unattended-upgrades",
 					Apply: func() error {
-						cmd := exec.CommandContext(ctx, "apt-get", "install", "-y", "unattended-upgrades")
-						if err := cmd.Run(); err != nil {
+						if err := exec.CommandContext(ctx, install.Bin, install.Args...).Run(); err != nil {
 							return err
 						}
 						return m.writeAPTConfig()
 					},
 					Revert: func() error {
-						_ = exec.CommandContext(ctx, "apt-get", "remove", "-y", "unattended-upgrades").Run()
-						return nil
+						if remove.Bin == "" {
+							return nil
+						}
+						return exec.CommandContext(ctx, remove.Bin, remove.Args...).Run()
 					},
 				})
 			}
 		}
 	}
 	return changes, nil
+}
+
+func (m *Module) writeDNFAutomaticConfig() error {
+	content := `[commands]
+upgrade_type = security
+apply_updates = yes
+reboot = never
+`
+	return util.AtomicWrite(m.dnfAutomaticPath(), []byte(content), 0o644)
 }
 
 func (m *Module) writeAPTConfig() error {
