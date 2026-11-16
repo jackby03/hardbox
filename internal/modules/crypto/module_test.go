@@ -16,14 +16,13 @@ package crypto_test
 
 import (
 	"context"
-	"github.com/hardbox-io/hardbox/internal/modules/util/testutil"
 	"os"
 	"path/filepath"
-	"runtime"
 	"testing"
 
 	"github.com/hardbox-io/hardbox/internal/modules"
 	"github.com/hardbox-io/hardbox/internal/modules/crypto"
+	"github.com/hardbox-io/hardbox/internal/modules/util/testutil"
 )
 
 func TestModule_ImplementsInterface(t *testing.T) {
@@ -157,9 +156,9 @@ func TestHelpers(t *testing.T) {
 }
 
 func TestReadStringIfExists_PermissionDenied(t *testing.T) {
-	if runtime.GOOS != "windows" && os.Geteuid() == 0 {
-		t.Skip("Skipping test on root as root can read files with 000 permissions")
-	}
+	testutil.RequireUnixPerms(t)
+	testutil.RequireUnprivileged(t)
+
 	dir := t.TempDir()
 	path := filepath.Join(dir, "noperm")
 	if err := os.WriteFile(path, []byte("test"), 0000); err != nil {
