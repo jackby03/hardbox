@@ -98,25 +98,8 @@ func runCommand(ctx context.Context, name string, args ...string) (string, error
 // serviceList returns the ordered list of service names to audit.
 // Config key "disable" ([]string or []any) takes precedence over the built-in catalog.
 func serviceList(cfg modules.ModuleConfig) []string {
-	if cfg != nil {
-		if raw, ok := cfg["disable"]; ok {
-			switch v := raw.(type) {
-			case []string:
-				if len(v) > 0 {
-					return v
-				}
-			case []any:
-				out := make([]string, 0, len(v))
-				for _, item := range v {
-					if s, ok := item.(string); ok {
-						out = append(out, s)
-					}
-				}
-				if len(out) > 0 {
-					return out
-				}
-			}
-		}
+	if v := stringList(cfg, "disable"); len(v) > 0 {
+		return v
 	}
 	// Fall back to the full catalog (de-duplicated by name).
 	out := make([]string, 0, len(catalog))
@@ -143,10 +126,67 @@ func entryFor(svc string) svcEntry {
 
 // Audit checks whether each service in the disable list is both inactive
 // (not running) and not enabled (will not start on boot).
+// stringList reads a []string-or-[]any config value.
+func stringList(cfg modules.ModuleConfig, key string) []string {
+	if cfg == nil {
+		return nil
+	}
+	raw, ok := cfg[key]
+	if !ok {
+		return nil
+	}
+	switch v := raw.(type) {
+	case []string:
+		return v
+	case []any:
+		out := make([]string, 0, len(v))
+		for _, item := range v {
+			if s, ok := item.(string); ok {
+				out = append(out, s)
+			}
+		}
+		return out
+	}
+	return nil
+}
+
+// unitSet normalises service names to their canonical systemd unit names, so an
+// alias and the unit itself collide as expected ("bind" and "named" are one
+// service).
+func unitSet(names []string) map[string]struct{} {
+	if len(names) == 0 {
+		return nil
+	}
+	out := make(map[string]struct{}, len(names))
+	for _, name := range names {
+		out[entryFor(name).unit] = struct{}{}
+	}
+	return out
+}
+
+// expectedServices returns the services the active profile declares this host is
+// supposed to run.
+//
+// This exists because the "disable unnecessary services" baseline and the
+// role-specific modules would otherwise contradict each other: cis-level1 lists
+// nginx and httpd as services to disable, which is correct for a generic server
+// and actively harmful on a host whose job is serving HTTP. Declaring a service
+// expected is how a profile says "this one is not unnecessary here".
+func expectedServices(cfg modules.ModuleConfig) map[string]struct{} {
+	return unitSet(stringList(cfg, "expected"))
+}
+
+func disabledServices(cfg modules.ModuleConfig) map[string]struct{} {
+	return unitSet(stringList(cfg, "disable"))
+}
+
 func (m *Module) Audit(ctx context.Context, cfg modules.ModuleConfig) ([]modules.Finding, error) {
 	services := serviceList(cfg)
 	run := m.runner()
 	findings := make([]modules.Finding, 0, len(services))
+
+	expected := expectedServices(cfg)
+	disabled := disabledServices(cfg)
 
 	for _, svc := range services {
 		entry := entryFor(svc)
@@ -159,6 +199,26 @@ func (m *Module) Audit(ctx context.Context, cfg modules.ModuleConfig) ([]modules
 			Compliance: []modules.ComplianceRef{
 				{Framework: "CIS", Control: entry.cisRef},
 			},
+		}
+
+		if _, isExpected := expected[entry.unit]; isExpected {
+			// expected wins over disable. That is the whole point: a role profile
+			// extends a generic baseline such as cis-level1, which lists nginx
+			// under disable, and then declares it expected. Both lists contain the
+			// unit after inheritance, and the role must not have to rewrite the
+			// baseline it extends.
+			detail := fmt.Sprintf("%s is declared expected in the active profile", entry.unit)
+			if _, alsoDisabled := disabled[entry.unit]; alsoDisabled {
+				detail += " (overrides services.disable inherited from the base profile)"
+			}
+			findings = append(findings, modules.Finding{
+				Check:   chk,
+				Status:  modules.StatusSkipped,
+				Current: "expected on this host",
+				Target:  "not audited",
+				Detail:  detail,
+			})
+			continue
 		}
 
 		if !isValidUnitName(entry.unit) {
@@ -215,6 +275,12 @@ func (m *Module) Plan(ctx context.Context, cfg modules.ModuleConfig) ([]modules.
 
 	for i, f := range findings {
 		if f.IsCompliant() {
+			continue
+		}
+		// An error finding means the profile is contradictory or the unit name is
+		// invalid. Never act on it: disabling the wrong unit is worse than doing
+		// nothing.
+		if f.Status == modules.StatusError {
 			continue
 		}
 		if i >= len(services) {

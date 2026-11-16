@@ -118,6 +118,12 @@ main gap in the product's promise.
 
 ### P1 — Server-native coverage
 
+**Prerequisite, done:** `services.expected` lets a profile declare the services
+the host is supposed to run. Without it the new modules would fight the baseline:
+`cis-level1` lists `nginx`, `httpd` and `named` under `disable`, so applying that
+profile on a web server stops the web server. `expected` overrides `disable`, and
+an expected service is reported as `skipped` rather than silently dropped.
+
 | Module | Key checks | Compliance |
 |---|---|---|
 | `webserver` | Server tokens hidden, directory listing disabled, TLS 1.2+ enforced, security headers | NIST SC-8 |
