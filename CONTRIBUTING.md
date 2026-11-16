@@ -10,6 +10,7 @@ Thank you for your interest in contributing! hardbox is an open-source Linux ser
 - [Development Setup](#development-setup)
 - [Project Structure](#project-structure)
 - [How to Contribute](#how-to-contribute)
+  - [What is most useful right now](#what-is-most-useful-right-now)
   - [Reporting Bugs](#reporting-bugs)
   - [Suggesting Features](#suggesting-features)
   - [Implementing a Module](#implementing-a-module)
@@ -88,6 +89,32 @@ hardbox/
 
 ## How to Contribute
 
+### What is most useful right now
+
+[`docs/ROADMAP.md`](docs/ROADMAP.md) defines the priority order. In short:
+
+> hardbox audits a Linux server against a hardening baseline **and fixes it**, for free, on
+> rules the operator writes.
+
+Work that advances that sentence is welcome. Work that does not is welcome to exist as an
+add-on, but it will not block a release and it should not be the first thing you build.
+
+**Highest value (in order):**
+
+1. **Remediation parity.** A check whose remediation only works on one distribution is a
+   bug. The open work here: distro-aware package installation (four modules call `apt-get`
+   or `yum` directly), and `crypto` which returns no remediation at all for its six checks.
+2. **Coverage of what servers actually run.** `webserver`, `databases` and `nameservices`
+   are the next modules. Each must ship audit **and** remediation.
+3. **Custom rules.** YAML-defined checks and the Plugin SDK. Defining your own baseline
+   without writing Go is a core promise and it is still the least developed part.
+4. **Documentation parity.** `docs/MODULES.md` and `docs/COMPLIANCE.md` are missing several
+   shipped modules. For a compliance product, undocumented checks are unauditable checks.
+
+**Explicitly not wanted:** a SaaS control plane, SSO/RBAC/billing, a telemetry agent,
+desktop hardening (USB/Bluetooth/Thunderbolt), or an interactive TUI. These are recorded as
+non-goals in the roadmap with the reasoning; please do not open PRs for them.
+
 ### Reporting Bugs
 
 Open a [GitHub Issue](https://github.com/jackby03/hardbox/issues/new?template=bug_report.md) and include:
@@ -107,6 +134,8 @@ Open a [GitHub Issue](https://github.com/jackby03/hardbox/issues/new?template=fe
 - Problem statement (what you're trying to solve)
 - Proposed solution
 - Compliance framework mapping if relevant (CIS, STIG, NIST, etc.)
+- **Which distribution(s) your remediation is verified on** — a check that reports a problem
+  without fixing it, or that only fixes it on Debian, is incomplete by definition here
 
 ### Implementing a Module
 
