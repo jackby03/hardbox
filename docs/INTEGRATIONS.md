@@ -66,3 +66,6 @@ Build custom hardening modules without forking the project.
 
 - **Guide:** [`PLUGIN-SDK.md`](PLUGIN-SDK.md)
 - **Example:** [`examples/plugin-custom-check/`](../examples/plugin-custom-check/)
+
+> **Not usable with a released binary.** Plugins require cgo and the official builds are
+> `CGO_ENABLED=0`. See the limitation section in the guide before starting.

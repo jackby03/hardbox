@@ -43,6 +43,10 @@ type Config struct {
 	// Defaults to /etc/hardbox/plugins. Set to "" to disable plugin loading.
 	PluginDir string `mapstructure:"plugin_dir"`
 
+	// CustomChecksDir is the directory scanned for operator-defined YAML checks.
+	// Defaults to /etc/hardbox/checks.d. Set to "" to disable custom checks.
+	CustomChecksDir string `mapstructure:"custom_checks_dir"`
+
 	Modules       map[string]ModuleConfig `mapstructure:"modules"`
 	Report        ReportConfig            `mapstructure:"report"`
 	Audit         AuditConfig             `mapstructure:"audit"`
@@ -276,5 +280,5 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("watch.interval", "5m")
 	v.SetDefault("watch.max_runs", 0)
 	v.SetDefault("plugin_dir", "/etc/hardbox/plugins")
+	v.SetDefault("custom_checks_dir", "/etc/hardbox/checks.d")
 }
-

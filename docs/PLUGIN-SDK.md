@@ -1,6 +1,25 @@
 # hardbox Plugin SDK
 
-The Plugin SDK lets you write custom hardening modules and load them into hardbox at runtime — no forking or recompiling the core required.
+The Plugin SDK lets you write custom hardening modules and load them into hardbox at runtime.
+
+## Limitation: published binaries cannot load plugins
+
+**This does not work with an official hardbox release.** Every published binary is built with
+`CGO_ENABLED=0` (see `.goreleaser.yaml` and the `Makefile`), and Go's `plugin` package requires
+cgo. In a cgo-free binary, `plugin.Open` fails with:
+
+```
+plugin.Open error: plugin: not implemented
+```
+
+Using the SDK therefore requires building hardbox yourself with `CGO_ENABLED=1`, and building
+your plugin against the same Go version and the same dependency versions as that binary. The
+`sdk` test suite skips its plugin tests when cgo is off, which is why CI never caught this.
+
+Whether the SDK is dropped, moved to a subprocess protocol, or shipped as a separate cgo build
+is an open decision recorded in [`ROADMAP.md`](ROADMAP.md#pillar-3--custom-rules). For
+operator-defined checks that do not need Go, see the YAML custom checks work in the same
+section.
 
 ## Prerequisites
 
