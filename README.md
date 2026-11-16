@@ -1,6 +1,6 @@
 <div align="center">
 
-**Audit, harden, and monitor Linux servers — guided, automated, auditable.**
+**Audit your Linux server, then fix it. Free, on your own rules.**
 
 [![Pre-release](https://img.shields.io/github/v/release/jackby03/hardbox?display_name=tag&include_prereleases&sort=semver&style=flat-square&label=pre-release&color=3b82f6)](https://github.com/jackby03/hardbox/releases)
 [![License: AGPLv3](https://img.shields.io/badge/License-AGPLv3-blue.svg?style=flat-square)](LICENSE)
@@ -14,9 +14,11 @@
 
 ## What is hardbox?
 
-**hardbox** is an open-source CLI toolkit that transforms Linux server hardening into a guided, auditable, and repeatable workflow. Audit your system against industry benchmarks, preview every change, apply hardening automatically, and roll back if needed — all from the command line.
+**hardbox** audits a Linux server against a hardening baseline **and remediates it** — from the command line, for free, and against rules you control.
 
-**21 hardening modules. 12 compliance profiles. 200+ checks. 7 Linux distros.**
+Most hardening tools tell you what is wrong. hardbox also fixes it: preview every change with `--dry-run`, take a snapshot, apply, and roll back with one command if anything breaks. Audit and remediation are both open source; there is no paid tier.
+
+**21 hardening modules · 175 checks · 12 compliance profiles · 6 distributions verified in CI**
 
 ---
 
@@ -53,14 +55,15 @@ See the full command reference: `hardbox --help`
 
 | Category | Capabilities |
 |---|---|
+| **Remediation** | Preview with `--dry-run`, atomic writes, pre-apply snapshot, one-command rollback — free and in the same binary as the audit |
 | **Hardening** | 21 modules: SSH, firewall, kernel, users, filesystem, auditd, crypto, AppArmor/SELinux, NTP, updates, containers, boot, storage, integrity, malware, shells, processes, and more |
 | **Compliance** | 12 built-in profiles: `cis-level1`, `cis-level2`, `pci-dss`, `stig`, `hipaa`, `nist-800-53`, `iso27001`, `cloud-aws`, `cloud-gcp`, `cloud-azure`, `production`, `development` |
-| **Safety** | Dry-run mode, atomic file writes, one-command rollback, snapshot/restore |
 | **Reports** | JSON, HTML, Markdown, Text, SARIF — CI/CD-friendly and human-readable |
-| **Operations** | `hardbox watch` daemon, `hardbox fleet` multi-host over SSH, `hardbox serve` web dashboard, `hardbox diff` audit comparison |
-| **Integrations** | Ansible role, Terraform provider, cloud-init templates, Slack/HTTP webhook alerts |
-| **Platforms** | Ubuntu, Debian, RHEL, Rocky Linux, AlmaLinux, Amazon Linux, Fedora |
+| **Safety** | Dry-run mode, atomic file writes, snapshot/restore, every failed module surfaced as a partial audit instead of being hidden |
+| **Operations** *(add-ons)* | `hardbox watch` scheduled re-audit, `hardbox fleet` multi-host over SSH, `hardbox serve` local report dashboard, `hardbox diff` regression comparison |
+| **Integrations** *(add-ons)* | Ansible role, Terraform provider, cloud-init templates, Slack/HTTP webhook alerts |
 | **Extensibility** | Plugin SDK for custom modules, YAML-based profiles with `extends` inheritance |
+| **Platforms** | Audited in CI on Ubuntu, Debian, RHEL, Rocky Linux, AlmaLinux, Amazon Linux and Fedora. Remediation is currently verified on Debian only — closing that gap is the v0.7 priority, see [`docs/ROADMAP.md`](docs/ROADMAP.md) |
 
 > Full module reference: [`docs/MODULES.md`](docs/MODULES.md) | Compliance mappings: [`docs/COMPLIANCE.md`](docs/COMPLIANCE.md)
 
@@ -76,16 +79,16 @@ See the full command reference: `hardbox --help`
 
 ## Roadmap
 
-| Version | What shipped |
+| Version | Focus |
 |---|---|
 | v0.4 ✅ | Core engine, 15 modules, 12 profiles, fleet, diff, serve, plugin SDK |
-| v0.5 ✅ | Watch daemon, Slack/webhook alerts, SARIF export, profile inheritance, fleet dashboard, trend sparklines |
-| v0.6 ✅ | 6 new modules (boot, storage, integrity, malware, shells, processes) — 21 total, all with remediation |
-| v0.7 | 4 modules: hardware (USB/bluetooth), nameservices (DNS), webserver (Apache/nginx), databases (MySQL/PG) |
-| v0.8 | Custom YAML checks, compliance PDFs, native .deb/.rpm, plugin SDK freeze, full docs |
-| v1.0 | 300+ checks, 25+ modules, GA stable release |
+| v0.5 ✅ | Watch daemon, alerts, SARIF export, profile inheritance, trend sparklines |
+| v0.6 ✅ | 6 new modules (boot, storage, integrity, malware, shells, processes) — 21 total |
+| **v0.7** | **Remediation parity** (distro-aware package handling, no audit-only silent gaps, `apply` verified in CI) **then** `webserver`, `databases`, `nameservices` |
+| v0.8 | Custom hardening: YAML custom checks, Plugin SDK v1, packages |
+| v1.0 | Quality bar: remediation verified on every supported distro, no undocumented check |
 
-Full roadmap with SaaS/enterprise deferrals: [`docs/ROADMAP.md`](docs/ROADMAP.md)
+[`docs/ROADMAP.md`](docs/ROADMAP.md) is the source of truth. It also lists what hardbox deliberately is **not** — no SaaS, no fleet control plane, no desktop hardening, no TUI — so scope decisions have something to point at.
 
 ---
 
@@ -125,5 +128,7 @@ For commercial use without AGPL obligations: jackby03@protonmail.com
 <div align="center">
 
 **Built for engineers who know that security is not a feature — it's a foundation.**
+
+Audit is table stakes. Fixing is the product.
 
 </div>

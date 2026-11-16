@@ -10,13 +10,53 @@ ACS-compatible agents should read `.agents/main.yaml` as the entry point for con
 ## Project Context
 
 `hardbox` is an open-source, CLI-first Linux server hardening toolkit written in Go.
-It is designed for infrastructure and security teams to run guided, auditable, and repeatable hardening workflows across multiple Linux distributions. It runs headless and in CI; there is no interactive UI layer.
+It audits a server against a hardening baseline **and remediates it**, for free, using rules
+the operator controls. It runs headless and in CI; there is no interactive UI layer.
+
+### Product direction
+
+[`docs/ROADMAP.md`](docs/ROADMAP.md) is the source of truth for scope. Read it before
+proposing or building anything. The short version:
+
+> hardbox audits a Linux server against a hardening baseline **and fixes it**, for free, on
+> rules the operator writes.
+
+**The filter question.** Every change must answer yes to:
+
+> Does this make it easier for someone to audit **and then fix** their Linux server, for
+> free, on any of the supported distributions, using rules they control?
+
+If not, it is not on the critical path. Say so rather than building it.
+
+Priority is strictly ordered — a pillar does not advance until the one above it holds:
+
+1. **Remediation parity.** Every check has a remediation that works on every supported
+   distribution, or a documented reason it is audit-only. A check that reports a problem
+   and silently does nothing is a bug, not a missing feature.
+2. **Coverage.** New modules and checks in categories server operators actually run.
+3. **Custom rules.** YAML checks and a stable Plugin SDK, so operators can encode their own
+   baseline.
+
+**Explicit non-goals.** Do not propose or build these — they are recorded in the roadmap
+precisely so this does not have to be re-argued:
+
+- No SaaS, multi-tenancy, SSO/SAML, RBAC or billing.
+- No telemetry agent, control plane or backend service.
+- No desktop/workstation hardening (USB, Bluetooth, FireWire/Thunderbolt DMA). `usb-storage`
+  blacklisting is the server-relevant part and already lives in the `mount` module.
+- No interactive TUI.
+- No audit-only positioning: an audit-only hardbox competes with more mature free scanners
+  and loses.
+
+`hardbox serve`, `hardbox fleet`, `hardbox watch`, webhook alerts, the Ansible role, the
+Terraform provider and the cloud-init templates are **add-ons**. Maintain them gladly, but
+they do not gate a release and new work on them must not displace remediation or coverage.
 
 Core product goals:
 - Secure Linux hosts using modular checks and profiles.
 - Keep operations safe with dry-run, rollback, and atomic file writes.
 - Support compliance-oriented workflows (CIS, STIG, NIST, PCI-DSS, ISO 27001, HIPAA).
-- Work both interactively and in headless/CI environments.
+- Work headless, in CI, and over SSH. There is no interactive mode.
 
 Technical constraints and standards:
 - Go 1.22+.
