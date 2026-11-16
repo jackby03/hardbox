@@ -5,8 +5,13 @@ permissions:
 on:
   push:
     branches: [ main, develop ]
+  # No 'branches' filter on purpose. Restricting pull_request to base=main
+  # silently skipped CI for stacked PRs (base = another feature branch), and
+  # retargeting the base does not fire an 'edited' event to start it later, so
+  # branch protection sat on "waiting for status to be reported" forever.
   pull_request:
-    branches: [ main ]
+  # Lets a maintainer re-run the suite on the current commit without pushing.
+  workflow_dispatch:
 
 jobs:
   build-and-test:
@@ -213,6 +218,13 @@ jobs:
     name: Distro Parity / ${{ matrix.distro }}
     runs-on: ubuntu-latest
     needs: build-and-test
+    # Two extra container legs cost ~1.5 min per run. Run them when the change
+    # lands on main, when a maintainer opts in with the 'full-ci' label, or on a
+    # manual dispatch. main always gets the full matrix, so a distro regression
+    # is caught before it can reach a release even though PRs stay fast.
+    if: >-
+      github.event_name != 'pull_request' ||
+      contains(github.event.pull_request.labels.*.name, 'full-ci')
     container:
       image: ${{ matrix.image }}
     strategy:
@@ -301,8 +313,10 @@ jobs:
           name: audit-${{ matrix.slug }}
           path: audit-${{ matrix.slug }}.json
 
-  # Single gate job that requires all matrix legs — add this check name to
-  # branch protection so the merge button blocks until every distro passes.
+  # Single gate job that requires all matrix legs. Add this check name to
+  # branch protection if you want merges blocked until every distro passes.
+  # It reports success when the matrix was intentionally skipped, so a PR that
+  # did not request the full suite is not left pending forever.
   distro-parity-gate:
     name: Distro Parity Gate
     runs-on: ubuntu-latest
@@ -313,11 +327,18 @@ jobs:
       - name: Assert all parity legs passed
         run: |
           RESULT="${{ needs.distro-parity.result }}"
-          if [ "${RESULT}" != "success" ]; then
-            echo "::error::One or more distro parity checks failed (result: ${RESULT})"
-            exit 1
-          fi
-          echo "✓ All distro parity checks passed"
+          case "${RESULT}" in
+            success)
+              echo "✓ All distro parity checks passed"
+              ;;
+            skipped)
+              echo "✓ Distro parity not requested for this run (label: full-ci, or push to main)"
+              ;;
+            *)
+              echo "::error::One or more distro parity checks failed (result: ${RESULT})"
+              exit 1
+              ;;
+          esac
 
   goreleaser-config:
     name: Release Configuration

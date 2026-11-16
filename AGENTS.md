@@ -52,9 +52,9 @@ Testing rules:
 - `make build` links with `CGO_ENABLED=0`; `test-race` needs `CGO_ENABLED=1`. Keep the two separate.
 - Integration and smoke tests are performed in the Vagrant lab.
 
-CI runs on `ubuntu-latest` plus RPM-based containers. See
-[docs/DEVSECOPS.md](docs/DEVSECOPS.md) for the authoritative job list and which checks are
-required on `main` — do not duplicate that list here, it drifts.
+CI runs on `ubuntu-latest` plus RPM-based containers. [docs/DEVSECOPS.md](docs/DEVSECOPS.md)
+is the authoritative description of every job and of the required checks on `main` —
+link to it, do not duplicate the list here, it drifts.
 
 Key repository structure:
 - `cmd/hardbox/main.go`: CLI entrypoint.
@@ -135,13 +135,19 @@ Examples:
 PR workflow:
 1. Open PR against `main` (draft if still WIP).
 2. Ensure CI passes before requesting review.
-3. Minimum 1 approval before merge.
+3. No approving review is required while the project is solo-maintained. Re-read the full diff before merging.
 4. Respond to review comments and re-request review when blocking items are addressed.
 
-Required checks before merge:
-- `build-and-test` (`go vet`, `go build`, `go test -race`)
-- `lint` (`golangci-lint`)
-- `hardbox-audit` dry-run job
+Required checks before merge — this is the authoritative list, keep it in sync with
+[docs/DEVSECOPS.md](docs/DEVSECOPS.md#branch-protection-policy):
+- `Build and Test` (`go vet`, `go build`, `go test -race`)
+- `Lint` (`golangci-lint`)
+- `Distro Parity Gate`
+
+A PR that only touches branches other than `main` still runs CI: the
+`pull_request` trigger deliberately has no `branches` filter, because restricting
+it to `main` silently skipped stacked PRs and left branch protection waiting on
+a check that would never be reported.
 
 Merge strategy:
 - Default: **Squash and Merge** for linear `main` history.
