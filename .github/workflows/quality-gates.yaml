@@ -9,7 +9,12 @@ on:
   # silently skipped CI for stacked PRs (base = another feature branch), and
   # retargeting the base does not fire an 'edited' event to start it later, so
   # branch protection sat on "waiting for status to be reported" forever.
+  #
+  # 'labeled' and 'ready_for_review' are listed explicitly because they are not
+  # default types: without them, adding the 'full-ci' label would not start the
+  # distro-parity matrix it is supposed to gate.
   pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled, ready_for_review]
   # Lets a maintainer re-run the suite on the current commit without pushing.
   workflow_dispatch:
 
