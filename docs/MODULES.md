@@ -528,3 +528,36 @@ kernel command line. It is never automated.
 **Remediation:** The accounting package is installed per family (`acct` on Debian, `psacct` on RHEL), the unit is enabled, and core-dump limits are appended to `limits.conf`.
 
 ---
+
+## Module: Database Servers
+
+**ID:** `databases`
+**Method:** `/etc/mysql/my.cnf`, `/etc/mysql/conf.d/*.cnf`, `/etc/my.cnf.d/*.cnf`, `/etc/postgresql/*/main/pg_hba.conf`, `/etc/postgresql/*/main/postgresql.conf`, `/var/lib/pgsql/data/*`, read-only `mysql` queries
+
+Both MySQL/MariaDB and PostgreSQL are covered. A family that is not installed reports all of its checks as `skipped`, so the audit still completes on a host without a database server.
+
+### Checks
+
+| ID | Check | Severity | NIST | PCI |
+|---|---|---|---|---|
+| db-001 | MySQL/MariaDB does not listen on all interfaces | High | SC-7 | 1.3 |
+| db-002 | MySQL/MariaDB LOCAL INFILE is disabled | High | SC-7 | 6.3 |
+| db-003 | PostgreSQL pg_hba.conf has no 'trust' authentication | Critical | IA-2 | 8.3 |
+| db-004 | PostgreSQL password_encryption uses scram-sha-256 | High | IA-5 | 8.3 |
+| db-005 | PostgreSQL listen_addresses is restricted | High | SC-7 | 1.3 |
+| db-006 | MySQL/MariaDB has no anonymous accounts | Critical | IA-2 | 8.3 |
+| db-007 | MySQL/MariaDB root is not reachable from any host | High | AC-6 | 2.2 |
+| db-008 | No leftover 'test' database | Low | CM-7 | 2.2 |
+
+### Remediation coverage
+
+| Check | Automated by `apply` |
+|---|---|
+| db-001, db-002 | Yes — writes `/etc/mysql/conf.d/99-hardbox.cnf` (or `/etc/my.cnf.d/`) |
+| db-003 … db-008 | **Audit only**, see below |
+
+**Why the rest is not automated.** Rollback restores files, not table contents, so an automated `DROP USER` or `DROP DATABASE` would be irreversible in a way the rest of the tool is not. `pg_hba.conf` edits are left out for a different reason: a wrong rule locks the operator out of the server they are hardening. Those checks report `manual` with the exact statement to run, which keeps the guidance without pretending the tool handled it.
+
+**No CIS control numbers here.** The CIS MySQL and PostgreSQL benchmarks use their own numbering that does not line up with the OS-level CIS controls the rest of hardbox quotes. Inventing plausible identifiers in a compliance reference would be worse than leaving the column empty.
+
+---

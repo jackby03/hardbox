@@ -381,6 +381,21 @@ This document is the authoritative cross-reference index.
 
 ---
 
+## Database Servers Module
+
+| Check ID | Title | CIS | NIST | STIG | PCI | HIPAA | ISO |
+|---|---|---|---|---|---|---|---|
+| db-001 | MySQL/MariaDB does not listen on all interfaces | — | SC-7 | — | 1.3 | — | — |
+| db-002 | MySQL/MariaDB LOCAL INFILE is disabled | — | SC-7 | — | 6.3 | — | — |
+| db-003 | PostgreSQL pg_hba.conf has no 'trust' authentication | — | IA-2 | — | 8.3 | — | — |
+| db-004 | PostgreSQL password_encryption uses scram-sha-256 | — | IA-5 | — | 8.3 | — | — |
+| db-005 | PostgreSQL listen_addresses is restricted | — | SC-7 | — | 1.3 | — | — |
+| db-006 | MySQL/MariaDB has no anonymous accounts | — | IA-2 | — | 8.3 | — | — |
+| db-007 | MySQL/MariaDB root is not reachable from any host | — | AC-6 | — | 2.2 | — | — |
+| db-008 | No leftover 'test' database | — | CM-7 | — | 2.2 | — | — |
+
+---
+
 ## Profile → Framework Coverage Matrix
 
 This table shows which compliance frameworks each **shipped** profile satisfies.
