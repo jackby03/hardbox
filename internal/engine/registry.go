@@ -20,6 +20,7 @@ import (
 	"github.com/hardbox-io/hardbox/internal/modules/boot"
 	"github.com/hardbox-io/hardbox/internal/modules/containers"
 	"github.com/hardbox-io/hardbox/internal/modules/crypto"
+	"github.com/hardbox-io/hardbox/internal/modules/databases"
 	"github.com/hardbox-io/hardbox/internal/modules/filesystem"
 	"github.com/hardbox-io/hardbox/internal/modules/firewall"
 	"github.com/hardbox-io/hardbox/internal/modules/integrity"
@@ -59,6 +60,7 @@ func registeredModules() []modules.Module {
 		&firewall.Module{},
 		&crypto.Module{},
 		&containers.Module{},
+		&databases.Module{},
 		&ssh.Module{},
 		&boot.Module{},
 		&storage.Module{},
@@ -68,4 +70,3 @@ func registeredModules() []modules.Module {
 		&processes.Module{},
 	}
 }
-
