@@ -411,6 +411,18 @@ This document is the authoritative cross-reference index.
 
 ---
 
+## Name Services Module
+
+| Check ID | Title | CIS | NIST | STIG | PCI | HIPAA | ISO |
+|---|---|---|---|---|---|---|---|
+| dns-001 | /etc/hosts maps localhost on both loopback addresses | — | SC-20 | — | — | — | — |
+| dns-002 | /etc/hosts is not writable by group or other | — | AC-6 | — | — | — | — |
+| dns-003 | nsswitch.conf resolves hosts from files before DNS | — | SC-20 | — | — | — | — |
+| dns-004 | The local resolver validates DNSSEC | — | SC-20 | — | — | — | — |
+| dns-005 | Name resolution does not use plaintext DNS to external servers | — | SC-8 | — | — | — | — |
+
+---
+
 ## Profile → Framework Coverage Matrix
 
 This table shows which compliance frameworks each **shipped** profile satisfies.

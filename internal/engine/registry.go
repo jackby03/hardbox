@@ -29,6 +29,7 @@ import (
 	"github.com/hardbox-io/hardbox/internal/modules/mac"
 	"github.com/hardbox-io/hardbox/internal/modules/malware"
 	"github.com/hardbox-io/hardbox/internal/modules/mount"
+	"github.com/hardbox-io/hardbox/internal/modules/nameservices"
 	"github.com/hardbox-io/hardbox/internal/modules/network"
 	"github.com/hardbox-io/hardbox/internal/modules/ntp"
 	"github.com/hardbox-io/hardbox/internal/modules/processes"
@@ -51,6 +52,7 @@ func registeredModules() []modules.Module {
 		&filesystem.Module{},
 		&mount.Module{},
 		&mac.Module{},
+		&nameservices.Module{},
 		&network.Module{},
 		&ntp.Module{},
 		&services.Module{},

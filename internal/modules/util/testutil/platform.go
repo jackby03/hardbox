@@ -64,6 +64,20 @@ func RequireLinux(t *testing.T) {
 	}
 }
 
+// RequireRoot skips the test unless the process runs as root.
+//
+// Use it for behaviour that can only be exercised with CAP_CHOWN or CAP_DAC_OVERRIDE,
+// such as asserting that a remediation actually reapplies ownership.
+func RequireRoot(t *testing.T) {
+	t.Helper()
+	if !UnixPermsSupported() {
+		t.Skipf("Unix privilege model unavailable on %s", runtime.GOOS)
+	}
+	if os.Geteuid() != 0 {
+		t.Skip("requires root: chown and similar operations need CAP_CHOWN")
+	}
+}
+
 // RequireUnprivileged skips the test when running as root, or on hosts without
 // POSIX permission semantics.
 //
