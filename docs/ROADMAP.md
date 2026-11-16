@@ -18,8 +18,12 @@ That is the whole product. Three claims, in order of importance:
    writes, and a one-command rollback.
 2. **It costs nothing.** Audit *and* remediation are open source, AGPL v3, self-hosted, no
    tier, no seat count, no feature flag. This is a product decision, not a marketing line.
-3. **It runs the operator's rules.** YAML custom checks and the Plugin SDK exist so a team
-   can encode its own baseline instead of only consuming built-in profiles.
+3. **It runs the operator's rules.** Today that means adjusting the built-in checks: profiles,
+   `extends` inheritance and per-module configuration let a team set its own values. Adding a
+   *new* check without writing Go is **not implemented** — it is the v0.8 YAML custom checks.
+   The Plugin SDK exists in the source tree but cannot load in the published binaries, which are
+   built with `CGO_ENABLED=0` while Go plugins require cgo; see
+   [`PLUGIN-SDK.md`](PLUGIN-SDK.md#limitation-published-binaries-cannot-load-plugins).
 
 ### The filter question
 
@@ -91,9 +95,23 @@ valuable only where Pillar 1 holds.
 
 ### Pillar 3 — Custom rules
 
-YAML-defined checks and a frozen Plugin SDK v1, so operators can encode their own baseline.
-This is claim 3 above; it has been scheduled last for three releases and that is now the
-main gap in the product's promise.
+What the product promises is that an operator can encode their own baseline instead of only
+consuming the built-in profiles. That is currently true only for *values*: profiles, `extends`
+and module configuration. Two gaps remain, and they are not equivalent in size:
+
+- **Adding a check without writing Go (the real gap).** This is the YAML custom checks work.
+  The decisive test is whether someone with a compliance rule but no Go toolchain can express
+  it. Today they cannot.
+- **Adding a check with arbitrary logic.** The Plugin SDK in `internal/sdk` compiles a Go
+  `.so`, which needs cgo, while every published binary is `CGO_ENABLED=0`. In those binaries
+  `plugin.Open` returns `plugin: not implemented`, so the SDK is source-only. Whether to drop
+  it, move it to a subprocess protocol, or ship a separate cgo build is an open decision, not
+  a scheduled task.
+
+Design constraint for the YAML work: a check file is written by an operator who already has
+root, but it must still not become arbitrary code execution through configuration. Assertions
+are declarative — file content, mode and ownership, sysctl values — never `sh -c`. Remediation
+writes files and declares them for the snapshot, or the check is explicitly audit-only.
 
 ---
 
