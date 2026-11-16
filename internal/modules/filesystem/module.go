@@ -341,6 +341,7 @@ var checkFS018 = modules.Check{
 
 func (m *Module) auditWorldWritable() []modules.Finding {
 	root := m.scanRoot()
+	skipDir := scanSkipFunc(root, m.scanExclusions())
 	var wwFiles []string
 	var wwDirsNoSticky []string
 
@@ -348,10 +349,7 @@ func (m *Module) auditWorldWritable() []modules.Finding {
 		if err != nil {
 			return nil
 		}
-		// Skip virtual and noise-heavy directories.
-		rel, _ := filepath.Rel(root, path)
-		switch rel {
-		case "proc", "sys", "dev":
+		if d.IsDir() && skipDir(path) {
 			return fs.SkipDir
 		}
 
@@ -428,15 +426,14 @@ var checkFS017 = modules.Check{
 
 func (m *Module) auditSUIDSGID() []modules.Finding {
 	root := m.scanRoot()
+	skipDir := scanSkipFunc(root, m.scanExclusions())
 	var found []string
 
 	_ = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return nil
 		}
-		rel, _ := filepath.Rel(root, path)
-		switch rel {
-		case "proc", "sys", "dev":
+		if d.IsDir() && skipDir(path) {
 			return fs.SkipDir
 		}
 		info, err := d.Info()
@@ -495,15 +492,14 @@ func (m *Module) auditUnowned() []modules.Finding {
 	}
 
 	root := m.scanRoot()
+	skipDir := scanSkipFunc(root, m.scanExclusions())
 	var unowned []string
 
 	_ = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return nil
 		}
-		rel, _ := filepath.Rel(root, path)
-		switch rel {
-		case "proc", "sys", "dev":
+		if d.IsDir() && skipDir(path) {
 			return fs.SkipDir
 		}
 		info, err := d.Info()
