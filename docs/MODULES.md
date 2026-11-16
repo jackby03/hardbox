@@ -561,3 +561,46 @@ Both MySQL/MariaDB and PostgreSQL are covered. A family that is not installed re
 **No CIS control numbers here.** The CIS MySQL and PostgreSQL benchmarks use their own numbering that does not line up with the OS-level CIS controls the rest of hardbox quotes. Inventing plausible identifiers in a compliance reference would be worse than leaving the column empty.
 
 ---
+
+## Module: Web Servers
+
+**ID:** `webserver`
+**Method:** `/etc/nginx/nginx.conf`, `/etc/nginx/conf.d/*.conf`, `/etc/nginx/sites-enabled/*`, `/etc/apache2/apache2.conf`, `/etc/apache2/conf-enabled/*.conf`, `/etc/apache2/sites-enabled/*.conf`, `/etc/httpd/conf/httpd.conf`, `/etc/httpd/conf.d/*.conf`
+
+nginx and Apache are audited independently. A server that is not installed reports its checks as `skipped`, so a host running only one of them still gets a complete report.
+
+### Checks
+
+| ID | Check | Severity | NIST | PCI |
+|---|---|---|---|---|
+| web-001 | nginx does not advertise its version | Medium | CM-7 | 2.2 |
+| web-002 | nginx directory listing is disabled | Medium | AC-3 | 6.5 |
+| web-003 | nginx disables TLS 1.0 and 1.1 | High | SC-8 | 4.1 |
+| web-004 | nginx sets baseline security headers | Medium | SC-18 | 6.5 |
+| web-005 | Apache does not advertise its version | Medium | CM-7 | 2.2 |
+| web-006 | Apache directory listing is disabled | Medium | AC-3 | 6.5 |
+| web-007 | Apache disables TLS 1.0 and 1.1 | High | SC-8 | 4.1 |
+| web-008 | Apache sets baseline security headers | Medium | SC-18 | 6.5 |
+
+### Remediation coverage
+
+| Check | Automated by `apply` |
+|---|---|
+| web-001, web-002, web-003, web-004 | Yes — writes `/etc/nginx/conf.d/99-hardbox.conf` |
+| web-005, web-007, web-008 | Yes — writes `conf-enabled/99-hardbox.conf` (Debian) or `conf.d/99-hardbox.conf` (RHEL) |
+| web-006 | **Audit only**, see below |
+
+Both drop-ins are written atomically and declared in `Files`, so rollback removes them. A truncated drop-in would make the server refuse to start, which is why the atomic write is not optional here.
+
+**Documented exception (web-006):** Apache only accepts `Options` inside a `<Directory>` block, and the document root is not derivable from the configuration alone. Writing a global `Options -Indexes` would either fail at startup or apply to a path the operator did not intend, so the check reports the offending directives and the operator fixes them where they belong.
+
+### Notes on what is checked
+
+- **Comments do not count.** A commented-out `server_tokens off;` does not satisfy web-001; the scanner strips comments before matching.
+- **`SSLProtocol` is evaluated, not string-matched.** `all -SSLv3` and `+TLSv1.2` both leave TLS 1.0/1.1 enabled, while `-all +TLSv1.2 +TLSv1.3` does not. web-007 applies the +/- modifiers to a starting set instead of looking for keywords.
+- **A missing directive is non-compliant, not compliant.** For these settings the build default is not a safe default: nginx inherits an `ssl_protocols` default that may include TLS 1.0, and Apache's default `SSLProtocol` still enables TLS 1.0/1.1.
+- **nginx `add_header` is not additive.** A drop-in at the `http` level is inherited only by server blocks that set no `add_header` of their own. Hosts that add headers per site must repeat the three baseline headers there; the finding stays until they do.
+
+**No CIS control numbers here**, for the same reason as the databases module: the CIS nginx and Apache benchmarks use their own numbering that does not line up with the OS-level CIS controls quoted elsewhere.
+
+---

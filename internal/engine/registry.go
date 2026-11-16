@@ -38,6 +38,7 @@ import (
 	"github.com/hardbox-io/hardbox/internal/modules/storage"
 	"github.com/hardbox-io/hardbox/internal/modules/updates"
 	"github.com/hardbox-io/hardbox/internal/modules/users"
+	"github.com/hardbox-io/hardbox/internal/modules/webserver"
 )
 
 // registeredModules returns the list of all built-in hardening modules.
@@ -61,6 +62,7 @@ func registeredModules() []modules.Module {
 		&crypto.Module{},
 		&containers.Module{},
 		&databases.Module{},
+		&webserver.Module{},
 		&ssh.Module{},
 		&boot.Module{},
 		&storage.Module{},

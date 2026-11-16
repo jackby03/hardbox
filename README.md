@@ -18,7 +18,7 @@
 
 Most hardening tools tell you what is wrong. hardbox also fixes it: preview every change with `--dry-run`, take a snapshot, apply, and roll back with one command if anything breaks. Audit and remediation are both open source; there is no paid tier.
 
-**22 hardening modules · 207 checks · 12 compliance profiles · 6 distributions verified in CI**
+**23 hardening modules · 215 checks · 12 compliance profiles · 6 distributions verified in CI**
 
 ---
 
@@ -58,7 +58,7 @@ See the full command reference: `hardbox --help`
 | Category | Capabilities |
 |---|---|
 | **Remediation** | Preview with `--dry-run`, atomic writes, pre-apply snapshot of every file a change declares, one-command rollback of file and sysctl state — free and in the same binary as the audit. Package and service changes are forward-only; see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#what-rollback-does-not-cover) |
-| **Hardening** | 22 modules: SSH, firewall, kernel, users, filesystem, auditd, crypto, AppArmor/SELinux, NTP, updates, containers, databases, boot, storage, integrity, malware, shells, processes, and more |
+| **Hardening** | 23 modules: SSH, firewall, kernel, users, filesystem, auditd, crypto, AppArmor/SELinux, NTP, updates, containers, databases, webserver, boot, storage, integrity, malware, shells, processes, and more |
 | **Compliance** | 12 built-in profiles: `cis-level1`, `cis-level2`, `pci-dss`, `stig`, `hipaa`, `nist-800-53`, `iso27001`, `cloud-aws`, `cloud-gcp`, `cloud-azure`, `production`, `development` |
 | **Reports** | JSON, HTML, Markdown, Text, SARIF — CI/CD-friendly and human-readable |
 | **Safety** | Dry-run mode, atomic file writes, snapshot/restore, every failed module surfaced as a partial audit instead of being hidden |
