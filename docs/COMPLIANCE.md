@@ -396,6 +396,21 @@ This document is the authoritative cross-reference index.
 
 ---
 
+## Web Servers Module
+
+| Check ID | Title | CIS | NIST | STIG | PCI | HIPAA | ISO |
+|---|---|---|---|---|---|---|---|
+| web-001 | nginx does not advertise its version | — | CM-7 | — | 2.2 | — | — |
+| web-002 | nginx directory listing is disabled | — | AC-3 | — | 6.5 | — | — |
+| web-003 | nginx disables TLS 1.0 and 1.1 | — | SC-8 | — | 4.1 | — | — |
+| web-004 | nginx sets baseline security headers | — | SC-18 | — | 6.5 | — | — |
+| web-005 | Apache does not advertise its version | — | CM-7 | — | 2.2 | — | — |
+| web-006 | Apache directory listing is disabled | — | AC-3 | — | 6.5 | — | — |
+| web-007 | Apache disables TLS 1.0 and 1.1 | — | SC-8 | — | 4.1 | — | — |
+| web-008 | Apache sets baseline security headers | — | SC-18 | — | 6.5 | — | — |
+
+---
+
 ## Profile → Framework Coverage Matrix
 
 This table shows which compliance frameworks each **shipped** profile satisfies.
