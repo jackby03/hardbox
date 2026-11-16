@@ -35,16 +35,30 @@ func (m *Module) Plan(ctx context.Context, cfg modules.ModuleConfig) ([]modules.
 		}
 		switch f.Check.ID {
 		case "prc-001":
+			// The package and its unit are named differently on the two families:
+			// acct on Debian, psacct on RHEL and friends.
+			pkg := util.HostPackageName("acct", "psacct")
+			install, err := util.InstallPackages(pkg)
+			if err != nil {
+				return nil, err
+			}
+			remove, _ := util.RemovePackages(pkg)
 			c = append(c, modules.Change{
 				Description:  "Processes: install and enable process accounting",
-				DryRunOutput: "  apt-get install -y acct && systemctl enable --now acct",
+				DryRunOutput: "  " + install.DryRun + " && systemctl enable --now " + pkg,
 				Apply: func() error {
-					if err := exec.CommandContext(ctx, "apt-get", "install", "-y", "acct").Run(); err != nil {
+					if err := exec.CommandContext(ctx, install.Bin, install.Args...).Run(); err != nil {
 						return err
 					}
-					return exec.CommandContext(ctx, "systemctl", "enable", "--now", "acct").Run()
+					return exec.CommandContext(ctx, "systemctl", "enable", "--now", pkg).Run()
 				},
-				Revert: func() error { return nil },
+				Revert: func() error {
+					_ = exec.CommandContext(ctx, "systemctl", "disable", "--now", pkg).Run()
+					if remove.Bin == "" {
+						return nil
+					}
+					return exec.CommandContext(ctx, remove.Bin, remove.Args...).Run()
+				},
 			})
 		case "prc-002":
 			c = append(c, modules.Change{

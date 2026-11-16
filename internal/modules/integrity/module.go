@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/hardbox-io/hardbox/internal/modules"
+	"github.com/hardbox-io/hardbox/internal/modules/util"
 )
 
 // Module implements file integrity monitoring checks (AIDE/Tripwire).
@@ -53,14 +54,23 @@ func (m *Module) Plan(ctx context.Context, cfg modules.ModuleConfig) ([]modules.
 		}
 		switch f.Check.ID {
 		case "int-001":
+			install, err := util.InstallPackages("aide")
+			if err != nil {
+				return nil, err
+			}
+			remove, _ := util.RemovePackages("aide")
 			changes = append(changes, modules.Change{
 				Description:  "Integrity: install AIDE",
-				DryRunOutput: "  apt-get install -y aide",
+				DryRunOutput: "  " + install.DryRun,
 				Apply: func() error {
-					cmd := exec.CommandContext(ctx, "apt-get", "install", "-y", "aide")
-					return cmd.Run()
+					return exec.CommandContext(ctx, install.Bin, install.Args...).Run()
 				},
-				Revert: func() error { return nil },
+				Revert: func() error {
+					if remove.Bin == "" {
+						return nil
+					}
+					return exec.CommandContext(ctx, remove.Bin, remove.Args...).Run()
+				},
 			})
 		case "int-002":
 			changes = append(changes, modules.Change{

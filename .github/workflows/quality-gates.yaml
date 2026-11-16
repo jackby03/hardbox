@@ -366,6 +366,25 @@ jobs:
           fi
           echo "✓ $(grep -oE 'Total: [0-9]+ change\(s\)' "plan-${{ matrix.slug }}.txt") on ${{ matrix.distro }}"
 
+      # The plan text is the only place the chosen package manager is visible
+      # without executing Apply. A remediation that hardcodes apt-get passed every
+      # other check in this job while being broken on four of the six images.
+      - name: Assert the plan uses this distro's package manager
+        run: |
+          PLAN="plan-${{ matrix.slug }}.txt"
+
+          case "${{ matrix.image }}" in
+            debian*|ubuntu*) FOREIGN='(^|[^a-zA-Z0-9_-])(dnf|yum|zypper|pacman) '; EXPECTED="apt-get" ;;
+            *)               FOREIGN='(^|[^a-zA-Z0-9_-])apt-get ';                       EXPECTED="dnf or yum" ;;
+          esac
+
+          if grep -qE "$FOREIGN" "$PLAN"; then
+            echo "::error::${{ matrix.distro }} must not invoke a foreign package manager (expected ${EXPECTED})"
+            grep -nE "$FOREIGN" "$PLAN"
+            exit 1
+          fi
+          echo "✓ plan invokes no foreign package manager (expected ${EXPECTED})"
+
       - name: Upload audit report
         uses: actions/upload-artifact@v4
         with:

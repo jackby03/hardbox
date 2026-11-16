@@ -87,12 +87,15 @@ Each leg performs:
 5. **Findings assertion** — fails if 0 findings are returned (indicates distro detection is broken)
 6. **Partial-audit report** — prints the modules listed under `module_errors` (informational)
 7. **Plan assertion** — `hardbox apply --dry-run` must build a plan and no module may fail to plan
+8. **Package-manager assertion** — the plan must not invoke a package manager from the
+   other family. A Debian image may not mention `dnf`, `yum`, `zypper` or `pacman`; an RPM
+   image may not mention `apt-get`. This is the check that catches a remediation hardcoding
+   a package manager without executing it.
 
-Step 7 exercises `Plan()` on every distro. It does **not** execute `Apply()`, so
-a remediation that hardcodes the wrong package manager is not caught here —
-that needs the plan text to be asserted against the host's package manager, and
-is tracked separately. Until that lands, treat remediation parity as covered on
-Debian only.
+Step 7 exercises `Plan()` on every distro. Step 8 inspects the plan text, which is the only
+place the chosen package manager is visible before `Apply()` runs — four modules used to
+call `apt-get` or `yum` directly, which passed every other check in this job while being
+broken on five of the six images.
 
 Each leg runs against a **bare container**. It deliberately does not create stub
 config files such as `/etc/ssh/sshd_config` or `/etc/login.defs`: a previous
