@@ -299,6 +299,13 @@ modules:
     overrides:
       net.ipv4.ip_forward: "1"    # needed if this is a router/NAT box
 
+  services:
+    # Services this host is supposed to run. They are skipped rather than
+    # disabled, even when an inherited profile lists them under disable.
+    expected:
+      - nginx
+
+
   users:
     enabled: true
     password_max_days: 90

@@ -197,6 +197,35 @@ Each module is self-contained, independently enabled/disabled, and maps every ch
 **ID:** `services`  
 **Method:** `systemctl disable --now`
 
+### Declaring a role: `expected`
+
+A generic baseline says "disable what you do not need". On a host whose job is
+serving HTTP, that is wrong: `cis-level1` lists `nginx`, `httpd`, `apache2` and
+`named` under `disable`, and applying that profile would stop and disable the
+web server.
+
+Declare the services the host is supposed to run and they are skipped instead of
+being disabled, even when an inherited profile lists them:
+
+```yaml
+# configs/profiles/web-frontend.yaml
+name: web-frontend
+extends: cis-level1
+modules:
+  services:
+    expected:
+      - nginx        # this host serves HTTP; do not disable it
+      - named        # nor its resolver
+```
+
+`expected` wins over `disable`. That ordering is deliberate: a role profile
+extends a baseline and should not have to copy and rewrite the baseline's whole
+`disable` list to exempt one entry. Aliases resolve to the canonical unit, so
+`bind` and `named` are the same declaration.
+
+Expected services appear in the audit as `skipped`, with a detail line naming
+the override, so the decision stays visible in the report instead of vanishing.
+
 ### Services Reviewed
 
 | ID | Service | Disable If | Severity | CIS |
