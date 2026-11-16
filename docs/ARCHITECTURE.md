@@ -5,8 +5,6 @@
 | Layer | Technology | Rationale |
 |---|---|---|
 | Language | **Go 1.22+** | Single static binary, no runtime deps, fast startup, great for system tools |
-| TUI Framework | **Bubble Tea** (charmbracelet) | Modern Elm-architecture TUI, rich component ecosystem |
-| TUI Components | **Lip Gloss** + **Bubbles** | Styling, tables, progress bars, spinners, viewports |
 | CLI Framework | **Cobra** | Industry-standard Go CLI, handles subcommands and flags |
 | Config | **Viper** + YAML | Flexible config loading (file, env, flags), supports merging profiles |
 | Templating | **text/template** | Config file generation for `/etc` files |
@@ -23,16 +21,9 @@ hardbox/
 │
 ├── cmd/
 │   └── hardbox/
-│       └── main.go                  # Entry point — CLI dispatch and TUI launch
+│       └── main.go                  # Entry point — CLI dispatch
 │
 ├── internal/
-│   │
-│   ├── tui/                         # Terminal UI (Bubble Tea)
-│   │   ├── app.go                   # Root model, screen router
-│   │   ├── dashboard.go             # Main dashboard screen
-│   │   ├── modules.go               # Module navigator/selector
-│   │   ├── moduledetail.go          # Per-module finding detail view
-│   │   └── workflow.go              # Apply / audit workflow screens
 │   │
 │   ├── engine/                      # Core hardening engine
 │   │   ├── engine.go                # Plan, Apply, Rollback orchestration
@@ -241,65 +232,6 @@ hardbox rollback --last
 
 # Rollback specific session
 hardbox rollback --session 2024-03-06T143200Z
-```
-
----
-
-## TUI Architecture (Bubble Tea)
-
-hardbox uses the **Elm Architecture** pattern via Bubble Tea:
-
-```
-         ┌─────────────┐
-Message  │    Update   │  Updates model state based on events
-────────►│    (pure)   │
-         └──────┬──────┘
-                │ new model
-         ┌──────▼──────┐
-         │    View     │  Renders model as a string (no side effects)
-         └──────┬──────┘
-                │ rendered string
-         ┌──────▼──────┐
-         │   Terminal  │
-         └─────────────┘
-```
-
-### Screen Flow
-
-```
-                    ┌──────────────┐
-          Start ──► │  Profile     │
-                    │  Picker      │
-                    └──────┬───────┘
-                           ▼
-                    ┌──────────────┐
-                    │  Dashboard   │◄─────────────────────┐
-                    │  (score +    │                       │
-                    │   summary)   │                       │
-                    └──────┬───────┘                       │
-             ┌─────────────┼────────────────┐              │
-             ▼             ▼                ▼              │
-      ┌────────────┐ ┌──────────┐  ┌─────────────┐        │
-      │  Module    │ │  Audit   │  │  Compliance │        │
-      │  Navigator │ │  Results │  │  Report     │        │
-      └────┬───────┘ └──────────┘  └─────────────┘        │
-           ▼                                               │
-      ┌────────────┐                                       │
-      │  Module    │                                       │
-      │  Detail    │                                       │
-      │  + Config  │                                       │
-      └────┬───────┘                                       │
-           ▼                                               │
-      ┌────────────┐                                       │
-      │  Confirm   │                                       │
-      │  Apply     │                                       │
-      └────┬───────┘                                       │
-           ▼                                               │
-      ┌────────────┐                                       │
-      │  Progress  │                                       │
-      │  + Live Log│                                       │
-      └────┬───────┘                                       │
-           └───────────────────────────────────────────────┘
 ```
 
 ---

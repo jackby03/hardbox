@@ -13,7 +13,6 @@ Thank you for your interest in contributing! hardbox is an open-source Linux ser
   - [Reporting Bugs](#reporting-bugs)
   - [Suggesting Features](#suggesting-features)
   - [Implementing a Module](#implementing-a-module)
-  - [Improving the TUI](#improving-the-tui)
   - [Documentation](#documentation)
 - [Code Standards](#code-standards)
 - [Testing](#testing)
@@ -79,7 +78,6 @@ hardbox/
 │   ├── modules/
 │   │   ├── module.go            # Module interface
 │   │   └── <name>/module.go    # One directory per module
-│   └── tui/                     # Bubble Tea UI
 └── docs/
     ├── ARCHITECTURE.md
     ├── MODULES.md               # Check IDs and compliance mappings
@@ -139,15 +137,6 @@ type Module interface {
 **Check ID format:** `<prefix>-<NNN>` — e.g., `fw-001`, `kern-001`
 
 See the [SSH module](internal/modules/ssh/module.go) as the reference implementation.
-
-### Improving the TUI
-
-The TUI is built with [Bubble Tea](https://github.com/charmbracelet/bubbletea) (Elm architecture) and [Lipgloss](https://github.com/charmbracelet/lipgloss). Currently several screens are stubs — see [open TUI issues](https://github.com/jackby03/hardbox/labels/tui).
-
-Color palette:
-- Header blue: `#1e40af`
-- Border: `#3b82f6`
-- Labels: slate tones
 
 ### Documentation
 
@@ -216,7 +205,6 @@ Recommended informational checks:
 **Commit message format** (conventional commits):
 - `feat(module):` — new module or check
 - `fix(module):` — bug fix
-- `feat(tui):` — TUI change
 - `docs:` — documentation only
 - `test:` — tests only
 - `refactor:` — internal restructuring, no behavior change
