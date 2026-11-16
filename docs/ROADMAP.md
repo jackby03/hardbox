@@ -58,9 +58,9 @@ on them should not displace remediation or coverage work.
 | | Count | Note |
 |---|---|---|
 | Hardening modules | 21 | registered in `internal/engine/registry.go` |
-| Distinct checks | 175 | counted from `ID:` definitions, excluding tests |
+| Distinct checks | 199 | counted from check-ID literals across `internal/modules`, excluding tests; includes the `services` and `network` checks built from tables |
 | Compliance profiles | 12 | CIS L1/L2, NIST 800-53, STIG, PCI-DSS, HIPAA, ISO 27001, AWS/GCP/Azure, production, development |
-| Frameworks mapped | 7 | rows in `docs/COMPLIANCE.md` |
+| Frameworks mapped | 6 | CIS, NIST, STIG, PCI, HIPAA, ISO — rows in `docs/COMPLIANCE.md`, enforced by CI |
 | Distributions audited in CI | 6 containers + Ubuntu runner | see [`DEVSECOPS.md`](DEVSECOPS.md) |
 | **Distributions with verified remediation** | **1 (Debian)** | everything else is untested, and 4 modules hardcode `apt-get`/`yum` |
 

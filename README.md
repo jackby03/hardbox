@@ -18,7 +18,7 @@
 
 Most hardening tools tell you what is wrong. hardbox also fixes it: preview every change with `--dry-run`, take a snapshot, apply, and roll back with one command if anything breaks. Audit and remediation are both open source; there is no paid tier.
 
-**21 hardening modules · 175 checks · 12 compliance profiles · 6 distributions verified in CI**
+**21 hardening modules · 199 checks · 12 compliance profiles · 6 distributions verified in CI**
 
 ---
 
