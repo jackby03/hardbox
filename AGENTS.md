@@ -9,14 +9,14 @@ ACS-compatible agents should read `.agents/main.yaml` as the entry point for con
 
 ## Project Context
 
-`hardbox` is an open-source, TUI-driven Linux server hardening toolkit written in Go.
-It is designed for infrastructure and security teams to run guided, auditable, and repeatable hardening workflows across multiple Linux distributions.
+`hardbox` is an open-source, CLI-first Linux server hardening toolkit written in Go.
+It is designed for infrastructure and security teams to run guided, auditable, and repeatable hardening workflows across multiple Linux distributions. It runs headless and in CI; there is no interactive UI layer.
 
 Core product goals:
 - Secure Linux hosts using modular checks and profiles.
 - Keep operations safe with dry-run, rollback, and atomic file writes.
 - Support compliance-oriented workflows (CIS, STIG, NIST, PCI-DSS, ISO 27001, HIPAA).
-- Work both interactively (TUI) and in headless/CI environments.
+- Work both interactively and in headless/CI environments.
 
 Technical constraints and standards:
 - Go 1.22+.
@@ -60,7 +60,6 @@ Key repository structure:
 - `cmd/hardbox/main.go`: CLI entrypoint.
 - `internal/engine`: orchestration, registry, snapshots/rollback.
 - `internal/modules/<name>`: hardening modules.
-- `internal/tui`: Bubble Tea based user interface (deprecated — will be removed in a future release).
 - `configs/profiles`: built-in hardening profiles.
 - `docs`: architecture, modules, compliance mapping.
 
@@ -118,7 +117,7 @@ Protected branch policy:
 
 Commit/PR title format (Conventional Commits):
 - `<type>(<scope>): <description>`
-- Scope is recommended (`ssh`, `engine`, `tui`, `config`, `ci`, etc.).
+- Scope is recommended (`ssh`, `engine`, `cli`, `config`, `ci`, etc.).
 - Lowercase type/scope.
 
 Allowed PR title types:
