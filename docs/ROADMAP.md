@@ -57,8 +57,8 @@ on them should not displace remediation or coverage work.
 
 | | Count | Note |
 |---|---|---|
-| Hardening modules | 23 | registered in `internal/engine/registry.go` |
-| Distinct checks | 215 | counted from check-ID literals across `internal/modules`, excluding tests; includes the `services` and `network` checks built from tables |
+| Hardening modules | 24 | registered in `internal/engine/registry.go` |
+| Distinct checks | 220 | counted from check-ID literals across `internal/modules`, excluding tests; includes the `services` and `network` checks built from tables |
 | Compliance profiles | 12 | CIS L1/L2, NIST 800-53, STIG, PCI-DSS, HIPAA, ISO 27001, AWS/GCP/Azure, production, development |
 | Frameworks mapped | 6 | CIS, NIST, STIG, PCI, HIPAA, ISO — rows in `docs/COMPLIANCE.md`, enforced by CI |
 | Distributions audited in CI | 6 containers + Ubuntu runner | see [`DEVSECOPS.md`](DEVSECOPS.md) |
@@ -128,7 +128,7 @@ an expected service is reported as `skipped` rather than silently dropped.
 |---|---|---|
 | `webserver` ✅ | Server tokens hidden, directory listing disabled, TLS 1.2+ enforced, security headers | NIST SC-8 |
 | `databases` ✅ | Remote root login, anonymous users, test databases, password auth enforced | PCI-DSS 6.3 |
-| `nameservices` | `/etc/hosts` integrity, `nsswitch.conf` review, DNSSEC enabled, no plaintext DNS outbound | CIS 3.4, NIST SC-20 |
+| `nameservices` ✅ | `/etc/hosts` integrity, `nsswitch.conf` review, DNSSEC enabled, no plaintext DNS outbound | NIST SC-20 |
 
 Each ships with audit **and** remediation, per Pillar 1.
 
@@ -189,7 +189,7 @@ package manager while the roadmap reported progress.
 | v0.4 ✅ | 15 | 15 | Core engine, profiles, fleet, diff, plugin SDK |
 | v0.5 ✅ | — | 15 | Watch daemon, alerts, SARIF, profile inheritance |
 | v0.6 ✅ | `boot`, `storage`, `integrity`, `malware`, `shells`, `processes` | 21 | Coverage |
-| **v0.7 (in progress)** | `databases`, `webserver` | **23** | **Coverage by role** |
+| **v0.7** | `databases`, `webserver`, `nameservices` | **24** | **Coverage by role** |
 | **v0.7** | `webserver`, `databases`, `nameservices` | **24** | **Remediation parity first, then coverage** |
 | v0.8 | — | 24 | Custom hardening: YAML checks, SDK v1, packaging |
 | v1.0 | — | 24 | Quality bar: parity, docs, packages |
