@@ -26,10 +26,35 @@ Technical constraints and standards:
 - Logging must use `zerolog`.
 
 Development and testing environment:
-- hardbox is a Linux-only tool; it is never executed on Windows.
-- Unit tests must be run under WSL or a Linux VM/CI environment (`go test ./... -race`).
+
+hardbox distinguishes three planes. Do not collapse them — most past confusion about
+"Windows support" came from treating them as one.
+
+| Plane | Rule |
+|---|---|
+| **Runtime target** | Linux only. hardbox never audits or applies hardening on a non-Linux host. Never weaken this. |
+| **Build host** | Any OS. `go build ./...` works on Windows, macOS and Linux and must keep working. |
+| **Test host** | Any OS for pure logic. Tests that depend on POSIX semantics (mode bits, `geteuid`, `/proc`, `systemctl`) must declare it via the guards below and skip elsewhere. |
+
+Testing rules:
+
+- Declare platform dependencies with the helpers in
+  `internal/modules/util/testutil/platform.go`: `RequireUnixPerms`, `RequireUnprivileged`,
+  `RequireLinux`, or the `UnixPermsSupported()` predicate. Never hand-roll
+  `if runtime.GOOS == ...` in a test — an inverted condition there already shipped once.
+- `make test` is the fast cross-platform suite (`go test ./... -count=1`). It must pass everywhere.
+- `make test-race` and `make validate` require cgo and a 64-bit toolchain. They are the CI gate.
+- On a Windows host, **do not** trust `make test-race` results: `/mnt/c` is mounted over 9p
+  without the `metadata` option, so `chmod 0000` is masked, files stay readable and permission
+  tests report false results. Run the gates on a WSL-native copy instead:
+  `wsl -d Debian -- bash scripts/dev/wsl-validate.sh` (provision once with
+  `scripts/dev/wsl-setup.sh`).
+- `make build` links with `CGO_ENABLED=0`; `test-race` needs `CGO_ENABLED=1`. Keep the two separate.
 - Integration and smoke tests are performed in the Vagrant lab.
-- CI runs on `ubuntu-latest` and executes `go vet`, `go build`, `go test -race`, `golangci-lint`, and the `hardbox-audit` dry-run job.
+
+CI runs on `ubuntu-latest` plus RPM-based containers. See
+[docs/DEVSECOPS.md](docs/DEVSECOPS.md) for the authoritative job list and which checks are
+required on `main` — do not duplicate that list here, it drifts.
 
 Key repository structure:
 - `cmd/hardbox/main.go`: CLI entrypoint.
@@ -130,7 +155,7 @@ Merge strategy:
 Before opening or merging a PR, ensure:
 - `go vet ./...`
 - `golangci-lint run`
-- `go test ./... -race`
+- `go test ./... -race` on Linux (see the testing rules above for Windows hosts)
 - Relevant docs updated when adding/modifying checks (`docs/MODULES.md` and related docs).
 
 ---
@@ -139,7 +164,7 @@ Before opening or merging a PR, ensure:
 
 - **Purpose:** Short, actionable guidance for AI coding agents working in this repository.
 - **Start here:** Read [.agents/main.yaml](.agents/main.yaml) for agent permissions, then this file.
-- **Build & test:** Run `go build ./...` on any platform; run `go test ./... -race` under WSL/Linux or a Linux VM. See [Makefile](Makefile) for CI targets.
+- **Build & test:** Run `go build ./...` on any platform; run `go test ./... -race` under WSL/Linux or a Linux VM. See [Makefile](Makefile) for CI targets and `scripts/dev/` for the WSL helpers.
 - **Key files to inspect:** [cmd/hardbox/main.go](cmd/hardbox/main.go), [internal/engine](internal/engine), [internal/modules](internal/modules), [configs/profiles](configs/profiles), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 - **Conventions:** Follow the `go-best-practices` and `github-flow` skills under `.agents/skills/`.
 - **Safety rules:** Do not push directly to `main`. Make small, focused changes and open a PR targeting `main`.

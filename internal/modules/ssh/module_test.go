@@ -16,15 +16,14 @@ package ssh_test
 
 import (
 	"context"
-	"github.com/hardbox-io/hardbox/internal/modules/util/testutil"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/hardbox-io/hardbox/internal/modules"
 	"github.com/hardbox-io/hardbox/internal/modules/ssh"
+	"github.com/hardbox-io/hardbox/internal/modules/util/testutil"
 )
 
 // writeTempConfig writes content to a temp sshd_config file and returns a cleanup func.
@@ -485,8 +484,8 @@ func assertConfigContains(t *testing.T, path, want string) {
 // On Windows, Unix permission bits are not enforced by the OS, so the check is skipped.
 func assertFileMode(t *testing.T, path string, want os.FileMode) {
 	t.Helper()
-	if runtime.GOOS == "windows" {
-		// Windows does not support Unix-style permission bits; skip the mode assertion.
+	if !testutil.UnixPermsSupported() {
+		// Hosts without POSIX permission bits cannot assert on the mode.
 		return
 	}
 	info, err := os.Stat(path)

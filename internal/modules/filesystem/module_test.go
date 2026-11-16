@@ -18,12 +18,12 @@ import (
 	"context"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/hardbox-io/hardbox/internal/modules"
 	"github.com/hardbox-io/hardbox/internal/modules/filesystem"
+	"github.com/hardbox-io/hardbox/internal/modules/util/testutil"
 )
 
 const (
@@ -168,9 +168,7 @@ func TestAudit_FilePerms_SkippedWhenMissing(t *testing.T) {
 }
 
 func TestAudit_FilePerms_WrongMode(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("Unix file permission model not available on Windows")
-	}
+	testutil.RequireUnixPerms(t)
 
 	fsRoot := t.TempDir()
 	etcDir := filepath.Join(fsRoot, "etc")
@@ -202,9 +200,7 @@ func TestAudit_FilePerms_WrongMode(t *testing.T) {
 }
 
 func TestAudit_FilePerms_CorrectMode(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("Unix file permission model not available on Windows")
-	}
+	testutil.RequireUnixPerms(t)
 
 	fsRoot := t.TempDir()
 	etcDir := filepath.Join(fsRoot, "etc")
@@ -238,9 +234,7 @@ func TestAudit_FilePerms_CorrectMode(t *testing.T) {
 // ── Sticky bit on /tmp (fs-019) ───────────────────────────────────────────────
 
 func TestAudit_StickyTmp_Compliant(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("sticky bit not supported on Windows")
-	}
+	testutil.RequireUnixPerms(t)
 
 	fsRoot := t.TempDir()
 	tmpPath := filepath.Join(fsRoot, "tmp")
@@ -269,9 +263,7 @@ func TestAudit_StickyTmp_Compliant(t *testing.T) {
 }
 
 func TestAudit_StickyTmp_Missing(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("sticky bit not supported on Windows")
-	}
+	testutil.RequireUnixPerms(t)
 
 	fsRoot := t.TempDir()
 	tmpPath := filepath.Join(fsRoot, "tmp")
@@ -322,9 +314,7 @@ func TestAudit_StickyTmp_Skipped_WhenAbsent(t *testing.T) {
 // ── World-writable scan (fs-015) ─────────────────────────────────────────────
 
 func TestAudit_WorldWritable_Clean(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("Unix permission model not available on Windows")
-	}
+	testutil.RequireUnixPerms(t)
 
 	fsRoot := t.TempDir()
 	if err := os.WriteFile(filepath.Join(fsRoot, "normal.txt"), []byte("ok"), 0o644); err != nil {
@@ -349,9 +339,7 @@ func TestAudit_WorldWritable_Clean(t *testing.T) {
 }
 
 func TestAudit_WorldWritable_Found(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("Unix permission model not available on Windows")
-	}
+	testutil.RequireUnixPerms(t)
 
 	fsRoot := t.TempDir()
 	wwFile := filepath.Join(fsRoot, "world_writable.txt")
@@ -428,9 +416,7 @@ func TestAudit_CheckIDs_HaveCorrectPrefix(t *testing.T) {
 // ── Plan ─────────────────────────────────────────────────────────────────────
 
 func TestPlan_NoChanges_WhenCompliant(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("sticky bit not supported on Windows")
-	}
+	testutil.RequireUnixPerms(t)
 
 	fsRoot := t.TempDir()
 	// Create /tmp with sticky bit set (fs-019 compliant).
@@ -545,9 +531,7 @@ func TestPlan_FstabChange_ApplyRevert(t *testing.T) {
 }
 
 func TestPlan_StickyBit_ApplyRevert(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("sticky bit not supported on Windows")
-	}
+	testutil.RequireUnixPerms(t)
 
 	fsRoot := t.TempDir()
 	tmpPath := filepath.Join(fsRoot, "tmp")
