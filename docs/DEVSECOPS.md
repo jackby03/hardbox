@@ -64,12 +64,20 @@ gh pr edit <number> --add-label full-ci
 ```
 
 The `Distro Parity Gate` job reports success when the matrix was skipped, so a
-PR that did not opt in is never left pending. It currently covers:
+PR that did not opt in is never left pending. It covers one representative of
+each family the README claims to support:
 
-| Distro | Container image | Notes |
+| Distro | Container image | Family |
 |---|---|---|
-| Rocky Linux 9 | `rockylinux:9` | Free RHEL-compatible rebuild |
-| RHEL UBI 9 | `redhat/ubi9` | Red Hat Universal Base Image — ABI-compatible with RHEL 9 |
+| Rocky Linux 9 | `rockylinux:9` | RPM |
+| RHEL UBI 9 | `redhat/ubi9` | RPM |
+| AlmaLinux 9 | `almalinux:9` | RPM |
+| Debian 12 | `debian:12` | Debian |
+| Amazon Linux 2023 | `amazonlinux:2023` | RPM |
+| Fedora 41 | `fedora:41` | RPM |
+
+Ubuntu is covered implicitly: `build-and-test`, `lint` and `Self-Audit` run
+`hardbox` on the `ubuntu-latest` runner itself.
 
 Each leg performs:
 1. **Build** — `go build ./...` inside the container
@@ -78,6 +86,13 @@ Each leg performs:
 4. **Structure assertion** — `jq` validates the JSON output has `session_id`, `overall_score`, and non-empty `modules`
 5. **Findings assertion** — fails if 0 findings are returned (indicates distro detection is broken)
 6. **Partial-audit report** — prints the modules listed under `module_errors` (informational)
+7. **Plan assertion** — `hardbox apply --dry-run` must build a plan and no module may fail to plan
+
+Step 7 exercises `Plan()` on every distro. It does **not** execute `Apply()`, so
+a remediation that hardcodes the wrong package manager is not caught here —
+that needs the plan text to be asserted against the host's package manager, and
+is tracked separately. Until that lands, treat remediation parity as covered on
+Debian only.
 
 Each leg runs against a **bare container**. It deliberately does not create stub
 config files such as `/etc/ssh/sshd_config` or `/etc/login.defs`: a previous
@@ -98,20 +113,23 @@ name needs to be added to branch protection rules.
 - **UBI 9 ≠ full RHEL 9.** The Universal Base Image does not include every
   RPM available in the full RHEL subscription. Build and runtime behavior are
   identical for hardbox's purposes (Go binaries, standard syscalls).
-- **No AlmaLinux / Amazon Linux / Fedora legs yet.** These can be added by
-  extending the matrix with their OCI images.
+- **One image per family.** Six legs cover the two package-manager families,
+  not every point release. A version-specific regression in, say, Ubuntu 22.04
+  versus 24.04 will not be caught.
 
 ### Adding a new distro
 
 1. Add an entry to the `matrix.include` list in `quality-gates.yaml`:
 
 ```yaml
-- distro: AlmaLinux 9
-  image: almalinux:9
+- distro: openSUSE Leap 15
+  image: opensuse/leap:15.6
+  slug: opensuse-leap-15
 ```
 
-2. Ensure the image ships `dnf` and the same `Install system dependencies`
-   step runs successfully.
+2. If the image is neither Debian-based nor RPM-based, extend the
+   `Install system dependencies` step: it detects `apt-get` and otherwise
+   assumes `dnf`.
 3. No other changes are needed — the remaining steps are distro-agnostic.
 
 ---

@@ -235,6 +235,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # One representative per family the README claims to support. Debian and
+        # Ubuntu differ enough (package names, pam defaults, sshd layout) that
+        # Ubuntu-only coverage would miss Debian-specific breakage, and the same
+        # is true of Rocky versus AlmaLinux.
         include:
           - distro: Rocky Linux 9
             image: rockylinux:9
@@ -242,11 +246,32 @@ jobs:
           - distro: RHEL UBI 9
             image: redhat/ubi9
             slug: rhel-ubi-9
+          - distro: AlmaLinux 9
+            image: almalinux:9
+            slug: almalinux-9
+          - distro: Debian 12
+            image: debian:12
+            slug: debian-12
+          - distro: Amazon Linux 2023
+            image: amazonlinux:2023
+            slug: amazon-linux-2023
+          - distro: Fedora 41
+            image: fedora:41
+            slug: fedora-41
 
     steps:
       - name: Install system dependencies
+        # Detect the package manager rather than assuming dnf. This step used to
+        # hardcode dnf, which is the exact defect the job exists to catch in the
+        # product — the harness should not have the bug it tests for.
         run: |
-          dnf install -y --nodocs git tar gzip ca-certificates jq
+          if command -v apt-get >/dev/null 2>&1; then
+            export DEBIAN_FRONTEND=noninteractive
+            apt-get update
+            apt-get install -y --no-install-recommends git tar gzip ca-certificates jq
+          else
+            dnf install -y --nodocs git tar gzip ca-certificates jq
+          fi
           # Mark any directory as safe so Go's VCS stamping doesn't fail when
           # the workspace UID (runner) differs from the container UID (root).
           git config --global --add safe.directory '*'
@@ -315,11 +340,39 @@ jobs:
           # The report must still exist and remain structurally valid, and no
           # single missing config may abort the whole audit.
 
+      # Remediation is the differentiator over audit-only tools, so it needs
+      # coverage on every distro, not just on the runner. Plan changes are
+      # distro-sensitive: modules that install a package must pick the right
+      # package manager, and a hardcoded one silently breaks four of these six
+      # images.
+      - name: Plan remediation (apply --dry-run)
+        run: |
+          ./hardbox apply --profile cis-level1 --dry-run --non-interactive \
+            < /dev/null > "plan-${{ matrix.slug }}.txt" 2>&1 || true
+          echo "--- head of plan ---"
+          head -20 "plan-${{ matrix.slug }}.txt"
+
+      - name: Assert the plan was built on this distro
+        run: |
+          if grep -qE "module [a-z]+ plan failed" "plan-${{ matrix.slug }}.txt"; then
+            echo "::error::a module failed to plan on ${{ matrix.distro }}"
+            grep -E "module [a-z]+ plan failed" "plan-${{ matrix.slug }}.txt"
+            exit 1
+          fi
+          if ! grep -qE "Total: [0-9]+ change" "plan-${{ matrix.slug }}.txt"; then
+            echo "::error::apply --dry-run produced no plan on ${{ matrix.distro }}"
+            cat "plan-${{ matrix.slug }}.txt"
+            exit 1
+          fi
+          echo "✓ $(grep -oE 'Total: [0-9]+ change\(s\)' "plan-${{ matrix.slug }}.txt") on ${{ matrix.distro }}"
+
       - name: Upload audit report
         uses: actions/upload-artifact@v4
         with:
           name: audit-${{ matrix.slug }}
-          path: audit-${{ matrix.slug }}.json
+          path: |
+            audit-${{ matrix.slug }}.json
+            plan-${{ matrix.slug }}.txt
 
   # Single gate job that requires all matrix legs. Add this check name to
   # branch protection if you want merges blocked until every distro passes.
