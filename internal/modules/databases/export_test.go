@@ -34,6 +34,9 @@ func NewModuleForTest(mysqlConfs, pgHba, pgConf, dropIn string, query func(ctx c
 }
 
 var (
+	// ExpandGlobs exposes the glob resolver.
+	ExpandGlobs = expandGlobs
+
 	// ParseMySQLOptions exposes the option parser.
 	ParseMySQLOptions = parseMySQLOptions
 	// HbaTrustRules exposes the pg_hba.conf parser.

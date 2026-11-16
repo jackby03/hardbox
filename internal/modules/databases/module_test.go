@@ -43,6 +43,15 @@ func noQuery(context.Context, string) (string, error) {
 	return "", errors.New("access denied")
 }
 
+// absent returns a path that does not exist, so a module built with it reports the
+// corresponding family as not installed. Tests must never rely on the host: the
+// GitHub runner ships /etc/mysql, which made a "" argument fall back to the real
+// globs and turned skipped checks into findings.
+func absent(t *testing.T) string {
+	t.Helper()
+	return filepath.Join(t.TempDir(), "absent")
+}
+
 func find(t *testing.T, findings []modules.Finding, id string) modules.Finding {
 	t.Helper()
 	for _, f := range findings {
@@ -87,7 +96,7 @@ func TestAudit_MySQL_Compliant(t *testing.T) {
 bind-address = 127.0.0.1
 local-infile = 0
 `)
-	m := databases.NewModuleForTest(mycnf, "", "",
+	m := databases.NewModuleForTest(mycnf, absent(t), absent(t),
 		"",
 		func(context.Context, string) (string, error) { return "0", nil })
 
@@ -107,7 +116,7 @@ func TestAudit_MySQL_NonCompliant(t *testing.T) {
 	mycnf := writeFile(t, dir, "my.cnf", `[mysqld]
 bind-address = 0.0.0.0
 `)
-	m := databases.NewModuleForTest(mycnf, "", "",
+	m := databases.NewModuleForTest(mycnf, absent(t), absent(t),
 		"",
 		func(context.Context, string) (string, error) { return "2", nil })
 
@@ -129,7 +138,7 @@ bind-address = 0.0.0.0
 func TestAudit_MySQLQueryFailureIsManual(t *testing.T) {
 	dir := t.TempDir()
 	mycnf := writeFile(t, dir, "my.cnf", "[mysqld]\nbind-address = 127.0.0.1\nlocal_infile = 0\n")
-	m := databases.NewModuleForTest(mycnf, "", "", "", noQuery)
+	m := databases.NewModuleForTest(mycnf, absent(t), absent(t), "", noQuery)
 
 	findings, err := m.Audit(context.Background(), nil)
 	if err != nil {
@@ -158,7 +167,7 @@ password_encryption = 'md5'
 listen_addresses = '*'
 `)
 
-	m := databases.NewModuleForTest("", hba, conf, "", noQuery)
+	m := databases.NewModuleForTest(absent(t), hba, conf, "", noQuery)
 	findings, err := m.Audit(context.Background(), nil)
 	if err != nil {
 		t.Fatalf("Audit: %v", err)
@@ -190,7 +199,7 @@ func TestAudit_PostgreSQL_Compliant(t *testing.T) {
 	hba := writeFile(t, dir, "pg_hba.conf", "local all all peer\nhost all all 127.0.0.1/32 scram-sha-256\n")
 	conf := writeFile(t, dir, "postgresql.conf", "password_encryption = 'scram-sha-256'\nlisten_addresses = 'localhost'\n")
 
-	m := databases.NewModuleForTest("", hba, conf, "", noQuery)
+	m := databases.NewModuleForTest(absent(t), hba, conf, "", noQuery)
 	findings, err := m.Audit(context.Background(), nil)
 	if err != nil {
 		t.Fatalf("Audit: %v", err)
@@ -209,7 +218,7 @@ func TestPlan_WritesMySQLDropIn(t *testing.T) {
 	mycnf := writeFile(t, dir, "my.cnf", "[mysqld]\n")
 	dropIn := filepath.Join(dir, "99-hardbox.cnf")
 
-	m := databases.NewModuleForTest(mycnf, "", "", dropIn, noQuery)
+	m := databases.NewModuleForTest(mycnf, absent(t), absent(t), dropIn, noQuery)
 	changes, err := m.Plan(context.Background(), nil)
 	if err != nil {
 		t.Fatalf("Plan: %v", err)
@@ -246,7 +255,7 @@ func TestPlan_WritesMySQLDropIn(t *testing.T) {
 func TestPlan_NoChangesWhenCompliant(t *testing.T) {
 	dir := t.TempDir()
 	mycnf := writeFile(t, dir, "my.cnf", "[mysqld]\nbind-address = 127.0.0.1\nlocal_infile = 0\n")
-	m := databases.NewModuleForTest(mycnf, "", "", filepath.Join(dir, "drop.cnf"),
+	m := databases.NewModuleForTest(mycnf, absent(t), absent(t), filepath.Join(dir, "drop.cnf"),
 		func(context.Context, string) (string, error) { return "0", nil })
 
 	changes, err := m.Plan(context.Background(), nil)
@@ -265,7 +274,7 @@ func TestPlan_PostgresIsAuditOnly(t *testing.T) {
 	hba := writeFile(t, dir, "pg_hba.conf", "host all all 0.0.0.0/0 trust\n")
 	conf := writeFile(t, dir, "postgresql.conf", "password_encryption = 'md5'\nlisten_addresses = '*'\n")
 
-	m := databases.NewModuleForTest("", hba, conf, filepath.Join(dir, "drop.cnf"), noQuery)
+	m := databases.NewModuleForTest(absent(t), hba, conf, filepath.Join(dir, "drop.cnf"), noQuery)
 	changes, err := m.Plan(context.Background(), nil)
 	if err != nil {
 		t.Fatalf("Plan: %v", err)
@@ -319,5 +328,29 @@ password_encryption = "scram-sha-256"
 	}
 	if opts["password_encryption"] != "scram-sha-256" {
 		t.Errorf("quotes not stripped: %q", opts["password_encryption"])
+	}
+}
+
+// TestExpandGlobs covers the resolution that decides whether a family is
+// considered installed. Explicit paths are used by every test above precisely to
+// avoid the fallback branch, so it needs its own coverage.
+func TestExpandGlobs(t *testing.T) {
+	dir := t.TempDir()
+	a := writeFile(t, dir, "a.cnf", "")
+	writeFile(t, dir, "b.cnf", "")
+
+	got := databases.ExpandGlobs(filepath.Join(dir, "*.cnf"), "")
+	if len(got) != 2 {
+		t.Fatalf("want 2 matches, got %v", got)
+	}
+
+	if got := databases.ExpandGlobs(a, ""); len(got) != 1 || got[0] != a {
+		t.Errorf("literal existing path must resolve: %v", got)
+	}
+	if got := databases.ExpandGlobs(filepath.Join(dir, "nope.cnf"), ""); len(got) != 0 {
+		t.Errorf("missing literal path must resolve to nothing: %v", got)
+	}
+	if got := databases.ExpandGlobs("", filepath.Join(dir, "*.cnf")); len(got) != 2 {
+		t.Errorf("empty input must fall back to the default globs: %v", got)
 	}
 }
