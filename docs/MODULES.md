@@ -367,3 +367,117 @@ Each module is self-contained, independently enabled/disabled, and maps every ch
 | mnt-015 | `jffs2` | Flash filesystem — no use on servers | Low | 1.1.1.6 |
 
 **Remediation:** Blacklist entries are written to `/etc/modprobe.d/hardbox.conf`.
+
+## Module: Boot Security
+
+**ID:** `boot`
+**Method:** `/boot`, `/boot/grub/grub.cfg`, `/etc/default/grub`, `/sys/firmware/efi/efivars`
+
+### Checks
+
+| ID | Check | Severity | CIS | NIST | STIG |
+|---|---|---|---|---|---|
+| boot-001 | GRUB2 password is set | High | 1.4.1 | AC-3 | V-238200 |
+| boot-002 | Secure Boot is enabled | High | 1.4.2 | SI-7 | — |
+| boot-003 | /boot permissions are restricted | Medium | 1.4.3 | — | V-238204 |
+| boot-004 | Bootloader configuration is not world-readable | High | 1.4.3 | — | V-238203 |
+| boot-005 | Kernel cmdline has security parameters | Medium | 1.4.4 | AU-12 | — |
+
+**Remediation:** `grub.cfg` permissions and the GRUB command line are written atomically. `/boot` ownership and mode are directory changes: they are applied, but rollback cannot restore them — see [ARCHITECTURE.md](ARCHITECTURE.md#what-rollback-does-not-cover).
+
+---
+
+## Module: Storage Encryption
+
+**ID:** `storage`
+**Method:** `/etc/crypttab`, `/etc/fstab`, `/proc/modules`
+
+### Checks
+
+| ID | Check | Severity | CIS | NIST | STIG |
+|---|---|---|---|---|---|
+| stg-001 | LUKS/dm-crypt enabled on sensitive partitions | Critical | 1.1.20 | SC-28 | — |
+| stg-002 | Encrypted swap partition or no swap | High | — | SC-28 | — |
+| stg-003 | /etc/crypttab entries have correct permissions | High | 1.1.21 | — | — |
+| stg-004 | No plain-text swap detected in /etc/fstab | High | — | SC-28 | — |
+| stg-005 | dm-crypt kernel module loaded | Medium | 1.1.20 | — | — |
+
+**Remediation:** `/etc/crypttab` is restricted to `0600`. Encryption itself is never enabled automatically.
+
+---
+
+## Module: File Integrity Monitoring
+
+**ID:** `integrity`
+**Method:** `/etc/aide/aide.conf`, `/var/lib/aide`, `/etc/tripwire`, `/etc/cron.d`, systemd timers
+
+### Checks
+
+| ID | Check | Severity | CIS | NIST | STIG |
+|---|---|---|---|---|---|
+| int-001 | File integrity tool (AIDE or Tripwire) installed | High | 1.3.1 | SI-7 | V-238283 |
+| int-002 | Integrity database initialized | High | 1.3.1 | SI-7 | — |
+| int-003 | Integrity check scheduled via cron or systemd timer | Medium | 1.3.2 | SI-7 | — |
+| int-004 | Integrity check results exist from last 7 days | Medium | 1.3.2 | SI-7 | — |
+| int-005 | /etc/aide/aide.conf or /etc/tripwire/tw.cfg has restricted permissions | Medium | 1.3.1 | — | — |
+
+**Remediation:** AIDE is installed with the host's package manager, its database is initialised, and config permissions are restricted to `0600`.
+
+---
+
+## Module: Malware Scanners
+
+**ID:** `malware`
+**Method:** `/var/lib/rkhunter`, `/var/lib/chkrootkit`, `/var/log/rkhunter.log`, `$PATH`
+
+### Checks
+
+| ID | Check | Severity | CIS | NIST | STIG |
+|---|---|---|---|---|---|
+| mal-001 | rkhunter or chkrootkit installed | High | — | SI-3 | — |
+| mal-002 | rkhunter/chkrootkit last run clean | Critical | — | SI-3 | — |
+| mal-003 | No suspicious listening processes | High | — | SI-3 | — |
+| mal-004 | No world-writable entries in PATH | High | 5.4.4 | SI-3 | — |
+| mal-005 | rkhunter/chkrootkit database up to date | Medium | — | SI-3 | — |
+
+**Remediation:** `rkhunter` is installed with the host's package manager. Scanning is left to the operator's schedule.
+
+---
+
+## Module: Shell Hardening
+
+**ID:** `shells`
+**Method:** `/etc/profile`, `/etc/profile.d`, `/etc/bash.bashrc`, per-user `.bashrc` / `.profile`
+
+### Checks
+
+| ID | Check | Severity | CIS | NIST | STIG |
+|---|---|---|---|---|---|
+| shl-001 | TMOUT is set in /etc/profile.d/ | Medium | 5.4.4 | — | V-238220 |
+| shl-002 | HISTSIZE limited to <= 2000 | Low | 5.4.4 | — | — |
+| shl-003 | Shell timeout configured in /etc/bash.bashrc | Medium | 5.4.4 | — | V-238220 |
+| shl-004 | .bashrc and .profile have restricted permissions | Medium | 5.4.4 | — | — |
+| shl-005 | HISTFILESIZE limited to <= 2000 | Low | 5.4.4 | — | — |
+
+**Remediation:** `TMOUT` is written to `/etc/profile.d/timeout.sh` atomically.
+
+---
+
+## Module: Process Accounting
+
+**ID:** `processes`
+**Method:** `/proc/sys/fs/suid_dumpable`, `/etc/security/limits.conf`, `/etc/logrotate.d/psacct`
+
+### Checks
+
+| ID | Check | Severity | CIS | NIST | STIG |
+|---|---|---|---|---|---|
+| prc-001 | Process accounting installed and enabled | Medium | 1.5.1 | AU-12 | — |
+| prc-002 | Core dumps disabled via limits.conf | High | 1.5.2 | SI-16 | — |
+| prc-003 | Core dumps disabled via sysctl | High | 1.5.2 | — | V-238200 |
+| prc-004 | Default ulimit -c set to 0 | Medium | 1.5.2 | — | — |
+| prc-005 | Process accounting log rotation configured | Low | — | AU-12 | — |
+
+**Remediation:** The accounting package is installed per family (`acct` on Debian, `psacct` on RHEL), the unit is enabled, and core-dump limits are appended to `limits.conf`.
+
+---

@@ -208,6 +208,79 @@ jobs:
             fi
           done
 
+  # ── Documentation coverage ─────────────────────────────────────────────────
+  # Two invariants, both of which had drifted: every registered module must have
+  # a section in MODULES.md, and every implemented check must be mapped in
+  # COMPLIANCE.md. Six modules and sixty-three checks were shipped without either
+  # before these gates existed, which for a compliance product means unauditable.
+
+  module-doc-coverage:
+    name: Module Documentation Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assert every registered module is documented
+        run: |
+          FAILED=0
+          MODS=$(grep -oE '&[a-z]+\.Module\{\}' internal/engine/registry.go \
+            | sed 's/&//;s/\.Module{}//' | sort -u)
+          echo "Registered modules: $(echo ${MODS} | wc -w)"
+          for mod in ${MODS}; do
+            if grep -qE "^\*\*ID:\*\* \`${mod}\`" docs/MODULES.md; then
+              echo "✓ ${mod}"
+            else
+              echo "::error file=docs/MODULES.md::Module '${mod}' is registered in internal/engine/registry.go but has no section in docs/MODULES.md"
+              FAILED=1
+            fi
+          done
+          exit ${FAILED}
+
+  compliance-doc-coverage:
+    name: Compliance Mapping Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assert every implemented check is mapped
+        run: |
+          # Matches both "ID: \"ssh-001\"" literals and the string tables used by
+          # the services and network modules, which build checks dynamically.
+          grep -rhoE '"([a-z]{2,4}-[0-9]{3}[a-z]?)"' --include='*.go' \
+            internal/modules --exclude='*_test.go' \
+            | tr -d '"' | sort -u > /tmp/check_ids.txt
+
+          TOTAL=$(wc -l < /tmp/check_ids.txt)
+          echo "Implemented checks: ${TOTAL}"
+
+          FAILED=0
+          MISSING=0
+          while read -r id; do
+            if ! grep -q "| ${id} |" docs/COMPLIANCE.md; then
+              echo "::error file=docs/COMPLIANCE.md::Check '${id}' is implemented but has no compliance mapping"
+              FAILED=1
+              MISSING=$((MISSING + 1))
+            fi
+          done < /tmp/check_ids.txt
+
+          if [ "${FAILED}" -eq 0 ]; then
+            echo "✓ all ${TOTAL} checks mapped"
+          else
+            echo "${MISSING} check(s) missing from docs/COMPLIANCE.md"
+          fi
+          exit ${FAILED}
+
+      - name: Warn about mappings for checks that no longer exist
+        run: |
+          while read -r id; do
+            if ! grep -rqE "\"${id}\"" --include='*.go' internal/modules --exclude='*_test.go'; then
+              echo "::notice file=docs/COMPLIANCE.md::'${id}' is documented but no longer implemented"
+            fi
+          done < <(grep -oE '^\| [a-z]{2,4}-[0-9]{3}[a-z]? \|' docs/COMPLIANCE.md \
+            | sed 's/^| //;s/ |$//' | sort -u)
+
   # ── Distro parity — RHEL / Rocky Linux ──────────────────────────────────────
   # Runs build + unit tests + smoke audit inside RPM-based containers to catch
   # path assumptions, syscall differences, or package-name drift that only

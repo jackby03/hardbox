@@ -31,11 +31,18 @@ This document is the authoritative cross-reference index.
 | ssh-003 | MaxAuthTries ≤ 4 | 5.2.7 | AC-7 | V-238220 | 8.3.4 | 164.312(a)(2)(iii) | A.9.4.2 |
 | ssh-004 | LoginGraceTime ≤ 60s | 5.2.16 | AC-2 | — | — | — | A.9.4.2 |
 | ssh-005 | Disable X11 forwarding | 5.2.6 | — | V-238222 | — | — | A.13.1.2 |
+| ssh-006 | Disable TCP forwarding | 5.2.21 | — | — | — | — | — |
 | ssh-007 | ClientAlive timeout | 5.2.16 | SC-10 | V-238233 | 8.2.8 | 164.312(a)(2)(iii) | A.9.4.2 |
+| ssh-008 | Restrict AllowUsers or AllowGroups | 5.2.22 | AC-17 | — | — | — | — |
 | ssh-009 | Strong ciphers only | 5.2.14 | SC-8 | V-238234 | 4.2.1 | 164.312(e)(2)(ii) | A.14.1.3 |
 | ssh-010 | Strong MACs only | 5.2.15 | SC-8 | V-238235 | 4.2.1 | 164.312(e)(2)(ii) | A.14.1.3 |
+| ssh-011 | Enforce strong KexAlgorithms | 5.2.15 | SC-8 | — | — | — | — |
 | ssh-012 | LogLevel VERBOSE | 5.2.5 | AU-12 | V-238225 | 10.2.2 | 164.312(b) | A.12.4.1 |
+| ssh-013 | Disable IgnoreRhosts | 5.2.9 | — | — | — | — | — |
+| ssh-014 | Set StrictModes yes | — | — | — | — | — | — |
 | ssh-015 | Disable empty passwords | 5.2.11 | IA-5 | — | 8.3.6 | 164.312(d) | A.9.4.3 |
+| ssh-016 | Set MaxSessions ≤ 10 | 5.2.20 | — | — | — | — | — |
+| ssh-017 | Non-default SSH port | — | — | — | — | — | — |
 
 ---
 
@@ -56,15 +63,25 @@ This document is the authoritative cross-reference index.
 
 | Check ID | Title | CIS | NIST | STIG | PCI | HIPAA | ISO |
 |---|---|---|---|---|---|---|---|
-| kn-001 | No IP forwarding | 3.1.1 | CM-7 | V-238327 | 1.3.3 | — | A.13.1.3 |
-| kn-004 | No ICMP redirects | 3.2.2 | SC-5 | V-238328 | — | — | A.13.1.3 |
-| kn-006 | Log martian packets | 3.2.4 | AU-12 | — | 10.6.1 | 164.312(b) | A.12.4.1 |
-| kn-010 | TCP SYN cookies | 3.2.8 | SC-5 | V-238329 | 6.3.3 | — | A.13.1.3 |
 | km-001 | ASLR enabled (RVSA=2) | — | SI-16 | V-238296 | 6.3.3 | — | A.14.2.5 |
 | km-002 | dmesg restricted | — | SI-3 | — | — | — | A.14.2.5 |
 | km-003 | kptr restricted | — | SI-3 | V-238297 | — | — | A.14.2.5 |
 | km-004 | ptrace scope 1 | — | SI-3 | — | — | — | A.14.2.5 |
+| km-005 | Enable hardlink protection | 1.5.6 | AC-6 | — | — | — | — |
+| km-006 | Enable symlink protection | 1.5.7 | AC-6 | — | — | — | — |
 | km-007 | No SUID core dumps | — | AC-6 | V-238298 | — | — | A.9.4.1 |
+| km-008 | Append PID to core dump filenames | 1.5.1 | — | — | — | — | — |
+| kn-001 | No IP forwarding | 3.1.1 | CM-7 | V-238327 | 1.3.3 | — | A.13.1.3 |
+| kn-002 | Disable sending ICMP redirects | 3.1.2 | SC-5 | — | — | — | — |
+| kn-003 | Disable source-routed packets | 3.2.1 | SC-5 | — | — | — | — |
+| kn-004 | No ICMP redirects | 3.2.2 | SC-5 | V-238328 | — | — | A.13.1.3 |
+| kn-005 | Disable secure ICMP redirect acceptance | 3.2.3 | — | — | — | — | — |
+| kn-006 | Log martian packets | 3.2.4 | AU-12 | — | 10.6.1 | 164.312(b) | A.12.4.1 |
+| kn-007 | Ignore broadcast ICMP echo requests | 3.2.5 | SC-5 | — | — | — | — |
+| kn-008 | Ignore bogus ICMP error responses | 3.2.6 | — | — | — | — | — |
+| kn-009 | Enable reverse path filtering | 3.2.7 | SC-5 | — | — | — | — |
+| kn-010 | TCP SYN cookies | 3.2.8 | SC-5 | V-238329 | 6.3.3 | — | A.13.1.3 |
+| kn-011 | Disable IPv6 router advertisement acceptance | 3.2.9 | SC-5 | — | — | — | — |
 
 ---
 
@@ -154,9 +171,25 @@ This document is the authoritative cross-reference index.
 |---|---|---|---|---|---|---|---|
 | fs-001 | /tmp nodev,nosuid,noexec | 1.1.2 | CM-7 | V-238306 | 5.2.5 | — | A.14.2.5 |
 | fs-002 | /dev/shm hardened | 1.1.6 | CM-7 | V-238307 | 5.2.5 | — | A.14.2.5 |
+| fs-003 | Mount /home with nodev | 1.1.13 | CM-7 | — | — | — | — |
+| fs-004 | Mount /var with nodev,nosuid | 1.1.14 | CM-7 | — | — | — | — |
+| fs-005 | Mount /var/log with nodev,nosuid,noexec | 1.1.15 | AU-9 | — | — | — | — |
+| fs-006 | Mount /var/log/audit with nodev,nosuid,noexec | 1.1.16 | AU-9 | — | — | — | — |
+| fs-007 | Mount /boot with nodev,nosuid | 1.1.17 | CM-7 | — | — | — | — |
+| fs-008 | Mount /var/tmp with nodev,nosuid,noexec | 1.1.10 | CM-7 | V-238149 | — | — | — |
+| fs-010 | /etc/passwd permissions: 644 root:root | 6.1.2 | AC-6 | — | — | — | — |
 | fs-011 | /etc/shadow 640 | 6.1.3 | AC-3 | V-238316 | 7.2.4 | 164.312(a)(1) | A.9.4.1 |
+| fs-012 | /etc/group permissions: 644 root:root | 6.1.4 | AC-6 | — | — | — | — |
+| fs-013 | /etc/gshadow permissions: 640 or 000 root:shadow | 6.1.5 | IA-5 | — | — | — | — |
+| fs-014a | /etc/passwd- backup: 644 root:root | 6.1.6 | — | — | — | — | — |
+| fs-014b | /etc/shadow- backup: 640 or 000 | 6.1.7 | — | — | — | — | — |
+| fs-014c | /etc/group- backup: 644 root:root | 6.1.8 | — | — | — | — | — |
+| fs-014d | /etc/gshadow- backup: 640 or 000 | 6.1.9 | — | — | — | — | — |
 | fs-015 | No world-writable files | 6.1.10 | AC-3 | V-238319 | 7.2.4 | — | A.9.4.1 |
+| fs-016 | No unowned or ungrouped files | 6.1.13 | AC-6 | — | — | — | — |
+| fs-017 | Audit SUID and SGID executables | 6.1.14 | CM-7 | — | — | — | — |
 | fs-018 | SUID/SGID audit | 6.1.13 | AC-6 | — | 7.2.1 | — | A.9.4.4 |
+| fs-019 | Sticky bit set on /tmp | 1.1.1 | CM-7 | — | — | — | — |
 
 ---
 
@@ -175,25 +208,41 @@ This document is the authoritative cross-reference index.
 
 ## Services Module
 
-| Check ID | Title | CIS | NIST | STIG | PCI |
-|---|---|---|---|---|---|
-| svc-017 | Telnet disabled | 2.1.18 | CM-7 | V-238241 | 2.2.1 |
-| svc-018 | rsh/rlogin disabled | — | CM-7 | V-238242 | 2.2.1 |
-| svc-009 | FTP (vsftpd) disabled | 2.1.9 | CM-7 | V-238243 | 2.2.1 |
-| svc-014 | SNMP disabled | 2.1.15 | CM-7 | — | 2.2.1 |
+| Check ID | Title | CIS | NIST | STIG | PCI | HIPAA | ISO |
+|---|---|---|---|---|---|---|---|
+| svc-001 | xinetd (extended inetd) disabled | 2.1.1 | — | — | — | — | — |
+| svc-002 | inetd super-server disabled | 2.1.2 | — | — | — | — | — |
+| svc-003 | Avahi mDNS daemon disabled | 2.2.3 | — | — | — | — | — |
+| svc-004 | CUPS print server disabled | 2.2.4 | — | — | — | — | — |
+| svc-005 | DHCP server disabled | 2.2.5 | — | — | — | — | — |
+| svc-006 | LDAP server (slapd) disabled | 2.2.6 | — | — | — | — | — |
+| svc-007 | NFS server disabled | 2.2.7 | — | — | — | — | — |
+| svc-008 | DNS server (bind/named) disabled | 2.2.8 | — | — | — | — | — |
+| svc-009 | FTP (vsftpd) disabled | 2.1.9 | CM-7 | V-238243 | 2.2.1 | — | — |
+| svc-010 | HTTP server (Apache2) disabled | 2.2.10 | — | — | — | — | — |
+| svc-011 | HTTP server (nginx) disabled | 2.2.11 | — | — | — | — | — |
+| svc-012 | IMAP/POP3 server (dovecot) disabled | 2.2.12 | — | — | — | — | — |
+| svc-013 | Mail server (sendmail) disabled | 2.2.13 | — | — | — | — | — |
+| svc-014 | SNMP disabled | 2.1.15 | CM-7 | — | 2.2.1 | — | — |
+| svc-015 | Web proxy (squid) disabled | 2.2.15 | — | — | — | — | — |
+| svc-016 | SNMP daemon disabled | 2.2.16 | — | — | — | — | — |
+| svc-017 | Telnet disabled | 2.1.18 | CM-7 | V-238241 | 2.2.1 | — | — |
+| svc-018 | rsh/rlogin disabled | — | CM-7 | V-238242 | 2.2.1 | — | — |
+| svc-019 | rsh/rlogin server disabled | 2.2.18 | — | — | — | — | — |
+| svc-020 | rsync daemon disabled | 2.2.20 | — | — | — | — | — |
 
 ---
 
 ## Cryptography Module
 
-| Check ID | Title | CIS | NIST | PCI | HIPAA |
-|---|---|---|---|---|---|
-| cry-001 | System crypto policy DEFAULT or stronger | — | SC-17 | 4.2.1 | 164.312(e)(2)(ii) |
-| cry-002 | TLS 1.0/1.1 disabled | — | SC-8 | 4.2.1 | 164.312(e)(2)(ii) |
-| cry-003 | SSLv2/v3 disabled | — | SC-8 | 4.2.1 | 164.312(e)(2)(ii) |
-| cry-004 | Weak ciphers removed | — | SC-8 | 4.2.1 | 164.312(e)(2)(ii) |
-| cry-005 | FIPS 140-2 mode | — | SC-13 | — | 164.312(a)(2)(iv) |
-| cry-006 | GnuPG keyid format long | — | — | — | — |
+| Check ID | Title | CIS | NIST | STIG | PCI | HIPAA | ISO |
+|---|---|---|---|---|---|---|---|
+| cry-001 | System crypto policy DEFAULT or stronger | — | SC-17 | — | 4.2.1 | 164.312(e)(2)(ii) | — |
+| cry-002 | TLS 1.0/1.1 disabled | — | SC-8 | — | 4.2.1 | 164.312(e)(2)(ii) | — |
+| cry-003 | SSLv2/v3 disabled | — | SC-8 | — | 4.2.1 | 164.312(e)(2)(ii) | — |
+| cry-004 | Weak ciphers removed | — | SC-8 | — | 4.2.1 | 164.312(e)(2)(ii) | — |
+| cry-005 | FIPS 140-2 mode | — | SC-13 | — | — | 164.312(a)(2)(iv) | — |
+| cry-006 | GnuPG keyid format long | — | — | — | — | — | — |
 
 ---
 
@@ -216,33 +265,33 @@ This document is the authoritative cross-reference index.
 
 ## Mandatory Access Control
 
-| Check ID | Title | CIS | NIST | STIG | ISO |
-|---|---|---|---|---|---|
-| mac-001 | AppArmor/SELinux installed | 1.6.1 | AC-3 | V-238332 | A.9.4.5 |
-| mac-002 | Enabled at boot | 1.6.2 | AC-3 | V-238333 | A.9.4.5 |
-| mac-003 | Enforcing mode | 1.6.3 | AC-3 | V-238334 | A.9.4.5 |
-| mac-004 | No unconfined processes (AppArmor) | 1.6.4 | AC-3 | — | A.9.4.5 |
-| mac-005 | SELinux policy type targeted or mls | — | AC-3 | V-238335 | A.9.4.5 |
+| Check ID | Title | CIS | NIST | STIG | PCI | HIPAA | ISO |
+|---|---|---|---|---|---|---|---|
+| mac-001 | AppArmor/SELinux installed | 1.6.1 | AC-3 | V-238332 | — | — | A.9.4.5 |
+| mac-002 | Enabled at boot | 1.6.2 | AC-3 | V-238333 | — | — | A.9.4.5 |
+| mac-003 | Enforcing mode | 1.6.3 | AC-3 | V-238334 | — | — | A.9.4.5 |
+| mac-004 | No unconfined processes (AppArmor) | 1.6.4 | AC-3 | — | — | — | A.9.4.5 |
+| mac-005 | SELinux policy type targeted or mls | — | AC-3 | V-238335 | — | — | A.9.4.5 |
 
 ---
 
 ## Auditd Module (Linux Audit Framework)
 
-| Check ID | Title | CIS | NIST | STIG | PCI |
-|---|---|---|---|---|---|
-| aud-001 | execve syscall auditing by non-root | 4.1.3 | AU-12 | — | 10.2.7 |
-| aud-002 | Unauthorized file access attempts audited | 4.1.5 | AU-12 | V-238285 | — |
-| aud-003 | User/group identity file modifications audited | 4.1.6 | AU-12 | V-238286 | — |
-| aud-004 | sudo usage logging | 4.1.11 | AU-12 | — | 10.2.5 |
-| aud-005 | Login/logout/SSH events audited | 4.1.8 | AC-17 | — | 10.2.4 |
-| aud-006 | Kernel module loading audited | 4.1.17 | CM-7 | V-238289 | — |
-| aud-007 | chown/chmod/setuid operations audited | 4.1.7 | AU-12 | V-238287 | — |
-| aud-008 | Network config changes audited | 4.1.16 | AU-12 | — | — |
-| aud-009 | Audit log immutability enabled | 4.1.18 | AU-9 | V-238291 | 10.5.2 |
-| aud-010 | Audit log file size configured | 4.1.1.1 | AU-11 | — | 10.7.1 |
-| aud-011 | Audit log full action configured | 4.1.1.2 | AU-5 | — | 10.7.1 |
-| aud-012 | Audit space_left_action configured | 4.1.1.3 | AU-5 | — | — |
-| aud-013 | auditd service enabled and active | 4.1.1 | AU-12 | V-238283 | 10.6.3 |
+| Check ID | Title | CIS | NIST | STIG | PCI | HIPAA | ISO |
+|---|---|---|---|---|---|---|---|
+| aud-001 | execve syscall auditing by non-root | 4.1.3 | AU-12 | — | 10.2.7 | — | — |
+| aud-002 | Unauthorized file access attempts audited | 4.1.5 | AU-12 | V-238285 | — | — | — |
+| aud-003 | User/group identity file modifications audited | 4.1.6 | AU-12 | V-238286 | — | — | — |
+| aud-004 | sudo usage logging | 4.1.11 | AU-12 | — | 10.2.5 | — | — |
+| aud-005 | Login/logout/SSH events audited | 4.1.8 | AC-17 | — | 10.2.4 | — | — |
+| aud-006 | Kernel module loading audited | 4.1.17 | CM-7 | V-238289 | — | — | — |
+| aud-007 | chown/chmod/setuid operations audited | 4.1.7 | AU-12 | V-238287 | — | — | — |
+| aud-008 | Network config changes audited | 4.1.16 | AU-12 | — | — | — | — |
+| aud-009 | Audit log immutability enabled | 4.1.18 | AU-9 | V-238291 | 10.5.2 | — | — |
+| aud-010 | Audit log file size configured | 4.1.1.1 | AU-11 | — | 10.7.1 | — | — |
+| aud-011 | Audit log full action configured | 4.1.1.2 | AU-5 | — | 10.7.1 | — | — |
+| aud-012 | Audit space_left_action configured | 4.1.1.3 | AU-5 | — | — | — | — |
+| aud-013 | auditd service enabled and active | 4.1.1 | AU-12 | V-238283 | 10.6.3 | — | — |
 
 ---
 
@@ -257,6 +306,78 @@ This document is the authoritative cross-reference index.
 | log-005 | Journald forwarding to syslog enabled | 4.2.2.2 | AU-12 | — | — | — | A.12.4.1 |
 | log-006 | Logrotate configured for all logs | 4.2.3 | AU-11 | — | 10.7.1 | — | A.12.4.1 |
 | log-007 | Log files not world-readable | 4.2.1.3 | AU-9 | V-238302 | — | 164.312(b) | A.12.4.2 |
+
+---
+
+## Boot Security Module
+
+| Check ID | Title | CIS | NIST | STIG | PCI | HIPAA | ISO |
+|---|---|---|---|---|---|---|---|
+| boot-001 | GRUB2 password is set | 1.4.1 | AC-3 | V-238200 | — | — | — |
+| boot-002 | Secure Boot is enabled | 1.4.2 | SI-7 | — | — | — | — |
+| boot-003 | /boot permissions are restricted | 1.4.3 | — | V-238204 | — | — | — |
+| boot-004 | Bootloader configuration is not world-readable | 1.4.3 | — | V-238203 | — | — | — |
+| boot-005 | Kernel cmdline has security parameters | 1.4.4 | AU-12 | — | — | — | — |
+
+---
+
+## Storage Encryption Module
+
+| Check ID | Title | CIS | NIST | STIG | PCI | HIPAA | ISO |
+|---|---|---|---|---|---|---|---|
+| stg-001 | LUKS/dm-crypt enabled on sensitive partitions | 1.1.20 | SC-28 | — | — | — | — |
+| stg-002 | Encrypted swap partition or no swap | — | SC-28 | — | — | — | — |
+| stg-003 | /etc/crypttab entries have correct permissions | 1.1.21 | — | — | — | — | — |
+| stg-004 | No plain-text swap detected in /etc/fstab | — | SC-28 | — | — | — | — |
+| stg-005 | dm-crypt kernel module loaded | 1.1.20 | — | — | — | — | — |
+
+---
+
+## File Integrity Monitoring Module
+
+| Check ID | Title | CIS | NIST | STIG | PCI | HIPAA | ISO |
+|---|---|---|---|---|---|---|---|
+| int-001 | File integrity tool (AIDE or Tripwire) installed | 1.3.1 | SI-7 | V-238283 | — | — | — |
+| int-002 | Integrity database initialized | 1.3.1 | SI-7 | — | — | — | — |
+| int-003 | Integrity check scheduled via cron or systemd timer | 1.3.2 | SI-7 | — | — | — | — |
+| int-004 | Integrity check results exist from last 7 days | 1.3.2 | SI-7 | — | — | — | — |
+| int-005 | /etc/aide/aide.conf or /etc/tripwire/tw.cfg has restricted permissions | 1.3.1 | — | — | — | — | — |
+
+---
+
+## Malware Scanners Module
+
+| Check ID | Title | CIS | NIST | STIG | PCI | HIPAA | ISO |
+|---|---|---|---|---|---|---|---|
+| mal-001 | rkhunter or chkrootkit installed | — | SI-3 | — | — | — | — |
+| mal-002 | rkhunter/chkrootkit last run clean | — | SI-3 | — | — | — | — |
+| mal-003 | No suspicious listening processes | — | SI-3 | — | — | — | — |
+| mal-004 | No world-writable entries in PATH | 5.4.4 | SI-3 | — | — | — | — |
+| mal-005 | rkhunter/chkrootkit database up to date | — | SI-3 | — | — | — | — |
+
+---
+
+## Shell Hardening Module
+
+| Check ID | Title | CIS | NIST | STIG | PCI | HIPAA | ISO |
+|---|---|---|---|---|---|---|---|
+| shl-001 | TMOUT is set in /etc/profile.d/ | 5.4.4 | — | V-238220 | — | — | — |
+| shl-002 | HISTSIZE limited to <= 2000 | 5.4.4 | — | — | — | — | — |
+| shl-003 | Shell timeout configured in /etc/bash.bashrc | 5.4.4 | — | V-238220 | — | — | — |
+| shl-004 | .bashrc and .profile have restricted permissions | 5.4.4 | — | — | — | — | — |
+| shl-005 | HISTFILESIZE limited to <= 2000 | 5.4.4 | — | — | — | — | — |
+
+---
+
+## Process Accounting Module
+
+| Check ID | Title | CIS | NIST | STIG | PCI | HIPAA | ISO |
+|---|---|---|---|---|---|---|---|
+| prc-001 | Process accounting installed and enabled | 1.5.1 | AU-12 | — | — | — | — |
+| prc-002 | Core dumps disabled via limits.conf | 1.5.2 | SI-16 | — | — | — | — |
+| prc-003 | Core dumps disabled via sysctl | 1.5.2 | — | V-238200 | — | — | — |
+| prc-004 | Default ulimit -c set to 0 | 1.5.2 | — | — | — | — | — |
+| prc-005 | Process accounting log rotation configured | — | AU-12 | — | — | — | — |
 
 ---
 

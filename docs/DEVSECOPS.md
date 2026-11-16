@@ -21,7 +21,20 @@ Checks exposed in GitHub:
 - `Quality Gates / Self-Audit`
 - `Quality Gates / Documentation Links`
 - `Quality Gates / Profile Documentation`
+- `Quality Gates / Module Documentation Coverage`
+- `Quality Gates / Compliance Mapping Coverage`
 - `Quality Gates / Release Configuration`
+
+Two of these enforce documentation invariants that had already drifted: six
+shipped modules and sixty-three checks were absent from `docs/MODULES.md` and
+`docs/COMPLIANCE.md`. For a compliance product that means unauditable checks, so
+the gates fail the build instead of relying on review:
+
+- **Module Documentation Coverage** — every module registered in
+  `internal/engine/registry.go` must have an `**ID:**` section in `docs/MODULES.md`.
+- **Compliance Mapping Coverage** — every check ID found in `internal/modules`
+  must appear as a row in `docs/COMPLIANCE.md`. It also warns about mappings that
+  reference a check that no longer exists.
 
 ### `release-publish.yaml`
 
