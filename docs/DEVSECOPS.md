@@ -50,8 +50,21 @@ Checks exposed in GitHub:
 
 ### Scope
 
-The `distro-parity` job matrix in `quality-gates.yaml` runs on every PR and
-push to `main`. It currently covers:
+The `distro-parity` job matrix in `quality-gates.yaml` runs on every push to
+`main`, and on a pull request only when the PR carries the `full-ci` label (or
+when the workflow is dispatched manually). Running the two container legs on
+every PR cost roughly a minute and a half of wall clock for changes that cannot
+possibly affect distro behaviour; `main` always gets the full matrix, so a
+distro regression is still caught before it can reach a release.
+
+To request the full suite on a PR, add the label:
+
+```bash
+gh pr edit <number> --add-label full-ci
+```
+
+The `Distro Parity Gate` job reports success when the matrix was skipped, so a
+PR that did not opt in is never left pending. It currently covers:
 
 | Distro | Container image | Notes |
 |---|---|---|
