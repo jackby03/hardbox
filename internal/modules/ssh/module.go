@@ -16,7 +16,9 @@ package ssh
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"strconv"
 	"strings"
@@ -45,6 +47,12 @@ func (m *Module) Audit(_ context.Context, cfg modules.ModuleConfig) ([]modules.F
 	}
 	content, err := os.ReadFile(path)
 	if err != nil {
+		// A host without an SSH server installed is not a faulty host. Report
+		// every check as not applicable instead of failing the module, so the
+		// audit still produces a complete report.
+		if errors.Is(err, fs.ErrNotExist) {
+			return skippedFindings(defaultChecks(cfg), path), nil
+		}
 		return nil, fmt.Errorf("reading %s: %w", path, err)
 	}
 
@@ -76,6 +84,21 @@ func (m *Module) Audit(_ context.Context, cfg modules.ModuleConfig) ([]modules.F
 		})
 	}
 	return findings, nil
+}
+
+// skippedFindings marks every SSH check as not applicable because the sshd
+// configuration file does not exist on this host.
+func skippedFindings(checks []sshdCheck, path string) []modules.Finding {
+	findings := make([]modules.Finding, 0, len(checks))
+	for _, chk := range checks {
+		findings = append(findings, modules.Finding{
+			Check:  chk.check,
+			Status: modules.StatusSkipped,
+			Target: chk.expected,
+			Detail: path + " not present — OpenSSH server is not installed on this host",
+		})
+	}
+	return findings
 }
 
 // Plan returns atomic Changes for every non-compliant SSH setting.

@@ -17,6 +17,7 @@ package report
 import (
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 )
 
@@ -60,9 +61,32 @@ func renderText(r *Report, w io.Writer) error {
 
 	compliant, total := countFindings(r)
 	if _, err := fmt.Fprintf(w,
-		"\n%s\n  Overall score: %s   Findings: %d compliant / %d total\n%s\n\n",
+		"\n%s\n  Overall score: %s   Findings: %d compliant / %d total\n%s\n",
 		sep, scoreLabel(r.OverallScore), compliant, total, sep,
 	); err != nil {
+		return err
+	}
+
+	if len(r.ModuleErrors) > 0 {
+		// A partial audit must be impossible to miss when reading the report.
+		names := make([]string, 0, len(r.ModuleErrors))
+		for name := range r.ModuleErrors {
+			names = append(names, name)
+		}
+		sort.Strings(names)
+
+		if _, err := fmt.Fprintf(w,
+			"\n  ⚠ PARTIAL AUDIT — %d module(s) could not be inspected:\n", len(names)); err != nil {
+			return err
+		}
+		for _, name := range names {
+			if _, err := fmt.Fprintf(w, "    %-12s %s\n", name, r.ModuleErrors[name]); err != nil {
+				return err
+			}
+		}
+	}
+
+	if _, err := fmt.Fprintln(w); err != nil {
 		return err
 	}
 

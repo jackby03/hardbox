@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -98,14 +100,11 @@ func (e *Engine) Audit(ctx context.Context, format, outputPath string) error {
 	sessionID := time.Now().UTC().Format("2006-01-02T150405Z")
 	log.Info().Str("profile", e.cfg.Profile).Msg("starting audit")
 
-	all, err := e.runAudit(ctx)
-	if err != nil {
-		return err
-	}
+	all, moduleErrors := e.runAudit(ctx)
 
-	printAuditSummary(all)
+	printAuditSummary(all, moduleErrors)
 
-	if err := e.writeReport(sessionID, all, format, outputPath); err != nil {
+	if err := e.writeReportWithErrors(sessionID, all, moduleErrors, format, outputPath); err != nil {
 		return fmt.Errorf("writing report: %w", err)
 	}
 
@@ -124,9 +123,10 @@ func (e *Engine) Apply(ctx context.Context, reportFormat, reportOutput string) e
 		Bool("dry_run", e.cfg.DryRun).
 		Msg("starting apply")
 
-	all, err := e.runAudit(ctx)
-	if err != nil {
-		return err
+	all, moduleErrors := e.runAudit(ctx)
+	if len(moduleErrors) > 0 {
+		log.Warn().Int("modules", len(moduleErrors)).
+			Msg("partial audit: some modules could not be inspected")
 	}
 
 	changes, err := e.buildPlan(ctx, all)
@@ -178,11 +178,8 @@ func (e *Engine) Apply(ctx context.Context, reportFormat, reportOutput string) e
 }
 
 func (e *Engine) writePostApplyReport(ctx context.Context, sessionID, format, path string) error {
-	findings, err := e.runAudit(ctx)
-	if err != nil {
-		return err
-	}
-	return e.writeReport(sessionID, findings, format, path)
+	findings, moduleErrors := e.runAudit(ctx)
+	return e.writeReportWithErrors(sessionID, findings, moduleErrors, format, path)
 }
 
 // RunAudit executes all module checks and returns the structured Report.
@@ -190,11 +187,8 @@ func (e *Engine) writePostApplyReport(ctx context.Context, sessionID, format, pa
 // persistence and diff comparison. This is the building block for hardbox watch.
 func (e *Engine) RunAudit(ctx context.Context) (*report.Report, error) {
 	sessionID := time.Now().UTC().Format("2006-01-02T150405Z")
-	findings, err := e.runAudit(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return report.Build(sessionID, e.cfg.Profile, findings), nil
+	findings, moduleErrors := e.runAudit(ctx)
+	return report.BuildWithErrors(sessionID, e.cfg.Profile, findings, moduleErrors), nil
 }
 
 // GetModules returns the list of registered modules (built-in + plugins).
@@ -260,8 +254,19 @@ func (e *Engine) Rollback(_ context.Context, sessionID string, last bool) error 
 
 // ── internal helpers ────────────────────────────────────────────────────────
 
-func (e *Engine) runAudit(ctx context.Context) ([]modules.Finding, error) {
+// runAudit executes every enabled module and returns the findings together
+// with a per-module error map.
+//
+// A module that fails does not abort the audit. A hardening tool is expected to
+// run on hosts where a given service is simply not installed — no sshd, no
+// auditd, no chrony — and returning early meant a single missing config file
+// produced no report at all. Modules that fail are recorded and surfaced in the
+// report, because a silently partial compliance report is worse than a loud
+// failure.
+func (e *Engine) runAudit(ctx context.Context) ([]modules.Finding, map[string]string) {
 	var all []modules.Finding
+	var moduleErrors map[string]string
+
 	for _, m := range e.modules {
 		if !e.cfg.IsModuleEnabled(m.Name()) {
 			log.Debug().Str("module", m.Name()).Msg("skipped (disabled)")
@@ -269,11 +274,16 @@ func (e *Engine) runAudit(ctx context.Context) ([]modules.Finding, error) {
 		}
 		findings, err := m.Audit(ctx, modules.ModuleConfig(e.cfg.ModuleCfg(m.Name())))
 		if err != nil {
-			return nil, fmt.Errorf("module %s audit: %w", m.Name(), err)
+			log.Warn().Err(err).Str("module", m.Name()).Msg("module audit failed, continuing")
+			if moduleErrors == nil {
+				moduleErrors = make(map[string]string)
+			}
+			moduleErrors[m.Name()] = err.Error()
+			continue
 		}
 		all = append(all, findings...)
 	}
-	return all, nil
+	return all, moduleErrors
 }
 
 func (e *Engine) buildPlan(ctx context.Context, findings []modules.Finding) ([]modules.Change, error) {
@@ -284,7 +294,10 @@ func (e *Engine) buildPlan(ctx context.Context, findings []modules.Finding) ([]m
 		}
 		c, err := m.Plan(ctx, modules.ModuleConfig(e.cfg.ModuleCfg(m.Name())))
 		if err != nil {
-			return nil, fmt.Errorf("module %s plan: %w", m.Name(), err)
+			// One module that cannot build a plan must not stop remediation of
+			// every other module. The audit already reported it.
+			log.Warn().Err(err).Str("module", m.Name()).Msg("module plan failed, continuing")
+			continue
 		}
 		changes = append(changes, c...)
 	}
@@ -301,7 +314,7 @@ func (e *Engine) execute(ctx context.Context, changes []modules.Change, snap *sn
 	return nil
 }
 
-func printAuditSummary(findings []modules.Finding) {
+func printAuditSummary(findings []modules.Finding, moduleErrors map[string]string) {
 	compliant, nonCompliant := 0, 0
 	for _, f := range findings {
 		if f.IsCompliant() {
@@ -311,8 +324,21 @@ func printAuditSummary(findings []modules.Finding) {
 		}
 	}
 	// Write to stderr so structured output on stdout stays pipeable (e.g. | jq .).
-	fmt.Fprintf(os.Stderr, "\nAudit Summary: %d compliant / %d non-compliant\n\n",
+	fmt.Fprintf(os.Stderr, "\nAudit Summary: %d compliant / %d non-compliant\n",
 		compliant, nonCompliant)
+
+	if len(moduleErrors) > 0 {
+		// Make a partial audit loud. A host missing a config file gets a
+		// degraded result, not a silent one.
+		names := make([]string, 0, len(moduleErrors))
+		for name := range moduleErrors {
+			names = append(names, name)
+		}
+		sort.Strings(names)
+		fmt.Fprintf(os.Stderr, "Partial audit: %d module(s) could not be audited: %s\n",
+			len(names), strings.Join(names, ", "))
+	}
+	fmt.Fprintln(os.Stderr)
 }
 
 func printDryRun(changes []modules.Change) {
@@ -338,7 +364,16 @@ func hasCritical(findings []modules.Finding) bool {
 // writeReport renders the audit report to stdout (when path is empty) or to a
 // file. If path points to a directory, a timestamped file is created inside it.
 func (e *Engine) writeReport(sessionID string, findings []modules.Finding, format, path string) error {
-	r := report.Build(sessionID, e.cfg.Profile, findings)
+	return e.writeReportWithErrors(sessionID, findings, nil, format, path)
+}
+
+func (e *Engine) writeReportWithErrors(
+	sessionID string,
+	findings []modules.Finding,
+	moduleErrors map[string]string,
+	format, path string,
+) error {
+	r := report.BuildWithErrors(sessionID, e.cfg.Profile, findings, moduleErrors)
 
 	if path == "" {
 		return report.Write(r, format, os.Stdout)
