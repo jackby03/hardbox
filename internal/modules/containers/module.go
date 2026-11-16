@@ -142,6 +142,7 @@ func (m *Module) Plan(ctx context.Context, _ modules.ModuleConfig) ([]modules.Ch
 			changes = append(changes, modules.Change{
 				Description:  "Containers: disable inter-container communication",
 				DryRunOutput: `  {"icc": false} in /etc/docker/daemon.json`,
+				Files:        []string{m.daemonJSON()},
 				Apply: func() error {
 					return m.patchDaemonJSON(map[string]any{"icc": false})
 				},
@@ -154,6 +155,7 @@ func (m *Module) Plan(ctx context.Context, _ modules.ModuleConfig) ([]modules.Ch
 			changes = append(changes, modules.Change{
 				Description:  "Containers: enable user namespace remapping",
 				DryRunOutput: `  {"userns-remap": "default"} in /etc/docker/daemon.json`,
+				Files:        []string{m.daemonJSON()},
 				Apply: func() error {
 					return m.patchDaemonJSON(map[string]any{"userns-remap": "default"})
 				},
@@ -486,4 +488,3 @@ func (m *Module) removeDaemonJSON(key string) error {
 	out, _ := json.MarshalIndent(cfg, "", "  ")
 	return util.AtomicWrite(path, out, 0o644)
 }
-

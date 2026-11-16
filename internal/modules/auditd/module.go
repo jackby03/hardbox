@@ -162,6 +162,7 @@ func (m *Module) Plan(ctx context.Context, cfg modules.ModuleConfig) ([]modules.
 		changes = append(changes, modules.Change{
 			Description:  fmt.Sprintf("auditd: write hardening rules to %s", rulesPath),
 			DryRunOutput: newContent,
+			Files:        []string{rulesPath},
 			Apply: func() error {
 				if err := os.MkdirAll(m.getRulesDir(), 0o750); err != nil {
 					return fmt.Errorf("auditd: create rules dir: %w", err)
@@ -382,4 +383,3 @@ func runCommand(ctx context.Context, name string, args ...string) (string, error
 	}
 	return result, nil
 }
-

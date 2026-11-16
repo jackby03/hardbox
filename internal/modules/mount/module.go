@@ -361,6 +361,7 @@ func (m *Module) Plan(ctx context.Context, _ modules.ModuleConfig) ([]modules.Ch
 	return []modules.Change{{
 		Description:  fmt.Sprintf("mount: blacklist %d kernel module(s) in %s", len(toBlacklist), confPath),
 		DryRunOutput: strings.TrimRight(dryRun.String(), "\n"),
+		Files:        []string{confPath},
 		Apply: func() error {
 			return util.AtomicWrite(confPath, []byte(newContent), 0o644)
 		},
@@ -372,4 +373,3 @@ func (m *Module) Plan(ctx context.Context, _ modules.ModuleConfig) ([]modules.Ch
 		},
 	}}, nil
 }
-

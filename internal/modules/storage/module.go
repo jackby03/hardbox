@@ -59,6 +59,7 @@ func (m *Module) Plan(ctx context.Context, cfg modules.ModuleConfig) ([]modules.
 			changes = append(changes, modules.Change{
 				Description:  "Storage: restrict /etc/crypttab permissions",
 				DryRunOutput: "  chmod 0600 /etc/crypttab",
+				Files:        []string{crypttabPath},
 				Apply: func() error {
 					return os.Chmod(crypttabPath, 0o600)
 				},

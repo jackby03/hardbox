@@ -134,6 +134,7 @@ func (m *Module) Plan(ctx context.Context, cfg modules.ModuleConfig) ([]modules.
 		changes = append(changes, modules.Change{
 			Description:  fmt.Sprintf("SSH: set %s = %s", f.Check.ID, f.Target),
 			DryRunOutput: fmt.Sprintf("  %s: %q → %q", f.Check.Title, f.Current, f.Target),
+			Files:        []string{path},
 			Apply: func() error {
 				return setSshdOption(path, sshdKey, f.Target)
 			},
@@ -489,4 +490,3 @@ func setSshdOption(path, key, value string) error {
 
 	return util.AtomicWrite(path, []byte(strings.Join(lines, "\n")), 0600)
 }
-

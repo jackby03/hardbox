@@ -69,8 +69,24 @@ type Finding struct {
 type Change struct {
 	Description  string
 	DryRunOutput string
-	Apply        func() error
-	Revert       func() error
+
+	// Files lists the absolute paths this change writes or modifies. The engine
+	// copies each one into the pre-apply snapshot before Apply runs and restores
+	// it on rollback. A declared path that does not exist yet is recorded as
+	// created, so rollback removes it instead of leaving an orphan behind.
+	//
+	// Declaring the paths here is not optional bookkeeping: rollback is the only
+	// thing that makes running Apply as root on a live server acceptable, and it
+	// can only restore what it was told about.
+	Files []string
+
+	// SysctlKeys lists kernel parameters (dotted form, e.g.
+	// "net.ipv4.ip_forward") this change modifies. Their current values are
+	// captured before Apply and written back on rollback.
+	SysctlKeys []string
+
+	Apply  func() error
+	Revert func() error
 }
 
 // ModuleConfig carries per-module settings resolved from the profile + user config.

@@ -101,13 +101,31 @@ We will not pursue legal action against researchers who disclose vulnerabilities
 
 ## Security Considerations for Users
 
-hardbox runs with elevated privileges (`sudo`) and makes direct changes to system configuration. To use it safely:
+hardbox runs with elevated privileges and makes direct changes to system
+configuration. Treat it like any other root-level change tool:
 
-- Always run `hardbox audit` or use `--dry-run` before applying any profile
-- Review the diff output before confirming changes
-- Keep hardbox updated to the latest release
-- Download binaries only from [official GitHub Releases](https://github.com/jackby03/hardbox/releases) or via the official installer at `https://hardbox.jackby03.com/install.sh`
-- Verify binary checksums before installation (SHA256 checksums are published alongside each release)
+- Always run `hardbox audit` or `apply --dry-run` before applying a profile, and
+  read the diff.
+- Keep hardbox updated to the latest release.
+- Download binaries only from [official GitHub Releases](https://github.com/jackby03/hardbox/releases)
+  or via the official installer at `https://hardbox.jackby03.com/install.sh`.
+- Verify binary checksums before installation (SHA256 checksums are published
+  alongside each release).
+
+Two properties are specific to how hardbox works:
+
+- **Snapshots contain copies of the files they protect.** Before `apply`, hardbox
+  copies every file a change declares into `/var/lib/hardbox/snapshots/`. That
+  directory is created `0700` and each backup `0600`, but the copies can include
+  `/etc/shadow`, `/etc/gshadow`, PAM stacks and service private keys. If
+  duplicating secrets on the same disk is unacceptable in your threat model, put
+  the snapshot directory on a separate volume, or remove finished session
+  directories from `/var/lib/hardbox/snapshots/` once the change window closes.
+- **Rollback covers files and sysctl values only.** Package installs, service
+  state, firewall rules, SELinux/AppArmor mode changes and directory permissions
+  are forward-only. Do not treat `rollback` as a substitute for a VM or LVM
+  snapshot on hosts you cannot rebuild. See
+  [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#what-rollback-does-not-cover).
 
 ---
 

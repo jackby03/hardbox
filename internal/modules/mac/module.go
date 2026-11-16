@@ -147,6 +147,7 @@ func (m *Module) planEnableBoot(ctx context.Context, b backendType) modules.Chan
 		return modules.Change{
 			Description:  "MAC: ensure AppArmor is enabled at boot",
 			DryRunOutput: "  verify apparmor=1 in kernel cmdline",
+			Files:        []string{"/etc/default/grub"},
 			Apply: func() error {
 				// AppArmor on Debian is enabled by default; ensure the service is enabled
 				_, err := m.runner()(ctx, "systemctl", "enable", "apparmor")
@@ -158,6 +159,7 @@ func (m *Module) planEnableBoot(ctx context.Context, b backendType) modules.Chan
 		return modules.Change{
 			Description:  "MAC: set SELinux to enforcing mode in config",
 			DryRunOutput: "  set SELINUX=enforcing in /etc/selinux/config",
+			Files:        []string{m.selinuxConfigPath()},
 			Apply: func() error {
 				return m.setSELinuxMode("enforcing")
 			},
@@ -194,6 +196,7 @@ func (m *Module) planSELinuxType(ctx context.Context) modules.Change {
 	return modules.Change{
 		Description:  "MAC: set SELinux policy type to targeted",
 		DryRunOutput: "  set SELINUXTYPE=targeted in /etc/selinux/config",
+		Files:        []string{m.selinuxConfigPath()},
 		Apply: func() error {
 			return m.setSELinuxEntry("SELINUXTYPE", "targeted")
 		},

@@ -227,6 +227,7 @@ func (m *Module) planUFW(ctx context.Context) ([]modules.Change, error) {
 				changes = append(changes, modules.Change{
 					Description:  "Firewall: enable IPv6 filtering in /etc/default/ufw",
 					DryRunOutput: "  set IPV6=yes in /etc/default/ufw",
+					Files:        []string{"/etc/default/ufw"},
 					Apply: func() error {
 						return setUFWConfig("IPV6", "yes")
 					},
@@ -279,27 +280,27 @@ func (m *Module) planFirewalld(ctx context.Context) ([]modules.Change, error) {
 						_, err := m.runner()(ctx, "firewall-cmd", "--set-default-zone=drop")
 						return err
 					},
-				Revert: func() error {
-					_, _ = m.runner()(ctx, "firewall-cmd", "--set-default-zone=public")
-					return nil
-				},
-			})
-		}
-	case "fw-004":
-		if !state.loopbackAllowed {
-			changes = append(changes, modules.Change{
-				Description:  "Firewall: add loopback interface to trusted zone",
-				DryRunOutput: "  firewall-cmd --zone=trusted --add-interface=lo --permanent",
-				Apply: func() error {
-					_, err := m.runner()(ctx, "firewall-cmd", "--zone=trusted", "--add-interface=lo", "--permanent")
-					if err == nil {
+					Revert: func() error {
+						_, _ = m.runner()(ctx, "firewall-cmd", "--set-default-zone=public")
+						return nil
+					},
+				})
+			}
+		case "fw-004":
+			if !state.loopbackAllowed {
+				changes = append(changes, modules.Change{
+					Description:  "Firewall: add loopback interface to trusted zone",
+					DryRunOutput: "  firewall-cmd --zone=trusted --add-interface=lo --permanent",
+					Apply: func() error {
+						_, err := m.runner()(ctx, "firewall-cmd", "--zone=trusted", "--add-interface=lo", "--permanent")
+						if err == nil {
+							_, _ = m.runner()(ctx, "firewall-cmd", "--reload")
+						}
+						return err
+					},
+					Revert: func() error {
+						_, _ = m.runner()(ctx, "firewall-cmd", "--zone=trusted", "--remove-interface=lo", "--permanent")
 						_, _ = m.runner()(ctx, "firewall-cmd", "--reload")
-					}
-					return err
-				},
-				Revert: func() error {
-					_, _ = m.runner()(ctx, "firewall-cmd", "--zone=trusted", "--remove-interface=lo", "--permanent")
-					_, _ = m.runner()(ctx, "firewall-cmd", "--reload")
 						return nil
 					},
 				})
@@ -686,4 +687,3 @@ func runCommand(ctx context.Context, name string, args ...string) (string, error
 	}
 	return result, nil
 }
-

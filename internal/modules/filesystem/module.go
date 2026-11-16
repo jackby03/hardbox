@@ -609,6 +609,7 @@ func (m *Module) Plan(ctx context.Context, _ modules.ModuleConfig) ([]modules.Ch
 		changes = append(changes, modules.Change{
 			Description:  fmt.Sprintf("filesystem: chmod %04o %s", spec.mode, spec.path),
 			DryRunOutput: fmt.Sprintf("  chmod %04o %s", spec.mode, spec.path),
+			Files:        []string{path},
 			Apply: func() error {
 				return os.Chmod(path, spec.mode)
 			},
@@ -697,6 +698,7 @@ func (m *Module) planMounts(findings []modules.Finding) ([]modules.Change, error
 	return []modules.Change{{
 		Description:  fmt.Sprintf("filesystem: update /etc/fstab mount options for %d mountpoint(s)", len(fixes)),
 		DryRunOutput: strings.TrimRight(dryRun.String(), "\n"),
+		Files:        []string{m.fstab()},
 		Apply: func() error {
 			return util.AtomicWrite(fstabPath, []byte(newContent), 0o644)
 		},
@@ -739,4 +741,3 @@ func addFstabOptions(content, mountpoint string, addOpts []string) string {
 
 	return strings.Join(lines, "\n")
 }
-

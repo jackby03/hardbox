@@ -539,6 +539,7 @@ func (m *Module) planLoginDefs(keys map[string]string) (*modules.Change, error) 
 	ch := &modules.Change{
 		Description:  "users: set login.defs " + strings.Join(desc, ", "),
 		DryRunOutput: newContent,
+		Files:        []string{path},
 		Apply: func() error {
 			return util.AtomicWrite(path, []byte(newContent), 0o644)
 		},
@@ -565,6 +566,7 @@ func (m *Module) planUseraddInactive() (*modules.Change, error) {
 	ch := &modules.Change{
 		Description:  "users: set INACTIVE=30 in " + path,
 		DryRunOutput: newContent,
+		Files:        []string{path},
 		Apply: func() error {
 			return util.AtomicWrite(path, []byte(newContent), 0o644)
 		},

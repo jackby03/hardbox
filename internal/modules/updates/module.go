@@ -100,6 +100,7 @@ func (m *Module) Plan(ctx context.Context, cfg modules.ModuleConfig) ([]modules.
 				changes = append(changes, modules.Change{
 					Description:  "Updates: install and enable unattended-upgrades",
 					DryRunOutput: "  apt-get install -y unattended-upgrades && dpkg-reconfigure -plow unattended-upgrades",
+					Files:        []string{m.aptAutoPath()},
 					Apply: func() error {
 						cmd := exec.CommandContext(ctx, "apt-get", "install", "-y", "unattended-upgrades")
 						if err := cmd.Run(); err != nil {
